@@ -4,7 +4,7 @@ export type Project = {
   commands?: Record<string, Command>;
   configs?: Record<string, Config>;
   targets?: Record<string, Target>;
-}
+};
 
 export enum Arch {
   x86_64,
@@ -19,7 +19,7 @@ export enum Platform {
   windows,
   wasi,
   emscripten,
-  android
+  android,
 }
 
 export enum Compiler {
@@ -39,7 +39,7 @@ export type TargetDependencies = {
   targets: string[];
   frameworks: string[];
   libs: string[];
-}
+};
 
 export type Filter = {
   arch: {
@@ -54,28 +54,28 @@ export type Filter = {
     is?: Compiler[];
     not?: Compiler[];
   };
-}
+};
 
 export type TargetCompileDefinitions = {
   filter?: Filter;
   interface?: Record<string, string>;
   private?: Record<string, string>;
   public?: Record<string, string>;
-}
+};
 
 export type TargetCompileOptions = {
   filter?: Filter;
   interface?: string[];
   private?: string[];
   public?: string[];
-}
+};
 
 export type TargetLinkOptions = {
   filter?: Filter;
   interface?: string[];
   private?: string[];
   public?: string[];
-}
+};
 
 export type TargetIncludeDirectories = {
   filter?: Filter;
@@ -83,7 +83,7 @@ export type TargetIncludeDirectories = {
   interface?: string[];
   private?: string[];
   public?: string[];
-}
+};
 
 export type Config = {
   name: string;
@@ -93,7 +93,7 @@ export type Config = {
   toolchain?: string;
   variables?: Record<string, string | boolean>;
   environment?: Record<string, string>;
-}
+};
 
 export type Target = {
   name: string;
@@ -103,10 +103,10 @@ export type Target = {
   compile_definitions?: TargetCompileDefinitions | TargetCompileDefinitions[];
   compile_options?: TargetCompileOptions | TargetCompileOptions[];
   link_options?: TargetLinkOptions | TargetLinkOptions[];
-}
+};
 
 export interface Command {
   name: string;
   help(project: Project): void;
-  run(project: Project): void;
+  run(project: Project): Promise<void>;
 }

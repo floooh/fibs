@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "allowJs": false,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "strictNullChecks": true,
+    "checkJs": true
+  },
+  "fmt": {
+    "options": {
+      "useTabs": false,
+      "indentWidth": 2,
+      "singleQuote": true
+    }
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"],
+      "exclude": [ "require-await" ]
+    }
+  }
+}

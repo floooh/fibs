@@ -1,2 +1,6 @@
-export * from './src/types.ts';
-export * from './src/command.ts';
+import * as fibs from './mod.ts';
+
+fibs.run({
+  name: 'Bla',
+  path: '.',
+})

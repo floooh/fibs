@@ -1,13 +1,13 @@
-import { Verb, Project } from '../../fibs.ts';
+import { Project, Command } from '../../mod.ts';
 
-export const diag: Verb = {
+export const diag: Command = {
   name: 'diag',
 
   help: (project: Project) => {
     console.log(`diag.help() called for project '${project.name}'`);
   },
 
-  run: (project: Project) => {
+  run: async (project: Project) => {
     console.log(`diag.run() called for project '${project.name}'`);
   },
-}
+};
