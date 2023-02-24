@@ -5,8 +5,8 @@ const project: fibs.Project = {
   path: '.',
 }
 
-await fibs.importVerbs(project);
+await fibs.importCommands(project);
 
-for (const k in project.verbs) {
-  project.verbs[k].run(project);
+for (const k in project.commands) {
+  project.commands[k].run(project);
 }

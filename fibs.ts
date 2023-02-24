@@ -1,2 +1,2 @@
 export * from './src/types.ts';
-export * from './src/verbs.ts';
+export * from './src/command.ts';

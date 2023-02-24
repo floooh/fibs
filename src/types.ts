@@ -1,7 +1,7 @@
 export type Project = {
   name: string;
   path: string;
-  verbs?: Record<string, Verb>;
+  commands?: Record<string, Command>;
   configs?: Record<string, Config>;
   targets?: Record<string, Target>;
 }
@@ -105,7 +105,7 @@ export type Target = {
   link_options?: TargetLinkOptions | TargetLinkOptions[];
 }
 
-export interface Verb {
+export interface Command {
   name: string;
   help(project: Project): void;
   run(project: Project): void;
