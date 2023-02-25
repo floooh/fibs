@@ -1,12 +1,25 @@
+import { colors } from './colors.ts';
+
+export function print(...args: unknown[]) {
+  console.log(...args);
+}
+
+export function help(cmds: string[], help: string) {
+  for (const cmd of cmds) {
+    print(`${colors.yellow(`fibs ${cmd}`)}`);
+  }
+  print('    ', help, '\n');
+}
+
 export function info(...args: unknown[]) {
   console.info(...args);
 }
 
 export function warn(...args: unknown[]) {
-  console.warn("%c[warning] ", "color:yellow", ...args);
+  console.warn(`${colors.yellow('[warning]')}`, ...args);
 }
 
 export function error(...args: unknown[]) {
-  console.error("%c[Error] ", "color:red", ...args);
+  console.warn(`${colors.red('[error]')}`, ...args);
   Deno.exit(10);
 }

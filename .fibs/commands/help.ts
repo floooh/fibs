@@ -1,13 +1,32 @@
-import { Project, Command } from '../../mod.ts';
+import { Project, Command, log } from '../../mod.ts';
 
 export const help: Command = {
   name: 'help',
-
-  help: (project: Project) => {
-    console.log(`help.help() called for project '${project.name}'`);
-  },
-
-  run: async (project: Project) => {
-    console.log(`help.run() called for project '${project.name}'`);
-  },
+  help: helpFn,
+  run: run,
 };
+
+function helpFn(_project: Project) {
+    log.help([
+      'help',
+      'help [cmd]'
+    ], 'print help for all commands or a specific command');
+}
+
+async function run(project: Project) {
+  const cmds = project.commands!;
+  if (Deno.args.length == 1) {
+    log.print('fixme: generic help info');
+    log.print('project url: https://github.com/floooh/fibs\n');
+    for (const cmdName in cmds) {
+      const cmd = cmds[cmdName];
+      cmd.help(project);
+    }
+  } else {
+    const cmdName = Deno.args[1];
+    if (cmdName in cmds) {
+      const cmd = cmds[cmdName];
+      cmd.help(project);
+    }
+  }
+}

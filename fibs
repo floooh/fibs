@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-deno run --allow-read fibs.ts $@
+deno run --allow-read --allow-run fibs.ts $@

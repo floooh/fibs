@@ -2,6 +2,7 @@ export type Project = {
   name: string;
   path: string;
   commands?: Record<string, Command>;
+  tools?: Record<string, Tool>;
   configs?: Record<string, Config>;
   targets?: Record<string, Target>;
 };
@@ -109,4 +110,12 @@ export interface Command {
   name: string;
   help(project: Project): void;
   run(project: Project): Promise<void>;
+}
+
+export interface Tool {
+  name: string;
+  platforms: Platform[];
+  optional: boolean;
+  notFoundMsg: string;
+  exists(project: Project): Promise<boolean>;
 }
