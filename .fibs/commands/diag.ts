@@ -19,7 +19,7 @@ function help(_project: Project) {
 async function run(project: Project) {
   const all: string[] = [ 'fibs', 'tools', 'configs', 'imports' ];
   let which: string[] = [];
-  if (Deno.args.length == 1) {
+  if (Deno.args.length === 1) {
     which = all;
   } else {
     const arg = Deno.args[1];

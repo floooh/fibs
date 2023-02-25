@@ -2,7 +2,7 @@ import { Project, Tool, Platform } from '../../mod.ts';
 
 export const git: Tool = {
   name: 'git',
-  platforms: [ Platform.windows, Platform.macos, Platform.linux ],
+  platforms: [ Platform.Windows, Platform.Macos, Platform.Linux ],
   optional: false,
   notFoundMsg: 'required for fetching imports',
   exists: exists,

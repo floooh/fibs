@@ -8,32 +8,32 @@ export type Project = {
 };
 
 export enum Arch {
-  x86_64,
-  arm64,
-  wasm32,
+  X86_64,
+  Arm64,
+  Wasm32,
 }
 
 export enum Platform {
-  ios,
-  linux,
-  macos,
-  windows,
-  wasi,
-  emscripten,
-  android,
+  IOS,
+  Linux,
+  Macos,
+  Windows,
+  Wasi,
+  Emscripten,
+  Android,
 }
 
 export enum Compiler {
-  msvc,
-  gcc,
-  clang,
-  apple_clang,
+  MSVC,
+  GCC,
+  Clang,
+  AppleClang,
 }
 
 export enum TargetType {
-  exe,
-  lib,
-  dll,
+  Exe,
+  Lib,
+  DLL,
 }
 
 export type TargetDependencies = {
@@ -100,10 +100,10 @@ export type Target = {
   name: string;
   type: TargetType;
   deps?: TargetDependencies | TargetDependencies[];
-  include_directories?: TargetIncludeDirectories | TargetIncludeDirectories[];
-  compile_definitions?: TargetCompileDefinitions | TargetCompileDefinitions[];
-  compile_options?: TargetCompileOptions | TargetCompileOptions[];
-  link_options?: TargetLinkOptions | TargetLinkOptions[];
+  includeDirectories?: TargetIncludeDirectories | TargetIncludeDirectories[];
+  compileDefinitions?: TargetCompileDefinitions | TargetCompileDefinitions[];
+  compileOptions?: TargetCompileOptions | TargetCompileOptions[];
+  linkOptions?: TargetLinkOptions | TargetLinkOptions[];
 };
 
 export interface Command {

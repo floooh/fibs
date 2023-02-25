@@ -2,7 +2,7 @@ import { Project, Tool, Platform } from '../../mod.ts';
 
 export const cmake: Tool = {
   name: 'cmake',
-  platforms: [ Platform.windows, Platform.macos, Platform.linux ],
+  platforms: [ Platform.Windows, Platform.Macos, Platform.Linux ],
   optional: false,
   notFoundMsg: 'required for building projects',
   exists: exists,

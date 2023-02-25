@@ -2,7 +2,7 @@ import { Project, Tool, Platform } from '../../mod.ts';
 
 export const ninja: Tool = {
   name: 'ninja',
-  platforms: [ Platform.windows, Platform.macos, Platform.linux ],
+  platforms: [ Platform.Windows, Platform.Macos, Platform.Linux ],
   optional: false,
   notFoundMsg: 'required for building *-ninja-* configs',
   exists: exists,
