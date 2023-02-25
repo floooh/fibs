@@ -8,7 +8,7 @@ import * as log from './log.ts';
  */
 export async function importAll(project: Project) {
   try {
-    const importPath = `${Deno.cwd()}/${project.path}/.fibs/tools.ts`;
+    const importPath = `file://${Deno.cwd()}/${project.path}/.fibs/tools.ts`;
     const module = await import(importPath);
     if (module['tools'] !== undefined) {
       project.tools = module['tools'];
