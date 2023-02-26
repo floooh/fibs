@@ -1,4 +1,4 @@
-import { Project, Adapter, Config, TargetType, Platform, cfg, log } from '../../mod.ts';
+import { Project, Adapter, Config, TargetType, Platform, util, log } from '../../mod.ts';
 import { cmake as cmakeTool } from '../tools/cmake.ts';
 import { fs } from '../../deps.ts';
 
@@ -16,8 +16,11 @@ export async function generate(project: Project, config: Config) {
     }
     // FIXME: write CMakePresets.json file
 
-    // run cmake config
-    const buildDir = cfg.buildDir(project, config);
+    await configure(project, config);
+}
+
+async function configure(project: Project, config: Config) {
+    const buildDir = util.buildDir(project, config);
     await fs.ensureDir(buildDir);
     const args = [];
     // FIXME: change this to a cmake preset name
@@ -36,7 +39,10 @@ export async function generate(project: Project, config: Config) {
 }
 
 export async function build(project: Project, config: Config) {
-    const buildDir = cfg.buildDir(project, config);
+    const buildDir = util.buildDir(project, config);
+    if (!util.fileExists(`${buildDir}/CMakeCache.txt`)) {
+        await configure(project, config);
+    }
     const res = await cmakeTool.run({
         args: [ '--build', '.' ],
         cwd: buildDir,
