@@ -1,19 +1,19 @@
-import { Project, Tool, Platform } from '../../mod.ts';
+import { Platform, Project, Tool } from '../../mod.ts';
 
 export const ninja: Tool = {
-  name: 'ninja',
-  platforms: [ Platform.Windows, Platform.Macos, Platform.Linux ],
-  optional: false,
-  notFoundMsg: 'required for building *-ninja-* configs',
-  exists: exists,
-}
+    name: 'ninja',
+    platforms: [Platform.Windows, Platform.Macos, Platform.Linux],
+    optional: false,
+    notFoundMsg: 'required for building *-ninja-* configs',
+    exists: exists,
+};
 
 export async function exists(_project: Project): Promise<boolean> {
-  try {
-    const p = Deno.run({ cmd: ['ninja', '--version'], stdout: 'piped' });
-    await p.status();
-    return true;
-  } catch (_err) {
-    return false;
-  }
+    try {
+        const p = Deno.run({ cmd: ['ninja', '--version'], stdout: 'piped' });
+        await p.status();
+        return true;
+    } catch (_err) {
+        return false;
+    }
 }

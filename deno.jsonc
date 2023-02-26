@@ -1,25 +1,25 @@
 {
-  "compilerOptions": {
-    "strict": true,
-    "allowJs": true,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
-    "strictNullChecks": true,
-    "checkJs": true
-  },
-  "fmt": {
-    "options": {
-      "useTabs": false,
-      "indentWidth": 2,
-      "singleQuote": true
+    "compilerOptions": {
+        "strict": true,
+        "allowJs": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noUnusedLocals": true,
+        "strictNullChecks": true,
+        "checkJs": true
+    },
+    "fmt": {
+        "options": {
+            "useTabs": false,
+            "indentWidth": 4,
+            "singleQuote": true
+        }
+    },
+    "lint": {
+        "rules": {
+            "tags": [],
+            "exclude": ["require-await"],
+            "include": ["recommended", "eqeqeq", "camelcase", "no-extra-semi"]
+        }
     }
-  },
-  "lint": {
-    "rules": {
-      "tags": [],
-      "exclude": [ "require-await" ],
-      "include": [ "recommended", "eqeqeq", "camelcase", "no-extra-semi" ]
-    }
-  }
 }
