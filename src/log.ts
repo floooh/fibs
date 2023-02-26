@@ -1,4 +1,4 @@
-import { colors } from './colors.ts';
+import { colors } from '../deps.ts';
 
 export function print(...args: unknown[]) {
   console.log(...args);

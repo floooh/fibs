@@ -1,6 +1,5 @@
 import * as fibs from './mod.ts';
 
-fibs.run({
+fibs.run(import.meta, {
   name: 'Bla',
-  path: '.',
 })

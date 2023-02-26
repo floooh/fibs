@@ -1,39 +1,48 @@
+export type ProjectDesc = {
+  name: string;
+  targets?: Target[];
+  commands?: Command[]
+  tools?: Tool[]
+  configs?: Config[];
+};
+
 export type Project = {
   name: string;
   path: string;
-  commands?: Record<string, Command>;
-  tools?: Record<string, Tool>;
-  configs?: Record<string, Config>;
-  targets?: Record<string, Target>;
-};
+  deps: Record<string, Project>;
+  targets: Record<string, Target>;
+  commands: Record<string, Command>;
+  tools: Record<string, Tool>;
+  configs: Record<string, Config>;
+}
 
 export enum Arch {
-  X86_64,
-  Arm64,
-  Wasm32,
+  X86_64 = 'x86_64',
+  Arm64 = 'arm64',
+  Wasm32 = 'wasm32',
 }
 
 export enum Platform {
-  IOS,
-  Linux,
-  Macos,
-  Windows,
-  Wasi,
-  Emscripten,
-  Android,
+  IOS = 'ios',
+  Linux = 'linux',
+  Macos = 'macos',
+  Windows = 'windows',
+  Wasi = 'wasi',
+  Emscripten = 'emscripten',
+  Android = 'android',
 }
 
 export enum Compiler {
-  MSVC,
-  GCC,
-  Clang,
-  AppleClang,
+  MSVC = 'msvc',
+  GCC = 'gcc',
+  Clang = 'clang',
+  AppleClang = 'appleclang'
 }
 
 export enum TargetType {
-  Exe,
-  Lib,
-  DLL,
+  Exe = 'exe',
+  Lib = 'lib',
+  DLL = 'dll',
 }
 
 export type TargetDependencies = {

@@ -1,4 +1,5 @@
-import { Project, Command, log, host, colors } from '../../mod.ts';
+import { Project, Command, log, host } from '../../mod.ts';
+import { colors } from '../../deps.ts';
 
 export const diag: Command = {
   name: 'diag',
@@ -13,11 +14,12 @@ function help(_project: Project) {
     'diag tools',
     'diag configs',
     'diag imports',
+    'diag project',
   ], 'run diagnostics and check for errors');
 }
 
 async function run(project: Project) {
-  const all: string[] = [ 'fibs', 'tools', 'configs', 'imports' ];
+  const all: string[] = [ 'fibs', 'tools', 'configs', 'imports', 'project' ];
   let which: string[] = [];
   if (Deno.args.length === 1) {
     which = all;
@@ -47,6 +49,10 @@ async function run(project: Project) {
     log.print(`${colors.yellow('=== imports:')}`);
     log.warn('FIXME: diag imports');
     log.print();
+  }
+  if (which.includes('project')) {
+    log.print(`${colors.yellow('=== project:')}`);
+    log.print(project);
   }
 }
 
