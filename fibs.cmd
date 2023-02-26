@@ -1,1 +1,1 @@
-@deno run --allow-read --allow-run fibs.ts %*
+@deno run --allow-read --allow-write --allow-run fibs.ts %*

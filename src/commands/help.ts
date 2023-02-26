@@ -1,4 +1,5 @@
 import { Command, log, Project } from '../../mod.ts';
+import { colors } from '../../deps.ts';
 
 export const help: Command = {
     name: 'help',
@@ -16,7 +17,7 @@ function helpFn(_project: Project) {
 async function run(project: Project) {
     const cmds = project.commands!;
     if (Deno.args.length === 1) {
-        log.print('Floh\'s Infernal Build System!');
+        log.print(`${colors.blue("Floh\'s Infernal Build System!")}`);
         log.print('https://github.com/floooh/fibs\n');
         for (const cmdName in cmds) {
             const cmd = cmds[cmdName];

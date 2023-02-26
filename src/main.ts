@@ -5,11 +5,13 @@ import * as proj from './proj.ts';
 
 import { commands } from './commands/index.ts';
 import { tools } from './tools/index.ts';
+import { adapters } from './adapters/index.ts';
 
 const stdDesc: ProjectDesc = {
     name: 'std',
     commands,
     tools,
+    adapters,
 };
 
 export async function run(importMeta: any, desc: ProjectDesc) {

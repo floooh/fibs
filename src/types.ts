@@ -4,16 +4,18 @@ export type ProjectDesc = {
     commands?: Command[];
     tools?: Tool[];
     configs?: Config[];
+    adapters?: Adapter[];
 };
 
 export type Project = {
     name: string;
-    path: string;
+    dir: string;
     deps: Record<string, Project>;
-    targets: Record<string, Target>;
+    targets: Target[];
     commands: Record<string, Command>;
     tools: Record<string, Tool>;
     configs: Record<string, Config>;
+    adapters: Record<string, Adapter>;
 };
 
 export enum Arch {
@@ -40,7 +42,8 @@ export enum Compiler {
 }
 
 export enum TargetType {
-    Exe = 'exe',
+    CmdLineExe = 'cmdline_exe',
+    WindowedExe = 'windowed_exe',
     Lib = 'lib',
     DLL = 'dll',
 }
@@ -108,6 +111,7 @@ export type Config = {
 export type Target = {
     name: string;
     type: TargetType;
+    sources: string[],
     deps?: TargetDependencies | TargetDependencies[];
     includeDirectories?: TargetIncludeDirectories | TargetIncludeDirectories[];
     compileDefinitions?: TargetCompileDefinitions | TargetCompileDefinitions[];
@@ -127,4 +131,9 @@ export interface Tool {
     optional: boolean;
     notFoundMsg: string;
     exists(project: Project): Promise<boolean>;
+}
+
+export interface Adapter {
+    name: string,
+    generate(project: Project, config: Config): void;
 }
