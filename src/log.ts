@@ -19,7 +19,7 @@ export function warn(...args: unknown[]) {
     console.warn(`${colors.yellow('[warning]')}`, ...args);
 }
 
-export function error(...args: unknown[]) {
+export function error(...args: unknown[]): never {
     console.warn(`${colors.red('[error]')}`, ...args);
     Deno.exit(10);
 }

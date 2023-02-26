@@ -56,7 +56,11 @@ function integrate(into: Project, other: ProjectDesc) {
 }
 
 export async function generate(project: Project, config: Config, adapter: Adapter): Promise<void> {
-    adapter.generate(project, config);
+    await adapter.generate(project, config);
+}
+
+export async function build(project: Project, config: Config, adapter: Adapter): Promise<void> {
+    await adapter.build(project, config);
 }
 
 /*

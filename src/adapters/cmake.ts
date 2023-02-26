@@ -1,8 +1,11 @@
-import { Project, Adapter, Config, TargetType, Platform, log } from '../../mod.ts';
+import { Project, Adapter, Config, TargetType, Platform, cfg, log } from '../../mod.ts';
+import { cmake as cmakeTool } from '../tools/cmake.ts';
+import { fs } from '../../deps.ts';
 
 export const cmake: Adapter = {
     name: 'cmake',
     generate: generate,
+    build: build,
 };
 
 export async function generate(project: Project, config: Config) {
@@ -11,7 +14,36 @@ export async function generate(project: Project, config: Config) {
     } catch (err) {
         log.error(`Failed writing CMakeLists.txt: ${err.message}`);
     }
+    // FIXME: write CMakePresets.json file
 
+    // run cmake config
+    const buildDir = cfg.buildDir(project, config);
+    await fs.ensureDir(buildDir);
+    const args = [];
+    // FIXME: change this to a cmake preset name
+    if (config.generator) {
+        args.push(`-G${config.generator}`);
+    }
+    args.push(project.dir);
+    const res = await cmakeTool.run({
+        args,
+        cwd: buildDir,
+        stderr: 'piped'
+    });
+    if (res.exitCode !== 0) {
+        log.error(`cmake returned with exit code ${res.exitCode}, stderr:\n\n${res.stderr}`);
+    }
+}
+
+export async function build(project: Project, config: Config) {
+    const buildDir = cfg.buildDir(project, config);
+    const res = await cmakeTool.run({
+        args: [ '--build', '.' ],
+        cwd: buildDir,
+    });
+    if (res.exitCode !== 0) {
+        log.error('build failed.');
+    }
 }
 
 function genCMakeListsTxt(project: Project, config: Config): string {

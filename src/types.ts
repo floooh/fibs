@@ -125,15 +125,30 @@ export interface Command {
     run(project: Project): Promise<void>;
 }
 
+export type ToolRunOptions = {
+    args: string[],
+    cwd?: string,
+    stdout?: 'inherit' | 'piped',
+    stderr?: 'inherit' | 'piped',
+}
+
+export type ToolRunResult = {
+    exitCode: number;
+    stdout: string;
+    stderr: string;
+}
+
 export interface Tool {
     name: string;
     platforms: Platform[];
     optional: boolean;
     notFoundMsg: string;
-    exists(project: Project): Promise<boolean>;
+    exists(): Promise<boolean>;
+    run(options: ToolRunOptions): Promise<ToolRunResult>;
 }
 
 export interface Adapter {
     name: string,
-    generate(project: Project, config: Config): void;
+    generate(project: Project, config: Config): Promise<void>;
+    build(project: Project, config: Config): Promise<void>;
 }

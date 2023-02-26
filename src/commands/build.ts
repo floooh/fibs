@@ -1,26 +1,25 @@
 import { Command, Project, Config, Platform, log, proj } from '../../mod.ts';
 
-export const gen: Command = {
-    name: 'gen',
+export const build: Command = {
+    name: 'build',
     help: help,
     run: run,
 };
 
 function help(_project: Project) {
     log.help([
-        'gen',
-        'gen [config]',
-        'gen [config] [adapter]'
-    ], 'generate build files for current of specific build config');
+        'build',
+        'build [config]',
+        'build [config] [build tool args]'
+    ], 'build current or specific config');
 }
 
 async function run(project: Project) {
     // FIXME: lookup config
-    // FIXME: lookup adapter
     const config: Config = {
         name: 'fixme-config',
         platform: Platform.Macos,
     };
     const adapter = project.adapters['cmake'];
-    await proj.generate(project, config, adapter);
+    await proj.build(project, config, adapter);
 }

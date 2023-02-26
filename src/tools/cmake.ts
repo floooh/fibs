@@ -1,4 +1,4 @@
-import { Platform, Project, Tool } from '../../mod.ts';
+import { Platform, Tool, ToolRunOptions, ToolRunResult, log, tool } from '../../mod.ts';
 
 export const cmake: Tool = {
     name: 'cmake',
@@ -6,14 +6,22 @@ export const cmake: Tool = {
     optional: false,
     notFoundMsg: 'required for building projects',
     exists: exists,
+    run: run,
 };
 
-export async function exists(_project: Project): Promise<boolean> {
+export async function exists(): Promise<boolean> {
     try {
-        const p = Deno.run({ cmd: ['cmake', '--version'], stdout: 'piped' });
-        await p.status();
+        await tool.run('cmake', { args: ['--version'], stdout: 'piped' });
         return true;
     } catch (_err) {
         return false;
+    }
+}
+
+export async function run(options: ToolRunOptions): Promise<ToolRunResult> {
+    try {
+        return await tool.run('cmake', options);
+    } catch (err) {
+        log.error(`Failed running cmake with: ${err.message}`);
     }
 }

@@ -61,7 +61,7 @@ async function tools(project: Project) {
     for (const toolName in tools) {
         const tool = tools[toolName];
         if (tool.platforms.includes(host.platform())) {
-            const exists = await tool.exists(project);
+            const exists = await tool.exists();
             let res: string;
             if (exists) {
                 res = `${colors.green('found')}`;

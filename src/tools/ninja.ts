@@ -1,4 +1,5 @@
-import { Platform, Project, Tool } from '../../mod.ts';
+import { Platform, Tool, ToolRunResult, tool, log } from '../../mod.ts';
+import { ToolRunOptions } from '../types.ts';
 
 export const ninja: Tool = {
     name: 'ninja',
@@ -6,14 +7,18 @@ export const ninja: Tool = {
     optional: false,
     notFoundMsg: 'required for building *-ninja-* configs',
     exists: exists,
+    run: run,
 };
 
-export async function exists(_project: Project): Promise<boolean> {
+export async function exists(): Promise<boolean> {
     try {
-        const p = Deno.run({ cmd: ['ninja', '--version'], stdout: 'piped' });
-        await p.status();
+        await tool.run('ninja', { args: ['--version'], stdout: 'piped' });
         return true;
     } catch (_err) {
         return false;
     }
+}
+
+export async function run(options: ToolRunOptions): Promise<ToolRunResult> {
+    log.error('ninja.run() not implemented');
 }
