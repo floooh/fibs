@@ -1,4 +1,4 @@
-import { Command, Project, log, settings } from '../../mod.ts';
+import { Command, log, Project, settings } from '../../mod.ts';
 
 export const get: Command = {
     name: 'get',
@@ -9,7 +9,10 @@ export const get: Command = {
 function help(project: Project) {
     log.help([
         'get [key]',
-    ],  "get settings value by key (run 'fibs list settings' to list valid keys");
+    ], [
+        'get settings value by key',
+        'run \'fibs list settings\' to get list of valid keys',
+    ]);
 }
 
 async function run(project: Project) {

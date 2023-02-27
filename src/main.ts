@@ -32,6 +32,6 @@ export async function run(importMeta: any, desc: ProjectDesc) {
         await cmd.run(rootProject, Deno.args[0]);
     } else {
         // 'dependency mode'
-        console.error('FIXME: implement dependency mode')
+        console.error('FIXME: implement dependency mode');
     }
 }

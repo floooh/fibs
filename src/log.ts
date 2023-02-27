@@ -4,11 +4,18 @@ export function print(...args: unknown[]) {
     console.log(...args);
 }
 
-export function help(cmds: string[], help: string) {
+export function help(cmds: string[], help: string | string[]) {
     for (const cmd of cmds) {
         print(`${colors.yellow(`fibs ${cmd}`)}`);
     }
-    print('    ', help, '\n');
+
+    if (typeof help === 'string') {
+        help = [help];
+    }
+    help.forEach((line) => {
+        print('    ', line);
+    });
+    print('');
 }
 
 export function run(cmdLine: string[]) {

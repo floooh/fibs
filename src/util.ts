@@ -1,4 +1,4 @@
-import { Config, Project, Platform } from './types.ts';
+import { Config, Platform, Project } from './types.ts';
 import { fs } from '../deps.ts';
 
 export function fileExists(path: string): boolean {
@@ -51,12 +51,19 @@ export function ensureDeployDir(project: Project, config: Config): string {
 
 export function defaultConfigForPlatform(platform: Platform): string {
     switch (platform) {
-        case 'windows': return 'win-vstudio-release';
-        case 'macos': return 'macos-make-release';
-        case 'ios': return 'ios-xcode-release';
-        case 'linux': return 'linux-make-release';
-        case 'android': return 'android-make-release';
-        case 'emscripten': return 'emscripten-make-release';
-        case 'wasi': return 'wasi-make-release';
+        case 'windows':
+            return 'win-vstudio-release';
+        case 'macos':
+            return 'macos-make-release';
+        case 'ios':
+            return 'ios-xcode-release';
+        case 'linux':
+            return 'linux-make-release';
+        case 'android':
+            return 'android-make-release';
+        case 'emscripten':
+            return 'emscripten-make-release';
+        case 'wasi':
+            return 'wasi-make-release';
     }
 }

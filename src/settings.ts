@@ -38,9 +38,13 @@ export function load(project: Project) {
     let items: typeof project.settings.items = {};
     if (util.fileExists(path)) {
         try {
-            items = JSON.parse(Deno.readTextFileSync(path)) as typeof project.settings.items;
+            items = JSON.parse(
+                Deno.readTextFileSync(path),
+            ) as typeof project.settings.items;
         } catch (err) {
-            log.error(`failed loading settings from '${path}' with: ${err.message}`);
+            log.error(
+                `failed loading settings from '${path}' with: ${err.message}`,
+            );
         }
     }
     // only take items with known keys and matching types
@@ -55,7 +59,9 @@ export function load(project: Project) {
     }
     // if we encountered any invalid keys during loading, fix the saved setting.json right away
     if (hasInvalidKeys) {
-        log.warn('invalid settings keys encountered during loading, cleaning up settings.json');
+        log.warn(
+            'invalid settings keys encountered during loading, cleaning up settings.json',
+        );
         save(project);
     }
 }
@@ -63,7 +69,10 @@ export function load(project: Project) {
 export function save(project: Project) {
     const path = util.ensureFibsDir(project) + '/settings.json';
     try {
-        Deno.writeTextFileSync(path, JSON.stringify(project.settings.items, null, '  '));
+        Deno.writeTextFileSync(
+            path,
+            JSON.stringify(project.settings.items, null, '  '),
+        );
     } catch (err) {
         log.error(`failed saving settings to '${path}' with: ${err.message}`);
     }
@@ -73,7 +82,9 @@ export function validKey(project: Project, key: string) {
     if (project.settings.defaults[key] !== undefined) {
         return true;
     } else {
-        log.warn(`ignoring unknown settings item '${key}' (run 'fibs list settings)`);
+        log.warn(
+            `ignoring unknown settings item '${key}' (run 'fibs list settings)`,
+        );
         return false;
     }
 }

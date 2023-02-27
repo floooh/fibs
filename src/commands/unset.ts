@@ -1,4 +1,4 @@
-import { Command, Project, log, settings } from '../../mod.ts';
+import { Command, log, Project, settings } from '../../mod.ts';
 
 export const unset: Command = {
     name: 'unset',
@@ -9,7 +9,10 @@ export const unset: Command = {
 function help(project: Project) {
     log.help([
         'unset [key]',
-    ],  'unsets a settings item to its default value');
+    ], [
+        'unset a settings item to its default value',
+        'run \'fibs list settings\' to get list of valid keys',
+    ]);
 }
 
 async function run(project: Project) {

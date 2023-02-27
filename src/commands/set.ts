@@ -1,4 +1,4 @@
-import { Command, Project, log, settings } from '../../mod.ts';
+import { Command, log, Project, settings } from '../../mod.ts';
 
 export const set: Command = {
     name: 'set',
@@ -9,7 +9,10 @@ export const set: Command = {
 function help(project: Project) {
     log.help([
         'set [key] [value]',
-    ],  "set a project settings key/value item, run 'fibs list settings' to get list of valid keys");
+    ], [
+        'set a project settings key/value item',
+        'run \'fibs list settings\' to get list of valid keys',
+    ]);
 }
 
 async function run(project: Project) {

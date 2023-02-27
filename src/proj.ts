@@ -2,7 +2,6 @@ import { path } from '../deps.ts';
 import { Adapter, Config, Project, ProjectDesc } from './types.ts';
 import * as settings from './settings.ts';
 
-
 export async function setup(
     rootImportMeta: any,
     rootDesc: ProjectDesc,
