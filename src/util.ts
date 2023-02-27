@@ -1,4 +1,4 @@
-import { Project, Config } from './types.ts';
+import { Config, Project } from './types.ts';
 
 export function fileExists(path: string): boolean {
     try {

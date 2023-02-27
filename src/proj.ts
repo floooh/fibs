@@ -1,5 +1,5 @@
 import { path } from '../deps.ts';
-import { Project, ProjectDesc, Adapter, Config } from './types.ts';
+import { Adapter, Config, Project, ProjectDesc } from './types.ts';
 
 export async function setup(
     rootImportMeta: any,
@@ -55,11 +55,19 @@ function integrate(into: Project, other: ProjectDesc) {
     }
 }
 
-export async function generate(project: Project, config: Config, adapter: Adapter): Promise<void> {
+export async function generate(
+    project: Project,
+    config: Config,
+    adapter: Adapter,
+): Promise<void> {
     await adapter.generate(project, config);
 }
 
-export async function build(project: Project, config: Config, adapter: Adapter): Promise<void> {
+export async function build(
+    project: Project,
+    config: Config,
+    adapter: Adapter,
+): Promise<void> {
     await adapter.build(project, config);
 }
 

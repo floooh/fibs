@@ -1,18 +1,21 @@
-import { Platform, Tool, ToolRunResult, tool, log } from '../../mod.ts';
+import { log, Tool, tool, ToolRunResult } from '../../mod.ts';
 import { ToolRunOptions } from '../types.ts';
 
 export const ninja: Tool = {
     name: 'ninja',
-    platforms: [Platform.Windows, Platform.Macos, Platform.Linux],
+    platforms: ['windows', 'macos', 'linux'],
     optional: false,
     notFoundMsg: 'required for building *-ninja-* configs',
     exists: exists,
-    run: run,
 };
 
 export async function exists(): Promise<boolean> {
     try {
-        await tool.run('ninja', { args: ['--version'], stdout: 'piped' });
+        await tool.run('ninja', {
+            args: ['--version'],
+            stdout: 'piped',
+            showCmd: false,
+        });
         return true;
     } catch (_err) {
         return false;

@@ -11,6 +11,10 @@ export function help(cmds: string[], help: string) {
     print('    ', help, '\n');
 }
 
+export function run(cmdLine: string[]) {
+    print(colors.cyan(`=> ${cmdLine.join(' ')}`));
+}
+
 export function info(...args: unknown[]) {
     console.info(...args);
 }

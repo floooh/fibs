@@ -1,17 +1,20 @@
-import { Platform, Tool, ToolRunOptions, ToolRunResult, log, tool } from '../../mod.ts';
+import { log, Tool, tool, ToolRunOptions, ToolRunResult } from '../../mod.ts';
 
 export const git: Tool = {
     name: 'git',
-    platforms: [Platform.Windows, Platform.Macos, Platform.Linux],
+    platforms: ['windows', 'macos', 'linux'],
     optional: false,
     notFoundMsg: 'required for fetching imports',
     exists: exists,
-    run: run,
 };
 
 export async function exists(): Promise<boolean> {
     try {
-        await tool.run('git', { args: ['--version'], stdout: 'piped' });
+        await tool.run('git', {
+            args: ['--version'],
+            stdout: 'piped',
+            showCmd: false,
+        });
         return true;
     } catch (_err) {
         return false;

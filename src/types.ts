@@ -18,35 +18,21 @@ export type Project = {
     adapters: Record<string, Adapter>;
 };
 
-export enum Arch {
-    X86_64 = 'x86_64',
-    Arm64 = 'arm64',
-    Wasm32 = 'wasm32',
-}
+export type Arch = 'x86_64' | 'arm64' | 'wasm32';
 
-export enum Platform {
-    IOS = 'ios',
-    Linux = 'linux',
-    Macos = 'macos',
-    Windows = 'windows',
-    Wasi = 'wasi',
-    Emscripten = 'emscripten',
-    Android = 'android',
-}
+export type Platform =
+    | 'ios'
+    | 'linux'
+    | 'macos'
+    | 'ios'
+    | 'windows'
+    | 'wasi'
+    | 'emscripten'
+    | 'android';
 
-export enum Compiler {
-    MSVC = 'msvc',
-    GCC = 'gcc',
-    Clang = 'clang',
-    AppleClang = 'appleclang',
-}
+export type Compiler = 'msvc' | 'gcc' | 'clang' | 'appleclang';
 
-export enum TargetType {
-    CmdLineExe = 'cmdline_exe',
-    WindowedExe = 'windowed_exe',
-    Lib = 'lib',
-    DLL = 'dll',
-}
+export type TargetType = 'exe-plain' | 'exe-windowed' | 'lib' | 'dll';
 
 export type TargetDependencies = {
     targets: string[];
@@ -111,7 +97,7 @@ export type Config = {
 export type Target = {
     name: string;
     type: TargetType;
-    sources: string[],
+    sources: string[];
     deps?: TargetDependencies | TargetDependencies[];
     includeDirectories?: TargetIncludeDirectories | TargetIncludeDirectories[];
     compileDefinitions?: TargetCompileDefinitions | TargetCompileDefinitions[];
@@ -126,17 +112,18 @@ export interface Command {
 }
 
 export type ToolRunOptions = {
-    args: string[],
-    cwd?: string,
-    stdout?: 'inherit' | 'piped',
-    stderr?: 'inherit' | 'piped',
-}
+    args: string[];
+    cwd?: string;
+    stdout?: 'inherit' | 'piped';
+    stderr?: 'inherit' | 'piped';
+    showCmd?: boolean;
+};
 
 export type ToolRunResult = {
     exitCode: number;
     stdout: string;
     stderr: string;
-}
+};
 
 export interface Tool {
     name: string;
@@ -144,11 +131,10 @@ export interface Tool {
     optional: boolean;
     notFoundMsg: string;
     exists(): Promise<boolean>;
-    run(options: ToolRunOptions): Promise<ToolRunResult>;
 }
 
 export interface Adapter {
-    name: string,
+    name: string;
     generate(project: Project, config: Config): Promise<void>;
     build(project: Project, config: Config): Promise<void>;
 }
