@@ -4,21 +4,21 @@ import * as log from './log.ts';
 
 export function set(project: Project, key: string, value: string) {
     if (validKey(project, key)) {
-        project.settings.items[key] = structuredClone(value);
+        project.settings.items[key] = value;
         save(project);
     }
 }
 
 export function unset(project: Project, key: string) {
     if (validKey(project, key)) {
-        project.settings.items[key] = structuredClone(project.settings.defaults[key]);
+        project.settings.items[key] = project.settings.defaults[key];
     }
     save(project);
 }
 
 export function get(project: Project, key: string): string | undefined {
     if (validKey(project, key)) {
-        return structuredClone(project.settings.items[key]);
+        return project.settings.items[key];
     } else {
         return undefined;
     }
@@ -26,7 +26,7 @@ export function get(project: Project, key: string): string | undefined {
 
 export function getDefault(project: Project, key: string): string | undefined {
     if (validKey(project, key)) {
-        return structuredClone(project.settings.defaults[key]);
+        return project.settings.defaults[key];
     } else {
         return undefined;
     }

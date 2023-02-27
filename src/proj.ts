@@ -37,8 +37,8 @@ export async function setup(
 function integrate(into: Project, other: ProjectDesc) {
     if (other.settings) {
         for (const key in other.settings) {
-            into.settings.defaults[key] = structuredClone(other.settings[key]);
-            into.settings.items[key] = structuredClone(into.settings.defaults[key]);
+            into.settings.defaults[key] = other.settings[key];
+            into.settings.items[key] = into.settings.defaults[key];
         }
     }
     if (other.targets) {
