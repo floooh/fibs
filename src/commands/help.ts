@@ -1,4 +1,4 @@
-import { Command, log, Project } from '../../mod.ts';
+import { Command, Project, log } from '../../mod.ts';
 import { colors } from '../../deps.ts';
 
 export const help: Command = {

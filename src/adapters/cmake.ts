@@ -9,7 +9,7 @@ export const cmake: Adapter = {
 
 export async function generate(project: Project, config: Config) {
     try {
-        await Deno.writeTextFile(
+        Deno.writeTextFileSync(
             `${project.dir}/CMakeLists.txt`,
             genCMakeListsTxt(project, config),
             { create: true },

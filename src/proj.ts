@@ -1,5 +1,7 @@
 import { path } from '../deps.ts';
 import { Adapter, Config, Project, ProjectDesc } from './types.ts';
+import * as settings from './settings.ts';
+
 
 export async function setup(
     rootImportMeta: any,
@@ -10,6 +12,10 @@ export async function setup(
     const project: Project = {
         name: rootDesc.name,
         dir: path.parse(path.fromFileUrl(rootImportMeta.url)).dir,
+        settings: {
+            defaults: {},
+            items: {},
+        },
         deps: {},
         targets: [],
         commands: {},
@@ -24,10 +30,17 @@ export async function setup(
 
     // FIXME: resolve and integrate dependencies...
 
+    settings.load(project);
     return project;
 }
 
 function integrate(into: Project, other: ProjectDesc) {
+    if (other.settings) {
+        for (const key in other.settings) {
+            into.settings.defaults[key] = structuredClone(other.settings[key]);
+            into.settings.items[key] = structuredClone(into.settings.defaults[key]);
+        }
+    }
     if (other.targets) {
         other.targets.forEach((target) => {
             into.targets.push(target);

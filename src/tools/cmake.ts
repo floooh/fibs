@@ -8,7 +8,6 @@ import {
     ToolRunResult,
     util,
 } from '../../mod.ts';
-import { fs } from '../../deps.ts';
 
 export const cmake: Tool = {
     name: 'cmake',
@@ -40,8 +39,7 @@ export async function run(options: ToolRunOptions): Promise<ToolRunResult> {
 }
 
 export async function configure(project: Project, config: Config) {
-    const buildDir = util.buildDir(project, config);
-    await fs.ensureDir(buildDir);
+    const buildDir = util.ensureBuildDir(project, config);
     const args = [];
     // FIXME: change this to a cmake preset name
     if (config.generator) {

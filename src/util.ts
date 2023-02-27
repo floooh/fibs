@@ -1,4 +1,5 @@
-import { Config, Project } from './types.ts';
+import { Config, Project, Platform } from './types.ts';
+import { fs } from '../deps.ts';
 
 export function fileExists(path: string): boolean {
     try {
@@ -18,10 +19,44 @@ export function dirExists(path: string): boolean {
     }
 }
 
+export function fibsDir(project: Project): string {
+    return `${project.dir}/.fibs`;
+}
+
+export function ensureFibsDir(project: Project): string {
+    const path = fibsDir(project);
+    fs.ensureDirSync(path);
+    return path;
+}
+
 export function buildDir(project: Project, config: Config): string {
-    return `${project.dir}/.fibs/build/${config.name}`;
+    return `${fibsDir(project)}/build/${config.name}`;
+}
+
+export function ensureBuildDir(project: Project, config: Config): string {
+    const path = buildDir(project, config);
+    fs.ensureDirSync(path);
+    return path;
 }
 
 export function deployDir(project: Project, config: Config): string {
-    return `${project.dir}/.fibs/deploy/${config.name}`;
+    return `${fibsDir(project)}/.fibs/deploy/${config.name}`;
+}
+
+export function ensureDeployDir(project: Project, config: Config): string {
+    const path = deployDir(project, config);
+    fs.ensureDirSync(path);
+    return path;
+}
+
+export function defaultConfigForPlatform(platform: Platform): string {
+    switch (platform) {
+        case 'windows': return 'win-vstudio-release';
+        case 'macos': return 'macos-make-release';
+        case 'ios': return 'ios-xcode-release';
+        case 'linux': return 'linux-make-release';
+        case 'android': return 'android-make-release';
+        case 'emscripten': return 'emscripten-make-release';
+        case 'wasi': return 'wasi-make-release';
+    }
 }

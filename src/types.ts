@@ -5,17 +5,24 @@ export type ProjectDesc = {
     tools?: Tool[];
     configs?: Config[];
     adapters?: Adapter[];
+    settings?: Record<string, string>;
 };
 
 export type Project = {
     name: string;
     dir: string;
+    settings: Settings;
     deps: Record<string, Project>;
     targets: Target[];
     commands: Record<string, Command>;
     tools: Record<string, Tool>;
     configs: Record<string, Config>;
     adapters: Record<string, Adapter>;
+};
+
+export type Settings = {
+    defaults: Record<string, string>;
+    items: Record<string, string>;
 };
 
 export type Arch = 'x86_64' | 'arm64' | 'wasm32';
