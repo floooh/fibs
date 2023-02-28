@@ -34,35 +34,35 @@ async function run(project: Project) {
     }
     if (which.includes('fibs')) {
         if (separator) {
-            log.print(`${colors.yellow('=== fibs:')}`);
+            log.section('fibs');
         }
         log.warn('FIXME: diag fibs');
         log.print();
     }
     if (which.includes('tools')) {
         if (separator) {
-            log.print(`${colors.yellow('=== tools:')}`);
+            log.section('tools');
         }
         await tools(project);
         log.print();
     }
     if (which.includes('configs')) {
         if (separator) {
-            log.print(`${colors.yellow('=== configs:')}`);
+            log.section('configs');
         }
         log.warn('FIXME: diag configs');
         log.print();
     }
     if (which.includes('imports')) {
         if (separator) {
-            log.print(`${colors.yellow('=== imports:')}`);
+            log.section('imports');
         }
         log.warn('FIXME: diag imports');
         log.print();
     }
     if (which.includes('project')) {
         if (separator) {
-            log.print(`${colors.yellow('=== project:')}`);
+            log.section('project');
         }
         log.print(project);
     }
@@ -78,9 +78,7 @@ async function tools(project: Project) {
             if (exists) {
                 res = `${colors.green('found')}`;
             } else if (tool.optional) {
-                res = `${
-                    colors.yellow('OPTIONAL, NOT FOUND')
-                } (${tool.notFoundMsg})`;
+                res = `${colors.yellow('OPTIONAL, NOT FOUND')} (${tool.notFoundMsg})`;
             } else {
                 res = `${colors.red('NOT FOUND')} (${tool.notFoundMsg})`;
             }

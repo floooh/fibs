@@ -22,6 +22,10 @@ export function run(cmdLine: string[]) {
     print(colors.cyan(`=> ${cmdLine.join(' ')}`));
 }
 
+export function section(name: string) {
+    print(colors.yellow(`=== ${name}:`));
+}
+
 export function info(...args: unknown[]) {
     console.info(...args);
 }

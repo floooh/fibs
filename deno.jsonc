@@ -12,7 +12,8 @@
         "options": {
             "useTabs": false,
             "indentWidth": 4,
-            "singleQuote": true
+            "singleQuote": true,
+            "lineWidth": 120
         }
     },
     "lint": {

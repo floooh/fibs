@@ -12,8 +12,8 @@ export type Project = {
     name: string;
     dir: string;
     settings: Settings;
-    deps: Record<string, Project>;
     targets: Target[];
+    deps: Record<string, Project>;
     commands: Record<string, Command>;
     tools: Record<string, Tool>;
     configs: Record<string, Config>;
@@ -39,7 +39,7 @@ export type Platform =
 
 export type Compiler = 'msvc' | 'gcc' | 'clang' | 'appleclang';
 
-export type TargetType = 'exe-plain' | 'exe-windowed' | 'lib' | 'dll';
+export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll';
 
 export type TargetDependencies = {
     targets: string[];

@@ -37,7 +37,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += `project(${project.name})\n`;
     project.targets.forEach((target) => {
         let subtype = '';
-        if (target.type === 'exe-windowed') {
+        if (target.type === 'windowed-exe') {
             if (config.platform === 'windows') {
                 subtype = 'WIN32';
             } else if (

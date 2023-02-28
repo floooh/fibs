@@ -1,13 +1,4 @@
-import {
-    Config,
-    log,
-    Project,
-    Tool,
-    tool,
-    ToolRunOptions,
-    ToolRunResult,
-    util,
-} from '../../mod.ts';
+import { Config, log, Project, Tool, tool, ToolRunOptions, ToolRunResult, util } from '../../mod.ts';
 
 export const cmake: Tool = {
     name: 'cmake',
