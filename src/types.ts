@@ -1,10 +1,10 @@
 export type ProjectDesc = {
     name: string;
-    targets?: Target[];
-    commands?: Command[];
-    tools?: Tool[];
-    configs?: Config[];
-    adapters?: Adapter[];
+    targets?: Record<string, TargetDesc>;
+    commands?: Record<string, CommandDesc>;
+    tools?: Record<string, ToolDesc>;
+    configs?: Record<string, ConfigDesc>;
+    adapters?: Record<string, AdapterDesc>;
     settings?: Record<string, string>;
 };
 
@@ -91,26 +91,51 @@ export type TargetIncludeDirectories = {
     public?: string[];
 };
 
-export type Config = {
+export type ConfigDesc = {
     name: string;
     generator?: string;
-    arch?: Arch;
+    arch: Arch;
     platform: Platform;
     toolchain?: string;
     variables?: Record<string, string | boolean>;
     environment?: Record<string, string>;
 };
 
+export type Config = {
+    name: string;
+    generator: string | null;
+    arch: Arch;
+    platform: Platform;
+    toolchain: string | null;
+    variables: Record<string, string | boolean>;
+    environment: Record<string, string>;
+};
+
+export type TargetDesc = {
+    type: TargetType;
+    sources: string[];
+    deps?: TargetDependencies[];
+    includeDirectories?: TargetIncludeDirectories[];
+    compileDefinitions?: TargetCompileDefinitions[];
+    compileOptions?: TargetCompileOptions[];
+    linkOptions?: TargetLinkOptions[];
+}
+
 export type Target = {
     name: string;
     type: TargetType;
     sources: string[];
-    deps?: TargetDependencies | TargetDependencies[];
-    includeDirectories?: TargetIncludeDirectories | TargetIncludeDirectories[];
-    compileDefinitions?: TargetCompileDefinitions | TargetCompileDefinitions[];
-    compileOptions?: TargetCompileOptions | TargetCompileOptions[];
-    linkOptions?: TargetLinkOptions | TargetLinkOptions[];
+    deps: TargetDependencies[];
+    includeDirectories: TargetIncludeDirectories[];
+    compileDefinitions: TargetCompileDefinitions[];
+    compileOptions: TargetCompileOptions[];
+    linkOptions: TargetLinkOptions[];
 };
+
+export interface CommandDesc {
+    help(project: Project): void;
+    run(project: Project): Promise<void>;
+}
 
 export interface Command {
     name: string;
@@ -132,7 +157,14 @@ export type ToolRunResult = {
     stderr: string;
 };
 
-export interface Tool {
+export type ToolDesc = {
+    platforms: Platform[];
+    optional: boolean;
+    notFoundMsg: string;
+    exists(): Promise<boolean>;
+}
+
+export type Tool = {
     name: string;
     platforms: Platform[];
     optional: boolean;
@@ -140,7 +172,12 @@ export interface Tool {
     exists(): Promise<boolean>;
 }
 
-export interface Adapter {
+export type AdapterDesc = {
+    generate(project: Project, config: Config): Promise<void>;
+    build(project: Project, config: Config): Promise<void>;
+}
+
+export type Adapter = {
     name: string;
     generate(project: Project, config: Config): Promise<void>;
     build(project: Project, config: Config): Promise<void>;

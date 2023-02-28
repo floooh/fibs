@@ -1,7 +1,6 @@
-import { Command, Config, log, proj, Project } from '../../mod.ts';
+import { CommandDesc, Config, log, proj, Project } from '../../mod.ts';
 
-export const build: Command = {
-    name: 'build',
+export const build: CommandDesc = {
     help: help,
     run: run,
 };
@@ -18,7 +17,12 @@ async function run(project: Project) {
     // FIXME: lookup config
     const config: Config = {
         name: 'fixme-config',
+        generator: null,
+        arch: 'arm64',
         platform: 'macos',
+        toolchain: null,
+        variables: {},
+        environment: {},
     };
     const adapter = project.adapters['cmake'];
     await proj.build(project, config, adapter);

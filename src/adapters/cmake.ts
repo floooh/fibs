@@ -1,8 +1,7 @@
-import { Adapter, Config, log, Project, util } from '../../mod.ts';
+import { AdapterDesc, Config, log, Project, util } from '../../mod.ts';
 import * as cmakeTool from '../tools/cmake.ts';
 
-export const cmake: Adapter = {
-    name: 'cmake',
+export const cmake: AdapterDesc = {
     generate: generate,
     build: build,
 };

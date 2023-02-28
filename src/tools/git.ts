@@ -1,7 +1,6 @@
-import { log, Tool, tool, ToolRunOptions, ToolRunResult } from '../../mod.ts';
+import { log, ToolDesc, tool, ToolRunOptions, ToolRunResult } from '../../mod.ts';
 
-export const git: Tool = {
-    name: 'git',
+export const git: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
     optional: false,
     notFoundMsg: 'required for fetching imports',

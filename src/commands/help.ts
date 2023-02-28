@@ -1,8 +1,7 @@
-import { Command, log, Project } from '../../mod.ts';
+import { CommandDesc, log, Project } from '../../mod.ts';
 import { colors } from '../../deps.ts';
 
-export const help: Command = {
-    name: 'help',
+export const help: CommandDesc = {
     help: helpFn,
     run: run,
 };

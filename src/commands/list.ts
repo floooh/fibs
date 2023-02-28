@@ -1,7 +1,6 @@
-import { Command, log, Project, TargetType } from '../../mod.ts';
+import { CommandDesc, log, Project, TargetType } from '../../mod.ts';
 
-export const list: Command = {
-    name: 'list',
+export const list: CommandDesc = {
     help: help,
     run: run,
 };

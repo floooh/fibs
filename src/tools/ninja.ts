@@ -1,8 +1,7 @@
-import { log, Tool, tool, ToolRunResult } from '../../mod.ts';
+import { log, ToolDesc, tool, ToolRunResult } from '../../mod.ts';
 import { ToolRunOptions } from '../types.ts';
 
-export const ninja: Tool = {
-    name: 'ninja',
+export const ninja: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
     optional: false,
     notFoundMsg: 'required for building *-ninja-* configs',

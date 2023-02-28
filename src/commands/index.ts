@@ -7,7 +7,7 @@ import { set } from './set.ts';
 import { get } from './get.ts';
 import { unset } from './unset.ts';
 
-export const commands = [
+export const commands = {
     help,
     gen,
     build,
@@ -16,4 +16,4 @@ export const commands = [
     set,
     get,
     unset,
-];
+};

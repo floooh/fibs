@@ -1,5 +1,5 @@
 import { path } from '../deps.ts';
-import { Adapter, Config, Project, ProjectDesc } from './types.ts';
+import { Adapter, Config, Project, ProjectDesc, Target, Command, Tool } from './types.ts';
 import * as settings from './settings.ts';
 
 export async function setup(
@@ -41,29 +41,70 @@ function integrate(into: Project, other: ProjectDesc) {
         }
     }
     if (other.targets) {
-        other.targets.forEach((target) => {
+        for (const name in other.targets) {
+            const desc = other.targets[name];
+            const target: Target = {
+                name: name,
+                type: desc.type,
+                sources: desc.sources,
+                deps: desc.deps ?? [],
+                includeDirectories: desc.includeDirectories ?? [],
+                compileDefinitions: desc.compileDefinitions ?? [],
+                compileOptions: desc.compileOptions ?? [],
+                linkOptions: desc.linkOptions ?? [],
+            };
             into.targets.push(target);
-        });
+        }
     }
     if (other.commands) {
-        other.commands.forEach((command) => {
-            into.commands[command.name] = command;
-        });
+        for (const name in other.commands) {
+            const desc = other.commands[name];
+            const command: Command = {
+                name: name,
+                help: desc.help,
+                run: desc.run,
+            };
+            into.commands[name] = command;
+        }
     }
     if (other.tools) {
-        other.tools.forEach((tool) => {
-            into.tools[tool.name] = tool;
-        });
+        for (const name in other.tools) {
+            const desc = other.tools[name];
+            const tool: Tool = {
+                name: name,
+                platforms: desc.platforms,
+                optional: desc.optional,
+                notFoundMsg: desc.notFoundMsg,
+                exists: desc.exists,
+            }
+            into.tools[name] = tool;
+        }
     }
     if (other.configs) {
-        other.configs.forEach((config) => {
-            into.configs[config.name] = config;
-        });
+        for (const name in other.configs) {
+            const desc = other.configs[name];
+            const config: Config = {
+                name: name,
+                generator: desc.generator ?? null,
+                arch: desc.arch,
+                platform: desc.platform,
+                toolchain: desc.toolchain ?? null,
+                variables: desc.variables ?? {},
+                environment: desc.environment ?? {},
+            };
+            into.configs[name] = config;
+        }
     }
     if (other.adapters) {
-        other.adapters.forEach((adapter) => {
-            into.adapters[adapter.name] = adapter;
-        });
+        for (const name in other.adapters) {
+            const desc = other.adapters[name];
+            const adapter: Adapter = {
+                name: name,
+                generate: desc.generate,
+                build: desc.build,
+            };
+            into.adapters[name] = adapter;
+        }
     }
 }
 

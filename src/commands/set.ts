@@ -1,7 +1,6 @@
-import { Command, log, Project, settings } from '../../mod.ts';
+import { CommandDesc, log, Project, settings } from '../../mod.ts';
 
-export const set: Command = {
-    name: 'set',
+export const set: CommandDesc = {
     help: help,
     run: run,
 };
