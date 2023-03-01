@@ -1,6 +1,7 @@
 import { path } from '../deps.ts';
-import { Adapter, Config, Project, ProjectDesc, Target, Command, Tool } from './types.ts';
+import { Adapter, Config, Project, ProjectDesc, ConfigDesc, Target, Command, Tool } from './types.ts';
 import * as settings from './settings.ts';
+import * as log from './log.ts';
 
 export async function setup(
     rootImportMeta: any,
@@ -11,10 +12,7 @@ export async function setup(
     const project: Project = {
         name: rootDesc.name,
         dir: path.parse(path.fromFileUrl(rootImportMeta.url)).dir,
-        settings: {
-            defaults: {},
-            items: {},
-        },
+        settings: {},
         deps: {},
         targets: [],
         commands: {},
@@ -34,12 +32,6 @@ export async function setup(
 }
 
 function integrate(into: Project, other: ProjectDesc) {
-    if (other.settings) {
-        for (const key in other.settings) {
-            into.settings.defaults[key] = other.settings[key];
-            into.settings.items[key] = into.settings.defaults[key];
-        }
-    }
     if (other.targets) {
         for (const name in other.targets) {
             const desc = other.targets[name];
@@ -82,12 +74,22 @@ function integrate(into: Project, other: ProjectDesc) {
     }
     if (other.configs) {
         for (const name in other.configs) {
-            const desc = other.configs[name];
+            if (other.configs[name].ignore) {
+                continue;
+            }
+            const desc = resolveConfigDesc(other.configs, name);
+            if (desc.platform === undefined) {
+                log.error(`config '${name}' requires 'platform' field`);
+            }
+            if (desc.buildType === undefined) {
+                log.error(`config '${name}' requires 'buildType' field`);
+            }
             const config: Config = {
                 name: name,
-                generator: desc.generator ?? null,
-                arch: desc.arch,
                 platform: desc.platform,
+                buildType: desc.buildType,
+                generator: desc.generator ?? null,
+                arch: desc.arch ?? null,
                 toolchain: desc.toolchain ?? null,
                 variables: desc.variables ?? {},
                 environment: desc.environment ?? {},
@@ -106,6 +108,37 @@ function integrate(into: Project, other: ProjectDesc) {
             into.adapters[name] = adapter;
         }
     }
+    if (other.settings) {
+        for (const key in other.settings) {
+            into.settings[key] = other.settings[key];
+        }
+    }
+}
+
+function resolveConfigDesc(configs: Record<string, ConfigDesc>, name: string): ConfigDesc {
+    let inheritChain: ConfigDesc[] = [];
+    const maxInherits = 8;
+    let curName = name;
+    while (inheritChain.length < maxInherits) {
+        const config = configs[curName];
+        inheritChain.unshift(config);
+        if (config.inherits !== undefined) {
+            if (configs[config.inherits] === undefined) {
+                log.error(`config '${curName}' tries to inherit from non-existing config '${config.inherits}'`);
+            }
+            curName = config.inherits;
+        } else {
+            break;
+        }
+    }
+    if (inheritChain.length === maxInherits) {
+        log.error(`circular dependency in config '${name}'?`);
+    }
+    let res: ConfigDesc = {};
+    inheritChain.forEach((config) => {
+        Object.assign(res, structuredClone(config));
+    });
+    return res;
 }
 
 export async function generate(

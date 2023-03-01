@@ -27,9 +27,9 @@ async function run(project: Project) {
         log.section('settings');
     }
     if (args.all || args.settings) {
-        for (const key in project.settings.items) {
-            const val = project.settings.items[key];
-            const def = project.settings.defaults[key];
+        for (const key in project.settings) {
+            const val = project.settings[key].value;
+            const def = project.settings[key].default;
             log.print(`${key}: ${val} (default: ${def})`);
         }
     }
@@ -39,7 +39,7 @@ async function run(project: Project) {
     }
     if (args.all || args.configs) {
         for (const key in project.configs) {
-            log.print(`${project.configs[key]}`);
+            log.print(`${project.configs[key].name}`);
         }
     }
     if (args.all) {
@@ -66,7 +66,7 @@ function parseArgs(): ListArgs {
         all: false,
         settings: false,
         configs: false,
-        targetTypes: ['plain-exe', 'windowed-exe', 'lib', 'dll'],
+        targetTypes: [],
     };
     if (Deno.args.length === 1) {
         args.all = true;

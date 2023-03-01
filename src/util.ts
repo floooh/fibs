@@ -1,4 +1,5 @@
 import { Config, Platform, Project } from './types.ts';
+import * as log from './log.ts';
 import { fs } from '../deps.ts';
 
 export function fileExists(path: string): boolean {
@@ -66,4 +67,13 @@ export function defaultConfigForPlatform(platform: Platform): string {
         case 'wasi':
             return 'wasi-make-release';
     }
+}
+
+export function activeConfig(project: Project): Config {
+    const name = project.settings.config.value;
+    const config = project.configs[name];
+    if (config === undefined) {
+        log.error(`active config ${name} does not exist`);
+    }
+    return config;
 }

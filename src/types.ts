@@ -5,7 +5,7 @@ export type ProjectDesc = {
     tools?: Record<string, ToolDesc>;
     configs?: Record<string, ConfigDesc>;
     adapters?: Record<string, AdapterDesc>;
-    settings?: Record<string, string>;
+    settings?: Record<string, SettingsItem>;
 };
 
 export type Project = {
@@ -20,10 +20,13 @@ export type Project = {
     adapters: Record<string, Adapter>;
 };
 
-export type Settings = {
-    defaults: Record<string, string>;
-    items: Record<string, string>;
-};
+export type SettingsItem = {
+    default: string,
+    value: string,
+    validate(project: Project, value: string): { valid: boolean, hint: string },
+}
+
+export type Settings = Record<string, SettingsItem>;
 
 export type Arch = 'x86_64' | 'arm64' | 'wasm32';
 
@@ -40,6 +43,8 @@ export type Platform =
 export type Compiler = 'msvc' | 'gcc' | 'clang' | 'appleclang';
 
 export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll';
+
+export type BuildType = 'release' | 'debug';
 
 export type TargetDependencies = {
     targets: string[];
@@ -92,10 +97,12 @@ export type TargetIncludeDirectories = {
 };
 
 export type ConfigDesc = {
-    name: string;
+    ignore?: boolean,
+    inherits?: string,
+    platform?: Platform;
+    buildType?: BuildType;
     generator?: string;
-    arch: Arch;
-    platform: Platform;
+    arch?: Arch;
     toolchain?: string;
     variables?: Record<string, string | boolean>;
     environment?: Record<string, string>;
@@ -103,9 +110,10 @@ export type ConfigDesc = {
 
 export type Config = {
     name: string;
-    generator: string | null;
-    arch: Arch;
     platform: Platform;
+    buildType: BuildType;
+    generator: string | null;
+    arch: Arch | null;
     toolchain: string | null;
     variables: Record<string, string | boolean>;
     environment: Record<string, string>;

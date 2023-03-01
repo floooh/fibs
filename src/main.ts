@@ -8,16 +8,7 @@ import * as host from './host.ts';
 import { commands } from './commands/index.ts';
 import { tools } from './tools/index.ts';
 import { adapters } from './adapters/index.ts';
-
-const stdDesc: ProjectDesc = {
-    name: 'std',
-    commands,
-    tools,
-    adapters,
-    settings: {
-        config: util.defaultConfigForPlatform(host.platform()),
-    },
-};
+import { configs } from './configs/index.ts';
 
 let rootProject: Project;
 
@@ -35,3 +26,18 @@ export async function run(importMeta: any, desc: ProjectDesc) {
         console.error('FIXME: implement dependency mode');
     }
 }
+
+const stdDesc: ProjectDesc = {
+    name: 'std',
+    commands,
+    tools,
+    adapters,
+    configs,
+    settings: {
+        config: {
+            default: util.defaultConfigForPlatform(host.platform()),
+            value: util.defaultConfigForPlatform(host.platform()),
+            validate: (project, value) => { return { valid: project.configs[value] !== undefined, hint: "run 'fibs list configs'" }; },
+        }
+    },
+};
