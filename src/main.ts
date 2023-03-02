@@ -1,5 +1,4 @@
 import { Project, ProjectDesc } from './types.ts';
-import * as cmd from './cmd.ts';
 import * as log from './log.ts';
 import * as proj from './proj.ts';
 import * as util from './util.ts';
@@ -20,7 +19,19 @@ export async function run(importMeta: any, desc: ProjectDesc) {
             Deno.exit(10);
         }
         rootProject = await proj.setup(importMeta, desc, stdDesc);
-        await cmd.run(rootProject, Deno.args[0]);
+        // find and run command
+        const cmd = Deno.args[0];
+        try {
+            if (rootProject.commands![cmd] !== undefined) {
+                await rootProject.commands![cmd].run(rootProject);
+            } else {
+                log.error(
+                    `command '${cmd}' not found in project '${rootProject.name}', run 'fibs help'`,
+                );
+            }
+        } catch (err) {
+            log.error(err);
+        }
     } else {
         // 'dependency mode'
         console.error('FIXME: implement dependency mode');
@@ -37,7 +48,9 @@ const stdDesc: ProjectDesc = {
         config: {
             default: util.defaultConfigForPlatform(host.platform()),
             value: util.defaultConfigForPlatform(host.platform()),
-            validate: (project, value) => { return { valid: project.configs[value] !== undefined, hint: "run 'fibs list configs'" }; },
-        }
+            validate: (project, value) => {
+                return { valid: project.configs[value] !== undefined, hint: 'run \'fibs list configs\'' };
+            },
+        },
     },
 };

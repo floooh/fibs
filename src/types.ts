@@ -21,10 +21,10 @@ export type Project = {
 };
 
 export type SettingsItem = {
-    default: string,
-    value: string,
-    validate(project: Project, value: string): { valid: boolean, hint: string },
-}
+    default: string;
+    value: string;
+    validate(project: Project, value: string): { valid: boolean; hint: string };
+};
 
 export type Settings = Record<string, SettingsItem>;
 
@@ -97,8 +97,8 @@ export type TargetIncludeDirectories = {
 };
 
 export type ConfigDesc = {
-    ignore?: boolean,
-    inherits?: string,
+    ignore?: boolean;
+    inherits?: string;
     platform?: Platform;
     buildType?: BuildType;
     generator?: string;
@@ -127,7 +127,7 @@ export type TargetDesc = {
     compileDefinitions?: TargetCompileDefinitions[];
     compileOptions?: TargetCompileOptions[];
     linkOptions?: TargetLinkOptions[];
-}
+};
 
 export type Target = {
     name: string;
@@ -151,15 +151,16 @@ export interface Command {
     run(project: Project): Promise<void>;
 }
 
-export type ToolRunOptions = {
+export type RunOptions = {
     args: string[];
     cwd?: string;
     stdout?: 'inherit' | 'piped';
     stderr?: 'inherit' | 'piped';
     showCmd?: boolean;
+    abortOnError?: boolean;
 };
 
-export type ToolRunResult = {
+export type RunResult = {
     exitCode: number;
     stdout: string;
     stderr: string;
@@ -170,7 +171,7 @@ export type ToolDesc = {
     optional: boolean;
     notFoundMsg: string;
     exists(): Promise<boolean>;
-}
+};
 
 export type Tool = {
     name: string;
@@ -178,15 +179,15 @@ export type Tool = {
     optional: boolean;
     notFoundMsg: string;
     exists(): Promise<boolean>;
-}
+};
 
 export type AdapterDesc = {
     generate(project: Project, config: Config): Promise<void>;
     build(project: Project, config: Config): Promise<void>;
-}
+};
 
 export type Adapter = {
     name: string;
     generate(project: Project, config: Config): Promise<void>;
     build(project: Project, config: Config): Promise<void>;
-}
+};

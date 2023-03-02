@@ -34,7 +34,7 @@ export function getDefault(project: Project, key: string): string | undefined {
 
 export function load(project: Project) {
     const path = util.fibsDir(project) + '/settings.json';
-    let items: Record<string,string> = {};
+    let items: Record<string, string> = {};
     if (util.fileExists(path)) {
         try {
             items = JSON.parse(

@@ -1,5 +1,5 @@
 import { path } from '../deps.ts';
-import { Adapter, Config, Project, ProjectDesc, ConfigDesc, Target, Command, Tool } from './types.ts';
+import { Adapter, Command, Config, ConfigDesc, Project, ProjectDesc, Target, Tool } from './types.ts';
 import * as settings from './settings.ts';
 import * as log from './log.ts';
 
@@ -68,7 +68,7 @@ function integrate(into: Project, other: ProjectDesc) {
                 optional: desc.optional,
                 notFoundMsg: desc.notFoundMsg,
                 exists: desc.exists,
-            }
+            };
             into.tools[name] = tool;
         }
     }

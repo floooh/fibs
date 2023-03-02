@@ -1,4 +1,4 @@
-import { Config, Platform, Project } from './types.ts';
+import { Config, Platform, Project, RunOptions, RunResult } from './types.ts';
 import * as log from './log.ts';
 import { fs } from '../deps.ts';
 
@@ -76,4 +76,33 @@ export function activeConfig(project: Project): Config {
         log.error(`active config ${name} does not exist`);
     }
     return config;
+}
+
+export async function run(cmd: string, options: RunOptions): Promise<RunResult> {
+    const cmdLine = [cmd, ...options.args];
+    const showCmd = options.showCmd ?? true;
+    const abortOnError = options.abortOnError ?? true;
+    if (showCmd) {
+        log.run(cmdLine);
+    }
+    try {
+        const p = Deno.run({
+            cmd: cmdLine,
+            cwd: options.cwd,
+            stdout: options.stdout,
+            stderr: options.stderr,
+        });
+        const res: RunResult = {
+            exitCode: (await p.status()).code,
+            stdout: (options.stdout === 'piped') ? new TextDecoder().decode(await p.output()) : '',
+            stderr: (options.stderr === 'piped') ? new TextDecoder().decode(await p.stderrOutput()) : '',
+        };
+        return res;
+    } catch (err) {
+        if (abortOnError === true) {
+            log.error(`Failed running '${cmd}' with: ${err.message}`);
+        } else {
+            throw err;
+        }
+    }
 }

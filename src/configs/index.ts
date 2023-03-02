@@ -40,4 +40,4 @@ export const configs: Record<string, ConfigDesc> = {
         inherits: 'linux-make',
         buildType: 'debug',
     },
-}
+};

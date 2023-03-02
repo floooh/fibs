@@ -1,4 +1,4 @@
-import { log, ToolDesc, tool, ToolRunOptions, ToolRunResult } from '../../mod.ts';
+import { log, RunOptions, RunResult, ToolDesc, util } from '../../mod.ts';
 
 export const git: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
@@ -7,23 +7,19 @@ export const git: ToolDesc = {
     exists: exists,
 };
 
-export async function exists(): Promise<boolean> {
+export async function run(options: RunOptions): Promise<RunResult> {
     try {
-        await tool.run('git', {
-            args: ['--version'],
-            stdout: 'piped',
-            showCmd: false,
-        });
-        return true;
-    } catch (_err) {
-        return false;
+        return await util.run('git', options);
+    } catch (err) {
+        log.error(`Failed running git with: ${err.message}`);
     }
 }
 
-export async function run(options: ToolRunOptions): Promise<ToolRunResult> {
+export async function exists(): Promise<boolean> {
     try {
-        return await tool.run('git', options);
-    } catch (err) {
-        log.error(`Failed running git with: ${err.message}`);
+        await run({ args: ['--version'], stdout: 'piped', showCmd: false, abortOnError: false });
+        return true;
+    } catch (_err) {
+        return false;
     }
 }

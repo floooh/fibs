@@ -1,5 +1,4 @@
-import { log, ToolDesc, tool, ToolRunResult } from '../../mod.ts';
-import { ToolRunOptions } from '../types.ts';
+import { log, RunOptions, RunResult, ToolDesc, util } from '../../mod.ts';
 
 export const ninja: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
@@ -8,19 +7,23 @@ export const ninja: ToolDesc = {
     exists: exists,
 };
 
+export async function run(options: RunOptions): Promise<RunResult> {
+    try {
+        return await util.run('ninja', options);
+    } catch (err) {
+        if (options.abortOnError === true) {
+            log.error(`Failed running ninja with: ${err.message}`);
+        } else {
+            throw err;
+        }
+    }
+}
+
 export async function exists(): Promise<boolean> {
     try {
-        await tool.run('ninja', {
-            args: ['--version'],
-            stdout: 'piped',
-            showCmd: false,
-        });
+        await run({ args: ['--version'], stdout: 'piped', showCmd: false, abortOnError: false });
         return true;
     } catch (_err) {
         return false;
     }
-}
-
-export async function run(options: ToolRunOptions): Promise<ToolRunResult> {
-    log.error('ninja.run() not implemented');
 }

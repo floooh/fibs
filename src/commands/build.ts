@@ -1,4 +1,4 @@
-import { CommandDesc, log, proj, util, Project } from '../../mod.ts';
+import { CommandDesc, log, proj, Project, util } from '../../mod.ts';
 
 export const build: CommandDesc = {
     help: help,
