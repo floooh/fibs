@@ -48,8 +48,9 @@ async function run(project: Project) {
     }
     if (args.all || (args.targetTypes.length > 0)) {
         const types: TargetType[] = ['windowed-exe', 'plain-exe', 'lib', 'dll'];
+        const targets = Object.values(project.targets);
         types.forEach((type) => {
-            project.targets.forEach((tgt) => {
+            targets.forEach((tgt) => {
                 if ((tgt.type === type) && (args.targetTypes.includes(type))) {
                     log.print(`${tgt.name} (${tgt.type})`);
                 }

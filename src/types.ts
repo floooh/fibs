@@ -12,7 +12,7 @@ export type Project = {
     name: string;
     dir: string;
     settings: Settings;
-    targets: Target[];
+    targets: Record<string, Target>;
     deps: Record<string, Project>;
     commands: Record<string, Command>;
     tools: Record<string, Tool>;
@@ -47,49 +47,30 @@ export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll';
 export type BuildType = 'release' | 'debug';
 
 export type TargetDependencies = {
-    targets: string[];
-    frameworks: string[];
-    libs: string[];
-};
-
-export type Filter = {
-    arch: {
-        is?: Arch[];
-        not?: Arch[];
-    };
-    platform: {
-        is?: Platform[];
-        not?: Platform[];
-    };
-    compiler: {
-        is?: Compiler[];
-        not?: Compiler[];
-    };
+    targets?: string[];
+    frameworks?: string[];
+    libs?: string[];
 };
 
 export type TargetCompileDefinitions = {
-    filter?: Filter;
     interface?: Record<string, string>;
     private?: Record<string, string>;
     public?: Record<string, string>;
 };
 
 export type TargetCompileOptions = {
-    filter?: Filter;
     interface?: string[];
     private?: string[];
     public?: string[];
 };
 
 export type TargetLinkOptions = {
-    filter?: Filter;
     interface?: string[];
     private?: string[];
     public?: string[];
 };
 
 export type TargetIncludeDirectories = {
-    filter?: Filter;
     system?: boolean;
     interface?: string[];
     private?: string[];
@@ -121,23 +102,25 @@ export type Config = {
 
 export type TargetDesc = {
     type: TargetType;
+    dir?: string;
     sources: string[];
-    deps?: TargetDependencies[];
-    includeDirectories?: TargetIncludeDirectories[];
-    compileDefinitions?: TargetCompileDefinitions[];
-    compileOptions?: TargetCompileOptions[];
-    linkOptions?: TargetLinkOptions[];
+    deps?: TargetDependencies;
+    includeDirectories?: TargetIncludeDirectories;
+    compileDefinitions?: TargetCompileDefinitions;
+    compileOptions?: TargetCompileOptions;
+    linkOptions?: TargetLinkOptions;
 };
 
 export type Target = {
     name: string;
+    dir: string | undefined;
     type: TargetType;
     sources: string[];
-    deps: TargetDependencies[];
-    includeDirectories: TargetIncludeDirectories[];
-    compileDefinitions: TargetCompileDefinitions[];
-    compileOptions: TargetCompileOptions[];
-    linkOptions: TargetLinkOptions[];
+    deps: TargetDependencies;
+    includeDirectories: TargetIncludeDirectories;
+    compileDefinitions: TargetCompileDefinitions;
+    compileOptions: TargetCompileOptions;
+    linkOptions: TargetLinkOptions;
 };
 
 export interface CommandDesc {

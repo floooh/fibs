@@ -14,7 +14,7 @@ export async function setup(
         dir: path.parse(path.fromFileUrl(rootImportMeta.url)).dir,
         settings: {},
         deps: {},
-        targets: [],
+        targets: {},
         commands: {},
         tools: {},
         configs: {},
@@ -28,6 +28,9 @@ export async function setup(
     // FIXME: resolve and integrate dependencies...
 
     settings.load(project);
+
+    // FIXME: validate the resulting project (esp target dependencies)
+
     return project;
 }
 
@@ -37,15 +40,16 @@ function integrate(into: Project, other: ProjectDesc) {
             const desc = other.targets[name];
             const target: Target = {
                 name: name,
+                dir: desc.dir,
                 type: desc.type,
                 sources: desc.sources,
-                deps: desc.deps ?? [],
-                includeDirectories: desc.includeDirectories ?? [],
-                compileDefinitions: desc.compileDefinitions ?? [],
-                compileOptions: desc.compileOptions ?? [],
-                linkOptions: desc.linkOptions ?? [],
+                deps: desc.deps ?? {},
+                includeDirectories: desc.includeDirectories ?? {},
+                compileDefinitions: desc.compileDefinitions ?? {},
+                compileOptions: desc.compileOptions ?? {},
+                linkOptions: desc.linkOptions ?? {},
             };
-            into.targets.push(target);
+            into.targets[name] = target;
         }
     }
     if (other.commands) {
