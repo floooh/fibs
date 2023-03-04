@@ -82,7 +82,7 @@ function parseArgs(): ListArgs {
                 break;
             case 'targets':
                 if (Deno.args.length === 2) {
-                    args.targetTypes = ['plain-exe', 'windowed-exe'];
+                    args.targetTypes = ['plain-exe', 'windowed-exe', 'lib', 'dll'];
                 } else if (Deno.args.length === 3) {
                     const targetType = Deno.args[2];
                     switch (targetType) {

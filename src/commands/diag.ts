@@ -63,7 +63,7 @@ async function run(project: Project) {
         if (separator) {
             log.section('project');
         }
-        log.print(project);
+        log.dir(project);
     }
 }
 

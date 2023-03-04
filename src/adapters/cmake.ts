@@ -84,19 +84,12 @@ function writeTarget(project: Project, config: Config, target: Target): string {
 }
 
 function writeTargetDependencies(project: Project, config: Config, target: Target): string {
-    let libs: string[] = [];
-    if (target.deps.targets) {
-        libs = [...libs, ...target.deps.targets.map((dep) => project.targets[dep].name)];
-    }
-    if (target.deps.libs) {
-        libs = [...libs, ...target.deps.libs];
-    }
     let str = '';
-    if (libs.length > 0) {
+    if (target.deps.libs.length > 0) {
         if (target.type === 'lib') {
-            str += `target_link_libraries(${target.name} INTERFACE ${libs.join(' ')})\n`;
+            str += `target_link_libraries(${target.name} INTERFACE ${target.deps.libs.join(' ')})\n`;
         } else {
-            str += `target_link_libraries(${target.name} ${libs.join(' ')})\n`;
+            str += `target_link_libraries(${target.name} ${target.deps.libs.join(' ')})\n`;
         }
     }
     // FIXME: osx frameworks

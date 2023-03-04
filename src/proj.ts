@@ -1,5 +1,22 @@
 import { path } from '../deps.ts';
-import { Adapter, Command, Config, ConfigDesc, Project, ProjectDesc, Target, Tool } from './types.ts';
+import {
+    Adapter,
+    Command,
+    Config,
+    ConfigDesc,
+    Project,
+    ProjectDesc,
+    Target,
+    TargetCompileDefinitions,
+    TargetCompileDefinitionsDesc,
+    TargetCompileOptions,
+    TargetCompileOptionsDesc,
+    TargetIncludeDirectories,
+    TargetIncludeDirectoriesDesc,
+    TargetLinkOptions,
+    TargetLinkOptionsDesc,
+    Tool,
+} from './types.ts';
 import * as settings from './settings.ts';
 import * as log from './log.ts';
 
@@ -43,11 +60,14 @@ function integrate(into: Project, other: ProjectDesc) {
                 dir: desc.dir,
                 type: desc.type,
                 sources: desc.sources,
-                deps: desc.deps ?? {},
-                includeDirectories: desc.includeDirectories ?? {},
-                compileDefinitions: desc.compileDefinitions ?? {},
-                compileOptions: desc.compileOptions ?? {},
-                linkOptions: desc.linkOptions ?? {},
+                deps: {
+                    libs: desc.libs ?? [],
+                    frameworks: desc.frameworks ?? [],
+                },
+                includeDirectories: toIncludeDirectories(desc.includeDirectories),
+                compileDefinitions: toCompileDefinitions(desc.compileDefinitions),
+                compileOptions: toCompileOptions(desc.compileOptions),
+                linkOptions: toLinkOptions(desc.linkOptions),
             };
             into.targets[name] = target;
         }
@@ -117,6 +137,82 @@ function integrate(into: Project, other: ProjectDesc) {
             into.settings[key] = other.settings[key];
         }
     }
+}
+
+function toIncludeDirectories(desc: TargetIncludeDirectoriesDesc | undefined): TargetIncludeDirectories {
+    const res: TargetIncludeDirectories = {
+        system: false,
+        interface: [],
+        private: [],
+        public: [],
+    };
+    if (desc) {
+        if (Array.isArray(desc)) {
+            res.public = desc;
+        } else {
+            res.system = desc.system ?? false;
+            res.interface = desc.interface ?? [];
+            res.private = desc.private ?? [];
+            res.public = desc.public ?? [];
+        }
+    }
+    return res;
+}
+
+function toCompileDefinitions(desc: TargetCompileDefinitionsDesc | undefined): TargetCompileDefinitions {
+    const res: TargetCompileDefinitions = {
+        interface: {},
+        private: {},
+        public: {},
+    };
+    if (desc) {
+        if (typeof desc.interface === 'object') {
+            res.interface = desc.interface;
+        }
+        if (typeof desc.private === 'object') {
+            res.private = desc.private;
+        }
+        if (typeof desc.public === 'object') {
+            res.public = desc.public;
+        }
+    }
+    return res;
+}
+
+function toCompileOptions(desc: TargetCompileOptionsDesc | undefined): TargetCompileOptions {
+    const res: TargetCompileOptions = {
+        interface: [],
+        private: [],
+        public: [],
+    };
+    if (desc) {
+        if (Array.isArray(desc)) {
+            res.public = desc;
+        } else {
+            res.interface = desc.interface ?? [];
+            res.private = desc.private ?? [];
+            res.public = desc.public ?? [];
+        }
+    }
+    return res;
+}
+
+function toLinkOptions(desc: TargetLinkOptionsDesc | undefined): TargetLinkOptions {
+    const res: TargetLinkOptions = {
+        interface: [],
+        private: [],
+        public: [],
+    };
+    if (desc) {
+        if (Array.isArray(desc)) {
+            res.public = desc;
+        } else {
+            res.interface = desc.interface ?? [];
+            res.private = desc.private ?? [];
+            res.public = desc.public ?? [];
+        }
+    }
+    return res;
 }
 
 function resolveConfigDesc(configs: Record<string, ConfigDesc>, name: string): ConfigDesc {

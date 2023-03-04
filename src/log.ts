@@ -4,6 +4,10 @@ export function print(...args: unknown[]) {
     console.log(...args);
 }
 
+export function dir(item: any) {
+    console.dir(item, { colors: true, depth: 8 });
+}
+
 export function help(cmds: string[], help: string | string[]) {
     for (const cmd of cmds) {
         print(`${colors.yellow(`fibs ${cmd}`)}`);

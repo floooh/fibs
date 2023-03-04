@@ -46,37 +46,6 @@ export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll';
 
 export type BuildType = 'release' | 'debug';
 
-export type TargetDependencies = {
-    targets?: string[];
-    frameworks?: string[];
-    libs?: string[];
-};
-
-export type TargetCompileDefinitions = {
-    interface?: Record<string, string>;
-    private?: Record<string, string>;
-    public?: Record<string, string>;
-};
-
-export type TargetCompileOptions = {
-    interface?: string[];
-    private?: string[];
-    public?: string[];
-};
-
-export type TargetLinkOptions = {
-    interface?: string[];
-    private?: string[];
-    public?: string[];
-};
-
-export type TargetIncludeDirectories = {
-    system?: boolean;
-    interface?: string[];
-    private?: string[];
-    public?: string[];
-};
-
 export type ConfigDesc = {
     ignore?: boolean;
     inherits?: string;
@@ -100,15 +69,71 @@ export type Config = {
     environment: Record<string, string>;
 };
 
+export type TargetIncludeDirectoriesDesc = string[] | {
+    system?: boolean;
+    interface?: string[];
+    private?: string[];
+    public?: string[];
+};
+
+export type TargetIncludeDirectories = {
+    system: boolean;
+    interface: string[];
+    private: string[];
+    public: string[];
+};
+
+export type TargetCompileDefinitionsDesc = Record<string, string> | {
+    interface?: Record<string, string>;
+    private?: Record<string, string>;
+    public?: Record<string, string>;
+};
+
+export type TargetCompileDefinitions = {
+    interface: Record<string, string>;
+    private: Record<string, string>;
+    public: Record<string, string>;
+};
+
+export type TargetCompileOptionsDesc = string[] | {
+    interface?: string[];
+    private?: string[];
+    public?: string[];
+};
+
+export type TargetCompileOptions = {
+    interface: string[];
+    private: string[];
+    public: string[];
+};
+
+export type TargetLinkOptionsDesc = string[] | {
+    interface?: string[];
+    private?: string[];
+    public?: string[];
+};
+
+export type TargetLinkOptions = {
+    interface: string[];
+    private: string[];
+    public: string[];
+};
+
+export type TargetDependencies = {
+    libs: string[];
+    frameworks: string[];
+};
+
 export type TargetDesc = {
     type: TargetType;
     dir?: string;
     sources: string[];
-    deps?: TargetDependencies;
-    includeDirectories?: TargetIncludeDirectories;
-    compileDefinitions?: TargetCompileDefinitions;
-    compileOptions?: TargetCompileOptions;
-    linkOptions?: TargetLinkOptions;
+    libs?: string[];
+    frameworks?: string[];
+    includeDirectories?: TargetIncludeDirectoriesDesc;
+    compileDefinitions?: TargetCompileDefinitionsDesc;
+    compileOptions?: TargetCompileOptionsDesc;
+    linkOptions?: TargetLinkOptionsDesc;
 };
 
 export type Target = {
