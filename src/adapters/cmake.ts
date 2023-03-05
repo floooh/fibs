@@ -2,50 +2,43 @@ import { AdapterDesc, AdapterOptions, BuildType, Config, host, log, Project, Tar
 import * as cmakeTool from '../tools/cmake.ts';
 
 export const cmake: AdapterDesc = {
-    generate: generate,
+    configure: configure,
     build: build,
 };
 
-export async function generate(project: Project, config: Config, options: AdapterOptions) {
+export async function configure(project: Project, config: Config, options: AdapterOptions) {
     const cmakeListsPath = `${project.dir}/CMakeLists.txt`;
     const cmakePresetsPath = `${project.dir}/CMakePresets.json`;
-    let genDirty = (options.forceGenerate === true) ? true : false;
-    if (!genDirty) {
-        // FIXME: inputs should actually be all dependency fibs files
-        const fibsPath = `${project.dir}/fibs.ts`;
-        genDirty = util.isDirty([fibsPath], [cmakeListsPath, cmakePresetsPath]);
+    log.info(`writing ${cmakeListsPath}`);
+    try {
+        Deno.writeTextFileSync(
+            cmakeListsPath,
+            genCMakeListsTxt(project, config),
+            { create: true },
+        );
+    } catch (err) {
+        log.error(`Failed writing ${cmakeListsPath}: ${err.message}`);
     }
-    if (genDirty) {
-        log.info(`generating ${cmakeListsPath}`);
-        try {
-            Deno.writeTextFileSync(
-                cmakeListsPath,
-                genCMakeListsTxt(project, config),
-                { create: true },
-            );
-        } catch (err) {
-            log.error(`Failed writing ${cmakeListsPath}: ${err.message}`);
-        }
-        log.info(`generating ${cmakePresetsPath}`);
-        try {
-            Deno.writeTextFileSync(
-                cmakePresetsPath,
-                genCMakePresetsJson(project, config),
-                { create: true },
-            );
-        } catch (err) {
-            log.error(`Failed writing CMakePresets.json: ${err.message}`);
-        }
+    log.info(`writing ${cmakePresetsPath}`);
+    try {
+        Deno.writeTextFileSync(
+            cmakePresetsPath,
+            genCMakePresetsJson(project, config),
+            { create: true },
+        );
+    } catch (err) {
+        log.error(`Failed writing CMakePresets.json: ${err.message}`);
     }
     await cmakeTool.configure(project, config);
 }
 
 export async function build(project: Project, config: Config, options: AdapterOptions) {
-    await generate(project, config, options);
+    if (!util.fileExists(`${util.buildDir(project, config)}/CMakeCache.txt`)) {
+        await configure(project, config, options);
+    }
     await cmakeTool.build(project, config, {
         target: options.buildTarget,
         cleanFirst: options.forceRebuild,
-        buildType: config.buildType,
     });
 }
 
@@ -80,14 +73,14 @@ function genProlog(project: Project, config: Config): string {
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     str += 'macro(fibs_exe_target_postfix target)\n';
-    str += '  if (FIBS_PLATFORM STREQUAL "emscripten")\n';
-    str += '    set_target_properties(${target} PROPERTIES RELEASE_POSTFIX ".html")\n';
-    str += '    set_target_properties(${target} PROPERTIES DEBUG_POSTFIX ".html")\n';
-    str += '  elseif (FIBS_PLATFORM STREQUAL "wasi")\n';
-    str += '    set_target_properties(${target} PROPERTIES RELEASE_POSTFIX ".wasm")\n';
-    str += '    set_target_properties(${target} PROPERTIES DEBUG_POSTFIX ".wasm")\n';
-    str += '  endif()\n';
-    str += 'endmacro(fibs_target_postfix)\n';
+    if (config.platform === 'emscripten') {
+        str += '  set_target_properties(${target} PROPERTIES RELEASE_POSTFIX ".html")\n';
+        str += '  set_target_properties(${target} PROPERTIES DEBUG_POSTFIX ".html")\n';
+    } else if (config.platform === 'wasi') {
+        str += '  set_target_properties(${target} PROPERTIES RELEASE_POSTFIX ".wasm")\n';
+        str += '  set_target_properties(${target} PROPERTIES DEBUG_POSTFIX ".wasm")\n';
+    }
+    str += 'endmacro(fibs_exe_target_postfix)\n';
     str += `project(${project.name})\n`;
     return str;
 }
@@ -169,27 +162,24 @@ function genCMakePresetsJson(project: Project, config: Config): string {
             minor: 21,
             patch: 0,
         },
-        configurePresets: genConfigurePresets(project),
+        configurePresets: genConfigurePresets(project, config),
         buildPresets: genBuildPresets(project, config),
     };
     return JSON.stringify(preset, null, 2);
 }
 
-function genConfigurePresets(project: Project): any[] {
-    let res = [];
-    for (const k in project.configs) {
-        const config = project.configs[k];
-        if (util.validConfigForPlatform(config, host.platform())) {
-            res.push({
-                name: config.name,
-                displayName: config.name,
-                binaryDir: util.buildDir(project, config),
-                generator: config.generator,
-                toolchainFile: config.toolchainFile,
-                cacheVariables: genCacheVariables(project, config),
-                environment: config.environment,
-            });
-        }
+function genConfigurePresets(project: Project, config: Config): any[] {
+    const res = [];
+    if (util.validConfigForPlatform(config, host.platform())) {
+        res.push({
+            name: config.name,
+            displayName: config.name,
+            binaryDir: util.buildDir(project, config),
+            generator: config.generator,
+            toolchainFile: config.toolchainFile,
+            cacheVariables: genCacheVariables(project, config),
+            environment: config.environment,
+        });
     }
     return res;
 }
@@ -203,11 +193,27 @@ function asCMakeBuildType(buildType: BuildType): string {
     }
 }
 
+function isMultiConfigGenerator(config: Config): boolean {
+    if (config.generator === undefined) {
+        return config.platform === 'windows';
+    } else {
+        if (config.generator.startsWith('Visual Studio')) {
+            return true;
+        } else if (config.generator === 'Ninja Multi-Config') {
+            return true;
+        } else if (config.generator === 'Xcode') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
 function genCacheVariables(project: Project, config: Config): Record<string, any> {
-    let res: Record<string, any> = {
-        CMAKE_BUILD_TYPE: asCMakeBuildType(config.buildType),
-        FIBS_PLATFORM: config.platform,
-    };
+    let res: Record<string, any> = {};
+    if (!isMultiConfigGenerator(config)) {
+        res.CMAKE_BUILD_TYPE = asCMakeBuildType(config.buildType);
+    }
     if (config.platform !== 'android') {
         res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = util.distDir(project, config);
     }
@@ -225,16 +231,14 @@ function genCacheVariables(project: Project, config: Config): Record<string, any
     return res;
 }
 
-function genBuildPresets(project: Project, defaultConfig: Config): any[] {
-    let res = [];
-    for (const k in project.configs) {
-        const config = project.configs[k];
-        if (util.validConfigForPlatform(config, host.platform())) {
-            res.push({
-                name: config.name,
-                configurePreset: config.name,
-            });
-        }
+function genBuildPresets(project: Project, config: Config): any[] {
+    if (isMultiConfigGenerator(config)) {
+        return [
+            { name: 'default', configurePreset: config.name, configuration: asCMakeBuildType(config.buildType) },
+            { name: 'debug', configurePreset: config.name, configuration: asCMakeBuildType('debug') },
+            { name: 'release', configurePreset: config.name, configuration: asCMakeBuildType('release') },
+        ];
+    } else {
+        return [ { name: 'default', configurePreset: config.name } ];
     }
-    return res;
 }

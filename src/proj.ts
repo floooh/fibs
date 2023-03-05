@@ -39,6 +39,7 @@ export async function setup(
         configDescs: {},
         adapters: {},
     };
+
     // first integrate std project properties (tools, commands, ...)
     integrate(project, stdDesc);
     // followed by the root project properties
@@ -138,7 +139,7 @@ function integrate(into: Project, other: ProjectDesc) {
             const desc = other.adapters[name];
             const adapter: Adapter = {
                 name: name,
-                generate: desc.generate,
+                configure: desc.configure,
                 build: desc.build,
             };
             into.adapters[name] = adapter;
@@ -253,13 +254,13 @@ function resolveConfigDesc(configs: Record<string, ConfigDesc>, name: string): C
     return res;
 }
 
-export async function generate(
+export async function configure(
     project: Project,
     config: Config,
     adapter: Adapter,
     options: AdapterOptions,
 ): Promise<void> {
-    await adapter.generate(project, config, options);
+    await adapter.configure(project, config, options);
 }
 
 export async function build(

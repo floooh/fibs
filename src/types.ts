@@ -191,17 +191,16 @@ export type Tool = {
 
 export type AdapterOptions = {
     buildTarget?: string;
-    forceGenerate?: boolean;
     forceRebuild?: boolean;
 };
 
 export type AdapterDesc = {
-    generate(project: Project, config: Config, options: AdapterOptions): Promise<void>;
+    configure(project: Project, config: Config, options: AdapterOptions): Promise<void>;
     build(project: Project, config: Config, options: AdapterOptions): Promise<void>;
 };
 
 export type Adapter = {
     name: string;
-    generate(project: Project, config: Config, options: AdapterOptions): Promise<void>;
+    configure(project: Project, config: Config, options: AdapterOptions): Promise<void>;
     build(project: Project, config: Config, options: AdapterOptions): Promise<void>;
 };

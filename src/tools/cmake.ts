@@ -1,4 +1,4 @@
-import { BuildType, Config, log, Project, RunOptions, RunResult, ToolDesc, util } from '../../mod.ts';
+import { Config, log, Project, RunOptions, RunResult, ToolDesc, util } from '../../mod.ts';
 
 export const cmake: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
@@ -37,16 +37,10 @@ export async function configure(project: Project, config: Config) {
 export type BuildOptions = {
     target?: string;
     cleanFirst?: boolean;
-    buildType?: BuildType;
 };
 
 export async function build(project: Project, config: Config, options: BuildOptions) {
-    let args = ['--build'];
-    if (options.buildType !== undefined) {
-        args = [...args, '--preset', config.name];
-    } else {
-        args = [...args, util.buildDir(project, config)];
-    }
+    let args = ['--build', '--preset', 'default' ];
     if (options.target !== undefined) {
         args = [...args, '--target', options.target];
     }
