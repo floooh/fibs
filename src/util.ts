@@ -20,6 +20,45 @@ export function dirExists(path: string): boolean {
     }
 }
 
+/**
+ * Checks if any of the inputs is newer than any all of the outputs,
+ * also returns true if any input or output doesn't exist.
+ * @param inputs an array of file paths defining inputs
+ * @param outputs an array of file paths defining outputs
+ * @returns true if outputs are dirty
+ */
+export function isDirty(inputs: string[], outputs: string[]) {
+    let mtime: number = 0;
+
+    // first find the newest output modification time
+    for (const path of outputs) {
+        try {
+            const res = Deno.statSync(path);
+            if (res.mtime === null) {
+                return true;
+            } else if (res.mtime.getTime() > mtime) {
+                mtime = res.mtime.getTime();
+            }
+        } catch (err) {
+            return true;
+        }
+    }
+    // now check against inputs
+    for (const path of inputs) {
+        try {
+            const res = Deno.statSync(path);
+            if (res.mtime === null) {
+                return true;
+            } else if (res.mtime.getTime() > mtime) {
+                return true;
+            }
+        } catch (err) {
+            return true;
+        }
+    }
+    return false;
+}
+
 export function fibsDir(project: Project): string {
     return `${project.dir}/.fibs`;
 }
@@ -40,12 +79,12 @@ export function ensureBuildDir(project: Project, config: Config): string {
     return path;
 }
 
-export function deployDir(project: Project, config: Config): string {
-    return `${fibsDir(project)}/.fibs/deploy/${config.name}`;
+export function distDir(project: Project, config: Config): string {
+    return `${fibsDir(project)}/.fibs/dist/${config.name}`;
 }
 
-export function ensureDeployDir(project: Project, config: Config): string {
-    const path = deployDir(project, config);
+export function ensureDistDir(project: Project, config: Config): string {
+    const path = distDir(project, config);
     fs.ensureDirSync(path);
     return path;
 }
@@ -78,7 +117,15 @@ export function activeConfig(project: Project): Config {
     return config;
 }
 
-export async function run(cmd: string, options: RunOptions): Promise<RunResult> {
+export function validConfigForPlatform(config: Config, platform: Platform): boolean {
+    // cross-compilation configs are valid on all platforms
+    if (config.toolchainFile) {
+        return true;
+    }
+    return config.platform === platform;
+}
+
+export async function runCmd(cmd: string, options: RunOptions): Promise<RunResult> {
     const cmdLine = [cmd, ...options.args];
     const showCmd = options.showCmd ?? true;
     const abortOnError = options.abortOnError ?? true;

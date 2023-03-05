@@ -17,6 +17,7 @@ export type Project = {
     commands: Record<string, Command>;
     tools: Record<string, Tool>;
     configs: Record<string, Config>;
+    configDescs: Record<string, ConfigDesc>;
     adapters: Record<string, Adapter>;
 };
 
@@ -53,7 +54,7 @@ export type ConfigDesc = {
     buildType?: BuildType;
     generator?: string;
     arch?: Arch;
-    toolchain?: string;
+    toolchainFile?: string;
     variables?: Record<string, string | boolean>;
     environment?: Record<string, string>;
 };
@@ -62,9 +63,9 @@ export type Config = {
     name: string;
     platform: Platform;
     buildType: BuildType;
-    generator: string | null;
-    arch: Arch | null;
-    toolchain: string | null;
+    generator: string | undefined;
+    arch: Arch | undefined;
+    toolchainFile: string | undefined;
     variables: Record<string, string | boolean>;
     environment: Record<string, string>;
 };
@@ -189,13 +190,19 @@ export type Tool = {
     exists(): Promise<boolean>;
 };
 
+export type AdapterOptions = {
+    buildTarget?: string;
+    forceGenerate?: boolean;
+    forceRebuild?: boolean;
+};
+
 export type AdapterDesc = {
-    generate(project: Project, config: Config): Promise<void>;
-    build(project: Project, config: Config): Promise<void>;
+    generate(project: Project, config: Config, options: AdapterOptions): Promise<void>;
+    build(project: Project, config: Config, options: AdapterOptions): Promise<void>;
 };
 
 export type Adapter = {
     name: string;
-    generate(project: Project, config: Config): Promise<void>;
-    build(project: Project, config: Config): Promise<void>;
+    generate(project: Project, config: Config, options: AdapterOptions): Promise<void>;
+    build(project: Project, config: Config, options: AdapterOptions): Promise<void>;
 };

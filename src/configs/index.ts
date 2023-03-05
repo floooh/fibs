@@ -19,6 +19,11 @@ export const configs: Record<string, ConfigDesc> = {
         platform: 'macos',
         generator: 'Unix Makefiles',
     },
+    'macos-ninja': {
+        ignore: true,
+        platform: 'macos',
+        generator: 'Ninja',
+    },
     'macos-make-release': {
         inherits: 'macos-make',
         buildType: 'release',
@@ -27,10 +32,23 @@ export const configs: Record<string, ConfigDesc> = {
         inherits: 'macos-make',
         buildType: 'debug',
     },
+    'macos-ninja-release': {
+        inherits: 'macos-ninja',
+        buildType: 'release',
+    },
+    'macos-ninja-debug': {
+        inherits: 'macos-ninja',
+        buildType: 'debug',
+    },
     'linux-make': {
         ignore: true,
         platform: 'linux',
         generator: 'Unix Makefiles',
+    },
+    'linux-ninja': {
+        ignore: true,
+        platform: 'linux',
+        generator: 'Ninja',
     },
     'linux-make-release': {
         inherits: 'linux-make',
@@ -38,6 +56,14 @@ export const configs: Record<string, ConfigDesc> = {
     },
     'linux-make-debug': {
         inherits: 'linux-make',
+        buildType: 'debug',
+    },
+    'linux-ninja-release': {
+        inherits: 'linux-ninja',
+        buildType: 'release',
+    },
+    'linux-ninja-debug': {
+        inherits: 'linux-ninja',
         buildType: 'debug',
     },
 };

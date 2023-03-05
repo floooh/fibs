@@ -1,6 +1,7 @@
 import { path } from '../deps.ts';
 import {
     Adapter,
+    AdapterOptions,
     Command,
     Config,
     ConfigDesc,
@@ -35,6 +36,7 @@ export async function setup(
         commands: {},
         tools: {},
         configs: {},
+        configDescs: {},
         adapters: {},
     };
     // first integrate std project properties (tools, commands, ...)
@@ -44,6 +46,9 @@ export async function setup(
 
     // FIXME: resolve and integrate dependencies...
 
+    // build resulting config list (happens as a post-step because configs can be inherited)
+    resolveConfigs(project);
+
     settings.load(project);
 
     // FIXME: validate the resulting project (esp target dependencies)
@@ -51,7 +56,39 @@ export async function setup(
     return project;
 }
 
+function resolveConfigs(project: Project) {
+    project.configs = {};
+    for (const name in project.configDescs) {
+        if (project.configDescs[name].ignore) {
+            continue;
+        }
+        const desc = resolveConfigDesc(project.configDescs, name);
+        if (desc.platform === undefined) {
+            log.error(`config '${name}' requires 'platform' field`);
+        }
+        if (desc.buildType === undefined) {
+            log.error(`config '${name}' requires 'buildType' field`);
+        }
+        const config: Config = {
+            name: name,
+            platform: desc.platform,
+            buildType: desc.buildType,
+            generator: desc.generator ?? undefined,
+            arch: desc.arch ?? undefined,
+            toolchainFile: desc.toolchainFile ?? undefined,
+            variables: desc.variables ?? {},
+            environment: desc.environment ?? {},
+        };
+        project.configs[name] = config;
+    }
+}
+
 function integrate(into: Project, other: ProjectDesc) {
+    if (other.configs) {
+        for (const name in other.configs) {
+            into.configDescs[name] = other.configs[name];
+        }
+    }
     if (other.targets) {
         for (const name in other.targets) {
             const desc = other.targets[name];
@@ -94,31 +131,6 @@ function integrate(into: Project, other: ProjectDesc) {
                 exists: desc.exists,
             };
             into.tools[name] = tool;
-        }
-    }
-    if (other.configs) {
-        for (const name in other.configs) {
-            if (other.configs[name].ignore) {
-                continue;
-            }
-            const desc = resolveConfigDesc(other.configs, name);
-            if (desc.platform === undefined) {
-                log.error(`config '${name}' requires 'platform' field`);
-            }
-            if (desc.buildType === undefined) {
-                log.error(`config '${name}' requires 'buildType' field`);
-            }
-            const config: Config = {
-                name: name,
-                platform: desc.platform,
-                buildType: desc.buildType,
-                generator: desc.generator ?? null,
-                arch: desc.arch ?? null,
-                toolchain: desc.toolchain ?? null,
-                variables: desc.variables ?? {},
-                environment: desc.environment ?? {},
-            };
-            into.configs[name] = config;
         }
     }
     if (other.adapters) {
@@ -245,16 +257,18 @@ export async function generate(
     project: Project,
     config: Config,
     adapter: Adapter,
+    options: AdapterOptions,
 ): Promise<void> {
-    await adapter.generate(project, config);
+    await adapter.generate(project, config, options);
 }
 
 export async function build(
     project: Project,
     config: Config,
     adapter: Adapter,
+    options: AdapterOptions,
 ): Promise<void> {
-    await adapter.build(project, config);
+    await adapter.build(project, config, options);
 }
 
 /*

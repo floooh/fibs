@@ -1,4 +1,4 @@
-import { AdapterDesc, Config, log, Project, Target, util } from '../../mod.ts';
+import { AdapterDesc, AdapterOptions, BuildType, Config, host, log, Project, Target, util } from '../../mod.ts';
 import * as cmakeTool from '../tools/cmake.ts';
 
 export const cmake: AdapterDesc = {
@@ -6,26 +6,47 @@ export const cmake: AdapterDesc = {
     build: build,
 };
 
-export async function generate(project: Project, config: Config) {
-    try {
-        Deno.writeTextFileSync(
-            `${project.dir}/CMakeLists.txt`,
-            writeCMakeListsTxt(project, config),
-            { create: true },
-        );
-    } catch (err) {
-        log.error(`Failed writing CMakeLists.txt: ${err.message}`);
+export async function generate(project: Project, config: Config, options: AdapterOptions) {
+    const cmakeListsPath = `${project.dir}/CMakeLists.txt`;
+    const cmakePresetsPath = `${project.dir}/CMakePresets.json`;
+    let genDirty = (options.forceGenerate === true) ? true : false;
+    if (!genDirty) {
+        // FIXME: inputs should actually be all dependency fibs files
+        const fibsPath = `${project.dir}/fibs.ts`;
+        genDirty = util.isDirty([fibsPath], [cmakeListsPath, cmakePresetsPath]);
     }
-    // FIXME: write CMakePresets.json file
+    if (genDirty) {
+        log.info(`generating ${cmakeListsPath}`);
+        try {
+            Deno.writeTextFileSync(
+                cmakeListsPath,
+                genCMakeListsTxt(project, config),
+                { create: true },
+            );
+        } catch (err) {
+            log.error(`Failed writing ${cmakeListsPath}: ${err.message}`);
+        }
+        log.info(`generating ${cmakePresetsPath}`);
+        try {
+            Deno.writeTextFileSync(
+                cmakePresetsPath,
+                genCMakePresetsJson(project, config),
+                { create: true },
+            );
+        } catch (err) {
+            log.error(`Failed writing CMakePresets.json: ${err.message}`);
+        }
+    }
     await cmakeTool.configure(project, config);
 }
 
-export async function build(project: Project, config: Config) {
-    const buildDir = util.buildDir(project, config);
-    if (!util.fileExists(`${buildDir}/CMakeCache.txt`)) {
-        await cmakeTool.configure(project, config);
-    }
-    await cmakeTool.build(project, config);
+export async function build(project: Project, config: Config, options: AdapterOptions) {
+    await generate(project, config, options);
+    await cmakeTool.build(project, config, {
+        target: options.buildTarget,
+        cleanFirst: options.forceRebuild,
+        buildType: config.buildType,
+    });
 }
 
 function filePath(project: Project, dir: string | undefined, rest: string): string {
@@ -37,7 +58,7 @@ function filePath(project: Project, dir: string | undefined, rest: string): stri
     return str;
 }
 
-function writeCMakeListsTxt(project: Project, config: Config): string {
+function genCMakeListsTxt(project: Project, config: Config): string {
     let str = '';
     str += 'cmake_minimum_required(VERSION 3.2)\n';
     str += 'set(CMAKE_C_STANDARD 99)\n'; // FIXME: make configurable
@@ -45,16 +66,16 @@ function writeCMakeListsTxt(project: Project, config: Config): string {
     str += `project(${project.name})\n`;
     const targets = Object.values(project.targets);
     targets.forEach((target) => {
-        str += writeTarget(project, config, target);
+        str += genTarget(project, config, target);
     });
     targets.forEach((target) => {
-        str += writeTargetDependencies(project, config, target);
-        str += writeTargetIncludeDirectories(project, config, target);
+        str += genTargetDependencies(project, config, target);
+        str += genTargetIncludeDirectories(project, config, target);
     });
     return str;
 }
 
-function writeTarget(project: Project, config: Config, target: Target): string {
+function genTarget(project: Project, config: Config, target: Target): string {
     let str = '';
     let subtype = '';
     switch (target.type) {
@@ -83,7 +104,7 @@ function writeTarget(project: Project, config: Config, target: Target): string {
     return str;
 }
 
-function writeTargetDependencies(project: Project, config: Config, target: Target): string {
+function genTargetDependencies(project: Project, config: Config, target: Target): string {
     let str = '';
     if (target.deps.libs.length > 0) {
         if (target.type === 'lib') {
@@ -96,7 +117,7 @@ function writeTargetDependencies(project: Project, config: Config, target: Targe
     return str;
 }
 
-function writeTargetIncludeDirectories(project: Project, config: Config, target: Target): string {
+function genTargetIncludeDirectories(project: Project, config: Config, target: Target): string {
     let str = '';
     const system = (target.includeDirectories.system === true) ? ' SYSTEM' : '';
     if (target.includeDirectories.interface) {
@@ -118,4 +139,78 @@ function writeTargetIncludeDirectories(project: Project, config: Config, target:
         }
     }
     return str;
+}
+
+function genCMakePresetsJson(project: Project, config: Config): string {
+    let preset: any = {
+        version: 6,
+        cmakeMinimumRequired: {
+            major: 3,
+            minor: 21,
+            patch: 0,
+        },
+        configurePresets: genConfigurePresets(project),
+        buildPresets: genBuildPresets(project, config),
+    };
+    return JSON.stringify(preset, null, 2);
+}
+
+function genConfigurePresets(project: Project): any[] {
+    let res = [];
+    for (const k in project.configs) {
+        const config = project.configs[k];
+        if (util.validConfigForPlatform(config, host.platform())) {
+            res.push({
+                name: config.name,
+                displayName: config.name,
+                binaryDir: util.buildDir(project, config),
+                generator: config.generator,
+                toolchainFile: config.toolchainFile,
+                cacheVariables: genCacheVariables(project, config),
+                environment: config.environment,
+            });
+        }
+    }
+    return res;
+}
+
+function asCMakeBuildType(buildType: BuildType): string {
+    switch (buildType) {
+        case 'debug':
+            return 'Debug';
+        case 'release':
+            return 'Release';
+    }
+}
+
+function genCacheVariables(project: Project, config: Config): Record<string, any> {
+    let res: Record<string, any> = {
+        CMAKE_BUILD_TYPE: asCMakeBuildType(config.buildType),
+    };
+    for (const key in config.variables) {
+        const val = config.variables[key];
+        if (typeof val === 'boolean') {
+            res[key] = {
+                type: 'BOOL',
+                value: val ? 'ON' : 'OFF',
+            };
+        } else {
+            res[key] = val;
+        }
+    }
+    return res;
+}
+
+function genBuildPresets(project: Project, defaultConfig: Config): any[] {
+    let res = [];
+    for (const k in project.configs) {
+        const config = project.configs[k];
+        if (util.validConfigForPlatform(config, host.platform())) {
+            res.push({
+                name: config.name,
+                configurePreset: config.name,
+            });
+        }
+    }
+    return res;
 }

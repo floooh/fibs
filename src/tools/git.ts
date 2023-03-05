@@ -9,7 +9,7 @@ export const git: ToolDesc = {
 
 export async function run(options: RunOptions): Promise<RunResult> {
     try {
-        return await util.run('git', options);
+        return await util.runCmd('git', options);
     } catch (err) {
         log.error(`Failed running git with: ${err.message}`);
     }

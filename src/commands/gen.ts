@@ -8,13 +8,11 @@ export const gen: CommandDesc = {
 function help(_project: Project) {
     log.help([
         'gen',
-        'gen [config]',
-        'gen [config] [adapter]',
     ], 'generate build files for current of specific build config');
 }
 
 async function run(project: Project) {
     const adapter = project.adapters['cmake'];
     const config = util.activeConfig(project);
-    await proj.generate(project, config, adapter);
+    await proj.generate(project, config, adapter, { forceGenerate: true });
 }
