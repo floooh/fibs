@@ -35,7 +35,6 @@ export type Platform =
     | 'ios'
     | 'linux'
     | 'macos'
-    | 'ios'
     | 'windows'
     | 'wasi'
     | 'emscripten'

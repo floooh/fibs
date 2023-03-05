@@ -10,7 +10,7 @@ function help(_project: Project) {
         'list',
         'list settings',
         'list configs',
-        'list targets [all|exe(s)|lib(s)|dll(s)]',
+        'list targets [--all] [--exe] [--lib] [--dll]',
     ], 'list available configs, current settings, targets, ...');
 }
 
@@ -82,30 +82,27 @@ function parseArgs(): ListArgs {
                 break;
             case 'targets':
                 if (Deno.args.length === 2) {
-                    args.targetTypes = ['plain-exe', 'windowed-exe', 'lib', 'dll'];
-                } else if (Deno.args.length === 3) {
-                    const targetType = Deno.args[2];
-                    switch (targetType) {
-                        case 'all':
-                            args.targetTypes = ['plain-exe', 'windowed-exe', 'lib', 'dll'];
-                            break;
-                        case 'exe':
-                        case 'exes':
-                            args.targetTypes = ['plain-exe', 'windowed-exe'];
-                            break;
-                        case 'lib':
-                        case 'libs':
-                            args.targetTypes = ['lib'];
-                            break;
-                        case 'dll':
-                        case 'dlls':
-                            args.targetTypes = ['dll'];
-                            break;
-                        default:
-                            log.error(`unknown target type '${targetType}' (run 'fibs help list')`);
+                    args.targetTypes = ['plain-exe', 'windowed-exe'];
+                } else if (Deno.args.length >= 3) {
+                    for (let i = 2; i < Deno.args.length; i++) {
+                        const targetArg = Deno.args[i];
+                        switch (targetArg) {
+                            case '--all':
+                                args.targetTypes = ['plain-exe', 'windowed-exe', 'lib', 'dll'];
+                                break;
+                            case '--exe':
+                                args.targetTypes = ['plain-exe', 'windowed-exe'];
+                                break;
+                            case '--lib':
+                                args.targetTypes = ['lib'];
+                                break;
+                            case '--dll':
+                                args.targetTypes = ['dll'];
+                                break;
+                            default:
+                                log.error(`unknown target type arg '${targetArg}' (run 'fibs help list')`);
+                        }
                     }
-                } else {
-                    log.error('too many args (run \'fibs help list\')');
                 }
                 break;
             default:

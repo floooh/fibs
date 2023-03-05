@@ -80,7 +80,7 @@ export function ensureBuildDir(project: Project, config: Config): string {
 }
 
 export function distDir(project: Project, config: Config): string {
-    return `${fibsDir(project)}/.fibs/dist/${config.name}`;
+    return `${fibsDir(project)}/dist/${config.name}`;
 }
 
 export function ensureDistDir(project: Project, config: Config): string {

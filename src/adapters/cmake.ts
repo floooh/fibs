@@ -60,10 +60,7 @@ function filePath(project: Project, dir: string | undefined, rest: string): stri
 
 function genCMakeListsTxt(project: Project, config: Config): string {
     let str = '';
-    str += 'cmake_minimum_required(VERSION 3.2)\n';
-    str += 'set(CMAKE_C_STANDARD 99)\n'; // FIXME: make configurable
-    str += 'set(CMAKE_CXX_STANDARD 14)\n'; // FIXME: make configurable
-    str += `project(${project.name})\n`;
+    str += genProlog(project, config);
     const targets = Object.values(project.targets);
     targets.forEach((target) => {
         str += genTarget(project, config, target);
@@ -72,6 +69,26 @@ function genCMakeListsTxt(project: Project, config: Config): string {
         str += genTargetDependencies(project, config, target);
         str += genTargetIncludeDirectories(project, config, target);
     });
+    return str;
+}
+
+function genProlog(project: Project, config: Config): string {
+    let str = '';
+    str += 'cmake_minimum_required(VERSION 3.2)\n';
+    str += 'set(CMAKE_C_STANDARD 99)\n'; // FIXME: make configurable
+    str += 'set(CMAKE_CXX_STANDARD 14)\n'; // FIXME: make configurable
+    str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
+    str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
+    str += 'macro(fibs_exe_target_postfix target)\n';
+    str += '  if (FIBS_PLATFORM STREQUAL "emscripten")\n';
+    str += '    set_target_properties(${target} PROPERTIES RELEASE_POSTFIX ".html")\n';
+    str += '    set_target_properties(${target} PROPERTIES DEBUG_POSTFIX ".html")\n';
+    str += '  elseif (FIBS_PLATFORM STREQUAL "wasi")\n';
+    str += '    set_target_properties(${target} PROPERTIES RELEASE_POSTFIX ".wasm")\n';
+    str += '    set_target_properties(${target} PROPERTIES DEBUG_POSTFIX ".wasm")\n';
+    str += '  endif()\n';
+    str += 'endmacro(fibs_target_postfix)\n';
+    str += `project(${project.name})\n`;
     return str;
 }
 
@@ -101,6 +118,9 @@ function genTarget(project: Project, config: Config, target: Target): string {
         str += `    ${filePath(project, target.dir, source)}\n`;
     });
     str += ')\n';
+    if ((target.type === 'plain-exe') || (target.type === 'windowed-exe')) {
+        str += `fibs_exe_target_postfix(${target.name})\n`;
+    }
     return str;
 }
 
@@ -186,7 +206,11 @@ function asCMakeBuildType(buildType: BuildType): string {
 function genCacheVariables(project: Project, config: Config): Record<string, any> {
     let res: Record<string, any> = {
         CMAKE_BUILD_TYPE: asCMakeBuildType(config.buildType),
+        FIBS_PLATFORM: config.platform,
     };
+    if (config.platform !== 'android') {
+        res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = util.distDir(project, config);
+    }
     for (const key in config.variables) {
         const val = config.variables[key];
         if (typeof val === 'boolean') {
