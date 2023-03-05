@@ -20,13 +20,6 @@ export function dirExists(path: string): boolean {
     }
 }
 
-/**
- * Checks if any of the inputs is newer than any all of the outputs,
- * also returns true if any input or output doesn't exist.
- * @param inputs an array of file paths defining inputs
- * @param outputs an array of file paths defining outputs
- * @returns true if outputs are dirty
- */
 export function isDirty(inputs: string[], outputs: string[]) {
     let mtime: number = 0;
 

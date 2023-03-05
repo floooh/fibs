@@ -1,18 +1,18 @@
 import { log, RunOptions, RunResult, ToolDesc, util } from '../../mod.ts';
 
-export const ninja: ToolDesc = {
+export const vscode: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
     optional: true,
-    notFoundMsg: 'required for building *-ninja-* configs',
+    notFoundMsg: 'required for opening projects in VSCode',
     exists: exists,
-};
+}
 
 export async function run(options: RunOptions): Promise<RunResult> {
     try {
-        return await util.runCmd('ninja', options);
+        return await util.runCmd('code', options);
     } catch (err) {
         if (options.abortOnError === true) {
-            log.error(`Failed running ninja with: ${err.message}`);
+            log.error(`Failed to run 'code' with: ${err.message}`);
         } else {
             throw err;
         }

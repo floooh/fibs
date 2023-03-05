@@ -1,18 +1,18 @@
 import { log, RunOptions, RunResult, ToolDesc, util } from '../../mod.ts';
 
-export const ninja: ToolDesc = {
+export const make: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
     optional: true,
-    notFoundMsg: 'required for building *-ninja-* configs',
+    notFoundMsg: 'required for building *-make-* configs',
     exists: exists,
-};
+}
 
 export async function run(options: RunOptions): Promise<RunResult> {
     try {
-        return await util.runCmd('ninja', options);
+        return await util.runCmd('make', options);
     } catch (err) {
         if (options.abortOnError === true) {
-            log.error(`Failed running ninja with: ${err.message}`);
+            log.error(`Failed running make with: ${err.message}`);
         } else {
             throw err;
         }

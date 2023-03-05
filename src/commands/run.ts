@@ -24,12 +24,21 @@ async function runFn(project: Project) {
     if (target.type !== 'plain-exe' && target.type !== 'windowed-exe') {
         log.error(`target '${name}' is not an executable (run 'fibs list targets)`);
     }
-    const dir = util.distDir(project, util.activeConfig(project));
+    const config = util.activeConfig(project);
+    const dir = util.distDir(project, config);
     const path = `${dir}/${target.name}`;
-    const res = await util.runCmd(path, {
-        args: Deno.args.slice(2),
-        cwd: dir,
-        showCmd: false,
-    });
-    Deno.exit(res.exitCode);
+    if (config.platform === 'emscripten') {
+        log.error('FIXME: implement run for Emscripten');
+    } else if (config.platform === 'android') {
+        log.error('FIXME: implement run for Android');
+    } else if (config.platform === 'wasi') {
+        log.error('FIXME: implement run for wasi');
+    } else {
+        const res = await util.runCmd(path, {
+            args: Deno.args.slice(2),
+            cwd: dir,
+            showCmd: false,
+        });
+        Deno.exit(res.exitCode);
+    }
 }
