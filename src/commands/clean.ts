@@ -37,7 +37,7 @@ async function run(project: Project) {
             configs.push(project.configs[k]);
         }
     } else if (configs.length === 0) {
-        configs = [ util.activeConfig(project) ];
+        configs = [util.activeConfig(project)];
     }
     let numDeleted = 0;
     for (const config of configs) {
@@ -63,6 +63,6 @@ async function run(project: Project) {
     if (0 === numDeleted) {
         log.print('nothing to do');
     } else {
-        log.print(`${numDeleted} directories deleted`)
+        log.print(`${numDeleted} directories deleted`);
     }
 }
