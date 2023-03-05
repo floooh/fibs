@@ -42,3 +42,11 @@ export function error(...args: unknown[]): never {
     console.warn(`${colors.red('[error]')}`, ...args);
     Deno.exit(10);
 }
+
+export function ask(msg: string, yes: boolean): boolean {
+    if (yes) {
+        return true;
+    } else {
+        return confirm(colors.green(`> ${msg}`));
+    }
+}
