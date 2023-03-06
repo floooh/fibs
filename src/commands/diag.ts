@@ -6,7 +6,7 @@ export const diag: CommandDesc = {
     run: run,
 };
 
-function help(_project: Project) {
+function help() {
     log.help([
         'diag',
         'diag fibs',

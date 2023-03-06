@@ -5,7 +5,7 @@ export const unset: CommandDesc = {
     run: run,
 };
 
-function help(project: Project) {
+function help() {
     log.help([
         'unset [key]',
     ], [

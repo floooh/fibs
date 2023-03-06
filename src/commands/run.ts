@@ -5,7 +5,7 @@ export const run: CommandDesc = {
     run: runFn,
 };
 
-function help(_project: Project) {
+function help() {
     log.help([
         'run [target]',
         'run [target] [target-args]',

@@ -9,12 +9,15 @@ import {
     Target,
     TargetCompileDefinitions,
     TargetCompileDefinitionsDesc,
-    TargetCompileOptions,
-    TargetCompileOptionsDesc,
     TargetIncludeDirectories,
     TargetIncludeDirectoriesDesc,
+    TargetCompileOptions,
+    TargetCompileOptionsDesc,
+    TargetCompileOptionsFunc,
     TargetLinkOptions,
     TargetLinkOptionsDesc,
+    TargetLinkOptionsFunc,
+
     Tool,
 } from './types.ts';
 import * as settings from './settings.ts';
@@ -191,14 +194,17 @@ function toCompileDefinitions(desc: TargetCompileDefinitionsDesc | undefined): T
     return res;
 }
 
-function toCompileOptions(desc: TargetCompileOptionsDesc | undefined): TargetCompileOptions {
+function toCompileOptions(desc: TargetCompileOptionsDesc | TargetCompileOptionsFunc | undefined): TargetCompileOptions | TargetCompileOptionsFunc {
     const res: TargetCompileOptions = {
         interface: [],
         private: [],
         public: [],
     };
     if (desc) {
-        if (Array.isArray(desc)) {
+        if (typeof desc === 'function') {
+            return desc;
+        }
+        else if (Array.isArray(desc)) {
             res.public = desc;
         } else {
             res.interface = desc.interface ?? [];
@@ -209,14 +215,17 @@ function toCompileOptions(desc: TargetCompileOptionsDesc | undefined): TargetCom
     return res;
 }
 
-function toLinkOptions(desc: TargetLinkOptionsDesc | undefined): TargetLinkOptions {
+function toLinkOptions(desc: TargetLinkOptionsDesc | TargetLinkOptionsFunc | undefined): TargetLinkOptions | TargetLinkOptionsFunc {
     const res: TargetLinkOptions = {
         interface: [],
         private: [],
         public: [],
     };
     if (desc) {
-        if (Array.isArray(desc)) {
+        if (typeof desc === 'function') {
+            return desc;
+        }
+        else if (Array.isArray(desc)) {
             res.public = desc;
         } else {
             res.interface = desc.interface ?? [];

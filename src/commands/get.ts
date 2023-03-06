@@ -5,7 +5,7 @@ export const get: CommandDesc = {
     run: run,
 };
 
-function help(project: Project) {
+function help() {
     log.help([
         'get [key]',
     ], [

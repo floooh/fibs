@@ -95,7 +95,9 @@ export type TargetCompileDefinitions = {
     public: Record<string, string>;
 };
 
-export type TargetCompileOptionsDesc = string[] | {
+export type TargetCompileOptionsFunc = (project: Project, config: Config, compiler: Compiler) => TargetCompileOptions;
+
+export type TargetCompileOptionsDesc = string[] | TargetCompileOptionsFunc | {
     interface?: string[];
     private?: string[];
     public?: string[];
@@ -107,7 +109,9 @@ export type TargetCompileOptions = {
     public: string[];
 };
 
-export type TargetLinkOptionsDesc = string[] | {
+export type TargetLinkOptionsFunc = (project: Project, config: Config, compiler: Compiler) => TargetLinkOptions;
+
+export type TargetLinkOptionsDesc = string[] | TargetLinkOptionsFunc | {
     interface?: string[];
     private?: string[];
     public?: string[];
@@ -144,12 +148,12 @@ export type Target = {
     deps: TargetDependencies;
     includeDirectories: TargetIncludeDirectories;
     compileDefinitions: TargetCompileDefinitions;
-    compileOptions: TargetCompileOptions;
-    linkOptions: TargetLinkOptions;
+    compileOptions: TargetCompileOptions | TargetCompileOptionsFunc;
+    linkOptions: TargetLinkOptions | TargetLinkOptionsFunc;
 };
 
 export interface CommandDesc {
-    help(project: Project): void;
+    help(): void;
     run(project: Project): Promise<void>;
 }
 

@@ -5,7 +5,7 @@ export const set: CommandDesc = {
     run: run,
 };
 
-function help(project: Project) {
+function help() {
     log.help([
         'set [key] [value]',
     ], [

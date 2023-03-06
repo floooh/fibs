@@ -6,7 +6,7 @@ export const help: CommandDesc = {
     run: run,
 };
 
-function helpFn(_project: Project) {
+function helpFn() {
     log.help([
         'help',
         'help [cmd]',
