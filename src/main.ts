@@ -11,17 +11,22 @@ import { configs } from './configs/index.ts';
 
 let rootProject: Project;
 
-export async function run(importMeta: any, desc: ProjectDesc) {
-    if (importMeta.main) {
-        // 'root project mode'
+export async function main() {
+    // try to import a fibs.ts file from current directory
+    try {
         if (Deno.args.length < 1) {
             log.print('run \'fibs help\' for more info');
             Deno.exit(10);
         }
-        rootProject = await proj.setup(importMeta, desc, stdDesc);
-        // find and run command
-        const cmd = Deno.args[0];
-        try {
+        const cwd = Deno.cwd();
+        const rootPath = `${cwd}/fibs.ts`;
+        if (!util.fileExists(rootPath)) {
+            log.error("current directory is not a fibs project (no fibs.ts found)");
+        }
+        const rootModule = await import(rootPath);
+        if (rootModule.projectDesc !== undefined) {
+            rootProject = await proj.setup(cwd, rootModule.projectDesc, stdDesc);
+            const cmd = Deno.args[0];
             if (rootProject.commands![cmd] !== undefined) {
                 await rootProject.commands![cmd].run(rootProject);
             } else {
@@ -29,12 +34,11 @@ export async function run(importMeta: any, desc: ProjectDesc) {
                     `command '${cmd}' not found in project '${rootProject.name}', run 'fibs help'`,
                 );
             }
-        } catch (err) {
-            log.error(err);
+        } else {
+            log.error("file 'fibs.ts' in current directory has no export 'projectDesc'");
         }
-    } else {
-        // 'dependency mode'
-        console.error('FIXME: implement dependency mode');
+    } catch (err) {
+        log.error(err);
     }
 }
 

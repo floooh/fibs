@@ -1,5 +1,2 @@
-import * as fibs from './mod.ts';
-
-fibs.run(import.meta, {
-    name: 'Bla',
-});
+import { main } from './mod.ts';
+main();

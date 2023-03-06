@@ -1,4 +1,3 @@
-import { path } from '../deps.ts';
 import {
     Adapter,
     AdapterOptions,
@@ -22,14 +21,14 @@ import * as settings from './settings.ts';
 import * as log from './log.ts';
 
 export async function setup(
-    rootImportMeta: any,
+    rootDir: string,
     rootDesc: ProjectDesc,
     stdDesc: ProjectDesc,
 ): Promise<Project> {
     // start populating project with std properties
     const project: Project = {
         name: rootDesc.name,
-        dir: path.parse(path.fromFileUrl(rootImportMeta.url)).dir,
+        dir: rootDir,
         settings: {},
         deps: {},
         targets: {},
@@ -45,7 +44,7 @@ export async function setup(
     // followed by the root project properties
     integrate(project, rootDesc);
 
-    // FIXME: resolve and integrate dependencies...
+    // FIXME: resolve and integrate imports...
 
     // build resulting config list (happens as a post-step because configs can be inherited)
     resolveConfigs(project);
