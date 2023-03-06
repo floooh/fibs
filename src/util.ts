@@ -7,7 +7,6 @@ export function fileExists(path: string): boolean {
         const res = Deno.statSync(path);
         return res.isFile;
     } catch (err) {
-console.log(err);
         return false;
     }
 }
