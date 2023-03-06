@@ -12,23 +12,26 @@ import { configs } from './configs/index.ts';
 let rootProject: Project;
 
 export async function main() {
-    // try to import a fibs.ts file from current directory
+    if (Deno.args.length < 1) {
+        log.print('run \'fibs help\' for more info');
+        Deno.exit(10);
+    }
     try {
-        if (Deno.args.length < 1) {
-            log.print('run \'fibs help\' for more info');
-            Deno.exit(10);
-        }
+        // try to import a fibs.ts file from current directory
         const cwd = Deno.cwd();
+console.log(cwd);
         const rootPath = `${cwd}/fibs.ts`;
         if (!util.fileExists(rootPath)) {
             log.error("current directory is not a fibs project (no fibs.ts found)");
         }
         const rootModule = await import(rootPath);
         if (rootModule.projectDesc !== undefined) {
+            // setup the root project tree
             rootProject = await proj.setup(cwd, rootModule.projectDesc, stdDesc);
+            // lookup and run subcommand
             const cmd = Deno.args[0];
-            if (rootProject.commands![cmd] !== undefined) {
-                await rootProject.commands![cmd].run(rootProject);
+            if (rootProject.commands[cmd] !== undefined) {
+                await rootProject.commands[cmd].run(rootProject);
             } else {
                 log.error(
                     `command '${cmd}' not found in project '${rootProject.name}', run 'fibs help'`,
