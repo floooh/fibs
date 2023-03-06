@@ -14,6 +14,8 @@ function help(_project: Project) {
     ], 'list available configs, current settings, targets, ...');
 }
 
+const allTargetTypes: TargetType[] = ['windowed-exe', 'plain-exe', 'lib', 'dll'];
+
 type ListArgs = {
     all: boolean;
     settings: boolean;
@@ -47,7 +49,7 @@ async function run(project: Project) {
         log.section('targets');
     }
     if (args.all || (args.targetTypes.length > 0)) {
-        const types: TargetType[] = ['windowed-exe', 'plain-exe', 'lib', 'dll'];
+        const types = allTargetTypes;
         const targets = Object.values(project.targets);
         types.forEach((type) => {
             targets.forEach((tgt) => {
@@ -71,6 +73,7 @@ function parseArgs(): ListArgs {
     };
     if (Deno.args.length === 1) {
         args.all = true;
+        args.targetTypes = allTargetTypes;
     } else {
         const filter = Deno.args[1];
         switch (filter) {
@@ -82,7 +85,7 @@ function parseArgs(): ListArgs {
                 break;
             case 'targets':
                 if (Deno.args.length === 2) {
-                    args.targetTypes = ['plain-exe', 'windowed-exe'];
+                    args.targetTypes = allTargetTypes;
                 } else if (Deno.args.length >= 3) {
                     for (let i = 2; i < Deno.args.length; i++) {
                         const targetArg = Deno.args[i];
