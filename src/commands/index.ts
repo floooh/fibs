@@ -8,6 +8,7 @@ import { diag } from './diag.ts';
 import { set } from './set.ts';
 import { get } from './get.ts';
 import { unset } from './unset.ts';
+import { emsdk } from './emsdk.ts';
 
 export const commands = {
     help,
@@ -20,4 +21,5 @@ export const commands = {
     set,
     get,
     unset,
+    emsdk,
 };

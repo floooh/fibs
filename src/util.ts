@@ -82,6 +82,16 @@ export function ensureDistDir(project: Project, config: Config): string {
     return path;
 }
 
+export function sdkDir(project: Project): string {
+    return `${fibsDir(project)}/sdks`;
+}
+
+export function ensureSdkDir(project: Project): string {
+    const path = sdkDir(project);
+    fs.ensureDirSync(path);
+    return path;
+}
+
 export function defaultConfigForPlatform(platform: Platform): string {
     switch (platform) {
         case 'windows':
