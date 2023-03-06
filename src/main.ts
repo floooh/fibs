@@ -20,11 +20,11 @@ export async function main() {
         // try to import a fibs.ts file from current directory
         const cwd = Deno.cwd();
 console.log(cwd);
-        const rootPath = `file://${cwd}/fibs.ts`;
+        const rootPath = `${cwd}/fibs.ts`;
         if (!util.fileExists(rootPath)) {
             log.error("current directory is not a fibs project (no fibs.ts found)");
         }
-        const rootModule = await import(rootPath);
+        const rootModule = await import(`file://${rootPath}`);
         if (rootModule.projectDesc !== undefined) {
             // setup the root project tree
             rootProject = await proj.setup(cwd, rootModule.projectDesc, stdDesc);
