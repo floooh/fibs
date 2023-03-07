@@ -1,5 +1,5 @@
-import { cmake } from './cmake.ts';
+import { cmakeAdapter } from './cmake.ts';
 
 export const adapters = {
-    cmake,
+    cmake: cmakeAdapter,
 };

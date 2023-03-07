@@ -1,6 +1,6 @@
 import { AdapterOptions, CommandDesc, log, proj, Project, util } from '../../mod.ts';
 
-export const build: CommandDesc = {
+export const buildCmd: CommandDesc = {
     help: help,
     run: run,
 };

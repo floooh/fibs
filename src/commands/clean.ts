@@ -1,6 +1,6 @@
 import { CommandDesc, Config, log, Project, util } from '../../mod.ts';
 
-export const clean: CommandDesc = {
+export const cleanCmd: CommandDesc = {
     help: help,
     run: run,
 };

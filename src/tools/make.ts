@@ -1,6 +1,6 @@
 import { log, RunOptions, RunResult, ToolDesc, util } from '../../mod.ts';
 
-export const make: ToolDesc = {
+export const makeTool: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
     optional: true,
     notFoundMsg: 'required for building *-make-* configs',

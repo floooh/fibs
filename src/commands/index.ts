@@ -1,25 +1,25 @@
-import { help } from './help.ts';
-import { config } from './config.ts';
-import { build } from './build.ts';
-import { run } from './run.ts';
-import { clean } from './clean.ts';
-import { list } from './list.ts';
-import { diag } from './diag.ts';
-import { set } from './set.ts';
-import { get } from './get.ts';
-import { unset } from './unset.ts';
-import { emsdk } from './emsdk.ts';
+import { helpCmd } from './help.ts';
+import { configCmd } from './config.ts';
+import { buildCmd } from './build.ts';
+import { runCmd } from './run.ts';
+import { cleanCmd } from './clean.ts';
+import { listCmd } from './list.ts';
+import { diagCmd } from './diag.ts';
+import { setCmd } from './set.ts';
+import { getCmd } from './get.ts';
+import { unsetCmd } from './unset.ts';
+import { emsdkCmd } from './emsdk.ts';
 
 export const commands = {
-    help,
-    config,
-    build,
-    run,
-    clean,
-    list,
-    diag,
-    set,
-    get,
-    unset,
-    emsdk,
+    help: helpCmd,
+    config: configCmd,
+    build: buildCmd,
+    run: runCmd,
+    clean: cleanCmd,
+    list: listCmd,
+    diag: diagCmd,
+    set: setCmd,
+    get: getCmd,
+    unset: unsetCmd,
+    emsdk: emsdkCmd,
 };

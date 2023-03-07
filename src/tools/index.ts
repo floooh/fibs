@@ -1,13 +1,13 @@
-import { ninja } from './ninja.ts';
-import { cmake } from './cmake.ts';
-import { git } from './git.ts';
-import { make } from './make.ts';
-import { vscode } from './vscode.ts';
+import { ninjaTool } from './ninja.ts';
+import { cmakeTool } from './cmake.ts';
+import { gitTool } from './git.ts';
+import { makeTool } from './make.ts';
+import { vscodeTool } from './vscode.ts';
 
 export const tools = {
-    git,
-    cmake,
-    ninja,
-    make,
-    vscode,
+    git: gitTool,
+    cmake: cmakeTool,
+    ninja: ninjaTool,
+    make: makeTool,
+    vscode: vscodeTool,
 };

@@ -1,6 +1,6 @@
 import { log, RunOptions, RunResult, ToolDesc, util } from '../../mod.ts';
 
-export const ninja: ToolDesc = {
+export const ninjaTool: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
     optional: true,
     notFoundMsg: 'required for building *-ninja-* configs',

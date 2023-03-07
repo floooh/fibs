@@ -1,7 +1,6 @@
-import { AdapterDesc, AdapterOptions, BuildType, Config, host, log, Project, Target, util } from '../../mod.ts';
-import * as cmakeTool from '../tools/cmake.ts';
+import { AdapterDesc, AdapterOptions, BuildType, Config, cmake, host, log, Project, Target, util } from '../../mod.ts';
 
-export const cmake: AdapterDesc = {
+export const cmakeAdapter: AdapterDesc = {
     configure: configure,
     build: build,
 };
@@ -29,14 +28,14 @@ export async function configure(project: Project, config: Config, options: Adapt
     } catch (err) {
         log.error(`Failed writing CMakePresets.json: ${err.message}`);
     }
-    await cmakeTool.configure(project, config);
+    await cmake.configure(project, config);
 }
 
 export async function build(project: Project, config: Config, options: AdapterOptions) {
     if (!util.fileExists(`${util.buildDir(project, config)}/CMakeCache.txt`)) {
         await configure(project, config, options);
     }
-    await cmakeTool.build(project, config, {
+    await cmake.build(project, config, {
         target: options.buildTarget,
         cleanFirst: options.forceRebuild,
     });
