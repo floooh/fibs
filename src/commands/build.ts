@@ -1,4 +1,4 @@
-import { AdapterOptions, CommandDesc, log, proj, Project, util } from '../../mod.ts';
+import { AdapterOptions, CommandDesc, log, proj, Project, util, conf } from '../../mod.ts';
 
 export const buildCmd: CommandDesc = {
     help: help,
@@ -34,5 +34,6 @@ async function run(project: Project) {
             }
         }
     }
+    await conf.validate(project, config, { silent: false, abortOnError: true });
     await proj.build(project, config, adapter, options);
 }

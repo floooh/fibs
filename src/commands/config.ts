@@ -1,4 +1,4 @@
-import { CommandDesc, log, Project, settings, proj } from '../../mod.ts';
+import { CommandDesc, log, Project, settings, proj, conf } from '../../mod.ts';
 
 export const configCmd: CommandDesc = {
     help: help,
@@ -19,6 +19,7 @@ async function run(project: Project) {
         const configName = Deno.args[1];
         const config = project.configs[configName];
         if (config !== undefined) {
+            await conf.validate(project, config, { silent: false, abortOnError: true });
             settings.set(project, 'config', configName);
             const adapter = project.adapters['cmake'];
             await proj.configure(project, config, adapter, {});
