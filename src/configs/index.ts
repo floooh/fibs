@@ -66,4 +66,35 @@ export const configs: Record<string, ConfigDesc> = {
         inherits: 'linux-ninja',
         buildType: 'debug',
     },
+    'emsc': {
+        ignore: true,
+        platform: 'emscripten',
+        toolchainFile: '.fibs/sdks/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake',
+    },
+    'emsc-make': {
+        ignore: true,
+        inherits: 'emsc',
+        generator: 'Unix Makefiles',
+    },
+    'emsc-make-debug': {
+        inherits: 'emsc-make',
+        buildType: 'debug',
+    },
+    'emsc-make-release': {
+        inherits: 'emsc-make',
+        buildType: 'release',
+    },
+    'emsc-ninja': {
+        ignore: true,
+        inherits: 'emsc',
+        generator: 'Ninja',
+    },
+    'emsc-ninja-debug': {
+        inherits: 'emsc-ninja',
+        buildType: 'debug',
+    },
+    'emsc-ninja-release': {
+        inherits: 'emsc-ninja',
+        buildType: 'release',
+    },
 };

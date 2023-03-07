@@ -41,8 +41,8 @@ export async function build(project: Project, config: Config, options: AdapterOp
     });
 }
 
-function filePath(project: Project, dir: string | undefined, rest: string): string {
-    let str = project.dir + '/';
+function filePath(importDir: string, dir: string | undefined, rest: string): string {
+    let str = importDir + '/';
     if (dir !== undefined) {
         str += dir + '/';
     }
@@ -67,20 +67,16 @@ function genCMakeListsTxt(project: Project, config: Config): string {
 function genProlog(project: Project, config: Config): string {
     let str = '';
     str += 'cmake_minimum_required(VERSION 3.2)\n';
+    str += `project(${project.name})\n`;
     str += 'set(CMAKE_C_STANDARD 99)\n'; // FIXME: make configurable
     str += 'set(CMAKE_CXX_STANDARD 14)\n'; // FIXME: make configurable
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
-    str += 'macro(fibs_exe_target_postfix target)\n';
     if (config.platform === 'emscripten') {
-        str += '  set_target_properties(${target} PROPERTIES RELEASE_POSTFIX ".html")\n';
-        str += '  set_target_properties(${target} PROPERTIES DEBUG_POSTFIX ".html")\n';
+        str += 'set(CMAKE_EXECUTABLE_SUFFIX ".html")\n';
     } else if (config.platform === 'wasi') {
-        str += '  set_target_properties(${target} PROPERTIES RELEASE_POSTFIX ".wasm")\n';
-        str += '  set_target_properties(${target} PROPERTIES DEBUG_POSTFIX ".wasm")\n';
+        str += 'set(CMAKE_EXECUTABLE_SUFFIX ".wasm")\n';
     }
-    str += 'endmacro(fibs_exe_target_postfix)\n';
-    str += `project(${project.name})\n`;
     return str;
 }
 
@@ -107,12 +103,9 @@ function genTarget(project: Project, config: Config, target: Target): string {
             break;
     }
     target.sources.forEach((source) => {
-        str += `    ${filePath(project, target.dir, source)}\n`;
+        str += `    ${filePath(target.importDir, target.dir, source)}\n`;
     });
     str += ')\n';
-    if ((target.type === 'plain-exe') || (target.type === 'windowed-exe')) {
-        str += `fibs_exe_target_postfix(${target.name})\n`;
-    }
     return str;
 }
 
@@ -133,19 +126,19 @@ function genTargetIncludeDirectories(project: Project, config: Config, target: T
     let str = '';
     const system = (target.includeDirectories.system === true) ? ' SYSTEM' : '';
     if (target.includeDirectories.interface) {
-        const items = target.includeDirectories.interface.map((rest) => filePath(project, target.dir, rest));
+        const items = target.includeDirectories.interface.map((rest) => filePath(target.importDir, target.dir, rest));
         if (items.length > 0) {
             str += `target_include_directories(${target.name}${system} INTERFACE ${items.join(' ')})\n`;
         }
     }
     if (target.includeDirectories.private) {
-        const items = target.includeDirectories.private.map((rest) => filePath(project, target.dir, rest));
+        const items = target.includeDirectories.private.map((rest) => filePath(target.importDir, target.dir, rest));
         if (items.length > 0) {
             str += `target_include_directories(${target.name}${system} PRIVATE ${items.join(' ')})\n`;
         }
     }
     if (target.includeDirectories.public) {
-        const items = target.includeDirectories.public.map((rest) => filePath(project, target.dir, rest));
+        const items = target.includeDirectories.public.map((rest) => filePath(target.importDir, target.dir, rest));
         if (items.length > 0) {
             str += `target_include_directories(${target.name}${system} PUBLIC ${items.join(' ')})\n`;
         }

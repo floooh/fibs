@@ -3,7 +3,7 @@ import {
     AdapterOptions,
     Command,
     Config,
-    ConfigDesc,
+    ConfigDescWithImportDir,
     Project,
     ProjectDesc,
     Target,
@@ -17,7 +17,6 @@ import {
     TargetLinkOptions,
     TargetLinkOptionsDesc,
     TargetLinkOptionsFunc,
-
     Tool,
 } from './types.ts';
 import * as settings from './settings.ts';
@@ -33,7 +32,6 @@ export async function setup(
         name: rootDesc.name,
         dir: rootDir,
         settings: {},
-        deps: {},
         targets: {},
         commands: {},
         tools: {},
@@ -43,9 +41,9 @@ export async function setup(
     };
 
     // first integrate std project properties (tools, commands, ...)
-    integrate(project, stdDesc);
+    integrate(project, stdDesc, rootDir);
     // followed by the root project properties
-    integrate(project, rootDesc);
+    integrate(project, rootDesc, rootDir);
 
     // FIXME: resolve and integrate imports...
 
@@ -61,6 +59,14 @@ export async function setup(
 
 function resolveConfigs(project: Project) {
     project.configs = {};
+    // first go through all config descs and resolve their toolchain file path
+    for (const name in project.configDescs) {
+        const desc = project.configDescs[name];
+        if (desc.toolchainFile !== undefined) {
+            desc.toolchainFile = `${desc.importDir}/${desc.toolchainFile}`;
+        }
+    }
+    // next merge resolve inherited config desc and generate list of final configs
     for (const name in project.configDescs) {
         if (project.configDescs[name].ignore) {
             continue;
@@ -73,7 +79,8 @@ function resolveConfigs(project: Project) {
             log.error(`config '${name}' requires 'buildType' field`);
         }
         const config: Config = {
-            name: name,
+            name,
+            importDir: desc.importDir,
             platform: desc.platform,
             buildType: desc.buildType,
             generator: desc.generator ?? undefined,
@@ -81,22 +88,26 @@ function resolveConfigs(project: Project) {
             toolchainFile: desc.toolchainFile ?? undefined,
             variables: desc.variables ?? {},
             environment: desc.environment ?? {},
+            defines: desc.defines ?? {},
         };
         project.configs[name] = config;
     }
 }
 
-function integrate(into: Project, other: ProjectDesc) {
+function integrate(into: Project, other: ProjectDesc, importDir: string) {
     if (other.configs) {
         for (const name in other.configs) {
-            into.configDescs[name] = other.configs[name];
+            into.configDescs[name] = { ...other.configs[name], importDir };
         }
     }
     if (other.targets) {
+        // FIXME: any paths in target need to be resolved relative to the
+        // integrated ProjectDesc's path (e.g. relative to the '@.' path alias)
         for (const name in other.targets) {
             const desc = other.targets[name];
             const target: Target = {
-                name: name,
+                name,
+                importDir,
                 dir: desc.dir,
                 type: desc.type,
                 sources: desc.sources,
@@ -116,7 +127,8 @@ function integrate(into: Project, other: ProjectDesc) {
         for (const name in other.commands) {
             const desc = other.commands[name];
             const command: Command = {
-                name: name,
+                name,
+                importDir,
                 help: desc.help,
                 run: desc.run,
             };
@@ -127,7 +139,8 @@ function integrate(into: Project, other: ProjectDesc) {
         for (const name in other.tools) {
             const desc = other.tools[name];
             const tool: Tool = {
-                name: name,
+                name,
+                importDir,
                 platforms: desc.platforms,
                 optional: desc.optional,
                 notFoundMsg: desc.notFoundMsg,
@@ -140,7 +153,8 @@ function integrate(into: Project, other: ProjectDesc) {
         for (const name in other.adapters) {
             const desc = other.adapters[name];
             const adapter: Adapter = {
-                name: name,
+                name,
+                importDir,
                 configure: desc.configure,
                 build: desc.build,
             };
@@ -236,8 +250,8 @@ function toLinkOptions(desc: TargetLinkOptionsDesc | TargetLinkOptionsFunc | und
     return res;
 }
 
-function resolveConfigDesc(configs: Record<string, ConfigDesc>, name: string): ConfigDesc {
-    let inheritChain: ConfigDesc[] = [];
+function resolveConfigDesc(configs: Record<string, ConfigDescWithImportDir>, name: string): ConfigDescWithImportDir {
+    let inheritChain: ConfigDescWithImportDir[] = [];
     const maxInherits = 8;
     let curName = name;
     while (inheritChain.length < maxInherits) {
@@ -255,7 +269,8 @@ function resolveConfigDesc(configs: Record<string, ConfigDesc>, name: string): C
     if (inheritChain.length === maxInherits) {
         log.error(`circular dependency in config '${name}'?`);
     }
-    let res: ConfigDesc = {};
+    let res: ConfigDescWithImportDir = { importDir: configs[name].importDir };
+    // FIXME: merge cmake variables, environment variables and defines
     inheritChain.forEach((config) => {
         Object.assign(res, structuredClone(config));
     });

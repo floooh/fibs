@@ -8,16 +8,17 @@ export type ProjectDesc = {
     settings?: Record<string, SettingsItem>;
 };
 
+export type ConfigDescWithImportDir = ConfigDesc & { importDir: string };
+
 export type Project = {
     name: string;
     dir: string;
     settings: Settings;
     targets: Record<string, Target>;
-    deps: Record<string, Project>;
     commands: Record<string, Command>;
     tools: Record<string, Tool>;
     configs: Record<string, Config>;
-    configDescs: Record<string, ConfigDesc>;
+    configDescs: Record<string, ConfigDescWithImportDir>;
     adapters: Record<string, Adapter>;
 };
 
@@ -56,10 +57,12 @@ export type ConfigDesc = {
     toolchainFile?: string;
     variables?: Record<string, string | boolean>;
     environment?: Record<string, string>;
+    defines?: Record<string, string>;
 };
 
 export type Config = {
     name: string;
+    importDir: string;
     platform: Platform;
     buildType: BuildType;
     generator: string | undefined;
@@ -67,6 +70,7 @@ export type Config = {
     toolchainFile: string | undefined;
     variables: Record<string, string | boolean>;
     environment: Record<string, string>;
+    defines: Record<string, string>;
 };
 
 export type TargetIncludeDirectoriesDesc = string[] | {
@@ -142,6 +146,7 @@ export type TargetDesc = {
 
 export type Target = {
     name: string;
+    importDir: string;
     dir: string | undefined;
     type: TargetType;
     sources: string[];
@@ -159,6 +164,7 @@ export interface CommandDesc {
 
 export interface Command {
     name: string;
+    importDir: string;
     help(project: Project): void;
     run(project: Project): Promise<void>;
 }
@@ -187,6 +193,7 @@ export type ToolDesc = {
 
 export type Tool = {
     name: string;
+    importDir: string;
     platforms: Platform[];
     optional: boolean;
     notFoundMsg: string;
@@ -205,6 +212,7 @@ export type AdapterDesc = {
 
 export type Adapter = {
     name: string;
+    importDir: string;
     configure(project: Project, config: Config, options: AdapterOptions): Promise<void>;
     build(project: Project, config: Config, options: AdapterOptions): Promise<void>;
 };
