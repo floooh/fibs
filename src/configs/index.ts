@@ -97,4 +97,38 @@ export const configs: Record<string, ConfigDesc> = {
         inherits: 'emsc-ninja',
         buildType: 'release',
     },
+    'wasi': {
+        ignore: true,
+        platform: 'wasi',
+        toolchainFile: '@sdks/wasisdk/share/cmake/wasi-sdk.cmake',
+        variables: {
+            WASI_SDK_PREFIX: '@sdks/wasisdk',
+        }
+    },
+    'wasi-make': {
+        ignore: true,
+        inherits: 'wasi',
+        generator: 'Unix Makefiles',
+    },
+    'wasi-make-debug': {
+        inherits: 'wasi-make',
+        buildType: 'debug',
+    },
+    'wasi-make-release': {
+        inherits: 'wasi-make',
+        buildType: 'release',
+    },
+    'wasi-ninja': {
+        ignore: true,
+        inherits: 'wasi',
+        generator: 'Ninja',
+    },
+    'wasi-ninja-debug': {
+        inherits: 'wasi-ninja',
+        buildType: 'debug',
+    },
+    'wasi-ninja-release': {
+        inherits: 'wasi-ninja',
+        buildType: 'release',
+    },
 };

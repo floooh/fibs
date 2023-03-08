@@ -203,6 +203,7 @@ function isMultiConfigGenerator(config: Config): boolean {
 }
 
 function genCacheVariables(project: Project, config: Config): Record<string, any> {
+    const aliasMap = util.aliasMap(project, config, config.importDir);
     let res: Record<string, any> = {};
     if (!isMultiConfigGenerator(config)) {
         res.CMAKE_BUILD_TYPE = asCMakeBuildType(config.buildType);
@@ -218,7 +219,7 @@ function genCacheVariables(project: Project, config: Config): Record<string, any
                 value: val ? 'ON' : 'OFF',
             };
         } else {
-            res[key] = val;
+            res[key] = util.resolveAlias(val, aliasMap);
         }
     }
     return res;

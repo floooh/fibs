@@ -1,5 +1,6 @@
 import { Config, Project } from './types.ts';
 import * as emsdk from './emsdk.ts';
+import * as wasisdk from './wasisdk.ts';
 import * as util from './util.ts';
 import * as log from './log.ts';
 
@@ -42,6 +43,11 @@ export async function validate(project: Project, config: Config, options: Valida
         if (!util.dirExists(emsdk.dir(project))) {
             res.valid = false;
             res.hints.push("Emscripten SDK not installed (install with 'fibs emsdk install')");
+        }
+    } else if (config.platform === 'wasi') {
+        if (!util.dirExists(wasisdk.dir(project))) {
+            res.valid = false;
+            res.hints.push("WASI SDK not installed (install with 'fibs wasisdk install')");
         }
     }
 
