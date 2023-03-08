@@ -1,4 +1,5 @@
 import { CommandDesc, log, Project, util, http, host } from '../../mod.ts';
+import WASI from 'https://deno.land/std@0.178.0/wasi/snapshot_preview1.ts';
 
 export const runCmd: CommandDesc = {
     help: help,
@@ -42,7 +43,15 @@ async function runFn(project: Project) {
         }
         await http.serve({ target: dir, port: '8080' });
     } else if (config.platform === 'wasi') {
-        log.error('FIXME: implement run for wasi');
+        const wasmPath = path + '.wasm';
+        const context = new WASI({
+            args: Deno.args.slice(2),
+            env: Deno.env.toObject(),
+        });
+        const binary = await Deno.readFile(wasmPath);
+        const module = await WebAssembly.compile(binary);
+        const instance = await WebAssembly.instantiate(module, { 'wasi_snapshot_preview1': context.exports });
+        context.start(instance);
     } else if (config.platform === 'android') {
         log.error('FIXME: implement run for Android');
     } else {
