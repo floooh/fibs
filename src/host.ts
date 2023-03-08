@@ -1,6 +1,6 @@
-import { Arch, Platform } from './types.ts';
+import { Arch } from './types.ts';
 
-export function platform(): Platform {
+export function platform(): 'macos' | 'windows' | 'linux' {
     switch (Deno.build.os) {
         case 'darwin':
             return 'macos';

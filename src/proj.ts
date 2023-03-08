@@ -59,14 +59,6 @@ export async function setup(
 
 function resolveConfigs(project: Project) {
     project.configs = {};
-    // first go through all config descs and resolve their toolchain file path
-    for (const name in project.configDescs) {
-        const desc = project.configDescs[name];
-        if (desc.toolchainFile !== undefined) {
-            desc.toolchainFile = `${desc.importDir}/${desc.toolchainFile}`;
-        }
-    }
-    // next merge resolve inherited config desc and generate list of final configs
     for (const name in project.configDescs) {
         if (project.configDescs[name].ignore) {
             continue;
@@ -83,9 +75,9 @@ function resolveConfigs(project: Project) {
             importDir: desc.importDir,
             platform: desc.platform,
             buildType: desc.buildType,
-            generator: desc.generator ?? undefined,
+            generator: desc.generator,
             arch: desc.arch ?? undefined,
-            toolchainFile: desc.toolchainFile ?? undefined,
+            toolchainFile: desc.toolchainFile,
             variables: desc.variables ?? {},
             environment: desc.environment ?? {},
             defines: desc.defines ?? {},

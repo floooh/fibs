@@ -128,6 +128,27 @@ export function validConfigForPlatform(config: Config, platform: Platform): bool
     return config.platform === platform;
 }
 
+export function aliasMap(project: Project, config: Config, importDir: string | undefined): Record<string, string> {
+    return {
+        '@root': project.dir,
+        '@self': (importDir !== undefined) ? importDir : project.dir,
+        '@sdks': sdkDir(project),
+        '@build': buildDir(project, config),
+        '@dist': distDir(project, config),
+    };
+}
+
+export function resolveAlias(str: string, aliasMap: Record<string,string>): string {
+    if ((str !== undefined) && str.startsWith('@')) {
+        for (const k in aliasMap) {
+            if (str.startsWith(k)) {
+                return str.replace(k, aliasMap[k]);
+            }
+        }
+    }
+    return str;
+}
+
 export async function runCmd(cmd: string, options: RunOptions): Promise<RunResult> {
     const {
         showCmd = true,
@@ -161,4 +182,59 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
             throw err;
         }
     }
+}
+
+export type DownloadOptions = {
+    url: string,
+    dir: string,
+    filename: string,
+    abortOnError?: boolean,
+};
+
+export async function download(options: DownloadOptions): Promise<boolean> {
+    const {
+        url,
+        dir,
+        filename,
+        abortOnError = true,
+    } = options;
+    const path = `${dir}/${filename}`;
+    try {
+        const response = await fetch(url);
+        if ((response.status < 400) && response.body) {
+            const allLength = +response.headers.get('Content-Length')!;
+            let curLength = 0;
+            fs.ensureDirSync(dir);
+            const file = await Deno.open(path, { write: true, create: true });
+            const reader = response.body.getReader();
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    break;
+                }
+                curLength += value.length;
+                const percent = Math.round((curLength / allLength) * 10000) / 100;
+                log.write(`${percent}%\r`);
+                await file.write(value);
+            }
+        } else {
+            const msg = `Downloading '${url} failed with: ${response.status} (${response.statusText})`;
+            if (abortOnError) {
+                log.error(msg);
+            } else {
+                log.warn(msg);
+                return false;
+            }
+        }
+    }
+    catch (err) {
+        const msg = `Downloading '${url} to ${path} failed with: ${err.message}`;
+        if (abortOnError) {
+            log.error(msg);
+        } else {
+            log.warn(msg);
+            return false;
+        }
+    }
+    return true;
 }

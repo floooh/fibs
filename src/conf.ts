@@ -20,6 +20,8 @@ export async function validate(project: Project, config: Config, options: Valida
     } = options;
     const res: ValidateResult = { valid: true, hints: [] };
 
+    const aliasMap = util.aliasMap(project, config, config.importDir);
+
     // validate generators
     // TODO: more generator checks
     if (config.generator === 'Ninja') {
@@ -45,9 +47,10 @@ export async function validate(project: Project, config: Config, options: Valida
 
     // check if toolchain file exists
     if (config.toolchainFile !== undefined) {
-        if (!util.fileExists(config.toolchainFile)) {
+        const toolchainPath = util.resolveAlias(config.toolchainFile, aliasMap);
+        if (!util.fileExists(toolchainPath)) {
             res.valid = false;
-            res.hints.push(`toolchain file not found: ${config.toolchainFile}`);
+            res.hints.push(`toolchain file not found: ${toolchainPath}`);
         }
     }
 

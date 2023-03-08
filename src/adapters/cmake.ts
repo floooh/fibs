@@ -163,12 +163,13 @@ function genCMakePresetsJson(project: Project, config: Config): string {
 function genConfigurePresets(project: Project, config: Config): any[] {
     const res = [];
     if (util.validConfigForPlatform(config, host.platform())) {
+        const aliasMap = util.aliasMap(project, config, config.importDir);
         res.push({
             name: config.name,
             displayName: config.name,
             binaryDir: util.buildDir(project, config),
             generator: config.generator,
-            toolchainFile: config.toolchainFile,
+            toolchainFile: (config.toolchainFile !== undefined) ? util.resolveAlias(config.toolchainFile, aliasMap) : undefined,
             cacheVariables: genCacheVariables(project, config),
             environment: config.environment,
         });

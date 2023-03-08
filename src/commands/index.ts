@@ -9,6 +9,7 @@ import { setCmd } from './set.ts';
 import { getCmd } from './get.ts';
 import { unsetCmd } from './unset.ts';
 import { emsdkCmd } from './emsdk.ts';
+import { wasisdkCmd } from './wasisdk.ts';
 
 export const commands = {
     help: helpCmd,
@@ -22,4 +23,5 @@ export const commands = {
     get: getCmd,
     unset: unsetCmd,
     emsdk: emsdkCmd,
+    wasisdk: wasisdkCmd,
 };

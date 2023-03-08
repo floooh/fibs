@@ -1,5 +1,7 @@
 import { colors } from '../deps.ts';
 
+const textEncoder = new TextEncoder();
+
 export function print(...args: unknown[]) {
     console.log(...args);
 }
@@ -28,6 +30,10 @@ export function run(cmdLine: string[]) {
 
 export function section(name: string) {
     print(colors.yellow(`=== ${name}:`));
+}
+
+export function write(str: string) {
+    Deno.stdout.writeSync(textEncoder.encode(str));
 }
 
 export function info(...args: unknown[]) {

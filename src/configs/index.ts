@@ -69,7 +69,7 @@ export const configs: Record<string, ConfigDesc> = {
     'emsc': {
         ignore: true,
         platform: 'emscripten',
-        toolchainFile: '.fibs/sdks/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake',
+        toolchainFile: '@sdks/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake',
     },
     'emsc-make': {
         ignore: true,
