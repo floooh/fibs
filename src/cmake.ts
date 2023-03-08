@@ -35,11 +35,15 @@ export type BuildOptions = {
 };
 
 export async function build(project: Project, config: Config, options: BuildOptions) {
+    const {
+        target,
+        cleanFirst = false,
+    } = options;
     let args = ['--build', '--preset', 'default' ];
-    if (options.target !== undefined) {
-        args = [...args, '--target', options.target];
+    if (target !== undefined) {
+        args = [...args, '--target', target];
     }
-    if (options.cleanFirst === true) {
+    if (cleanFirst) {
         args = [...args, '--clean-first'];
     }
     const res = await run({ args });

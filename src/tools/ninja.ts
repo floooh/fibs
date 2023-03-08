@@ -8,10 +8,11 @@ export const ninjaTool: ToolDesc = {
 };
 
 export async function run(options: RunOptions): Promise<RunResult> {
+    const { abortOnError = true } = options;
     try {
         return await util.runCmd('ninja', options);
     } catch (err) {
-        if (options.abortOnError === true) {
+        if (abortOnError) {
             log.error(`Failed running ninja with: ${err.message}`);
         } else {
             throw err;

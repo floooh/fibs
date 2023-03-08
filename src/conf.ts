@@ -14,8 +14,10 @@ export type ValidateResult = {
 };
 
 export async function validate(project: Project, config: Config, options: ValidateOptions): Promise<ValidateResult> {
-    const silent = options.silent ?? false;
-    const abortOnError = options.abortOnError ?? true;
+    const {
+        silent = false,
+        abortOnError = true,
+    } = options;
     const res: ValidateResult = { valid: true, hints: [] };
 
     // validate generators

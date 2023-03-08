@@ -8,10 +8,11 @@ export const vscodeTool: ToolDesc = {
 }
 
 export async function run(options: RunOptions): Promise<RunResult> {
+    const { abortOnError = true } = options;
     try {
         return await util.runCmd('code', options);
     } catch (err) {
-        if (options.abortOnError === true) {
+        if (abortOnError) {
             log.error(`Failed to run 'code' with: ${err.message}`);
         } else {
             throw err;

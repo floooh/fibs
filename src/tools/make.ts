@@ -8,10 +8,11 @@ export const makeTool: ToolDesc = {
 }
 
 export async function run(options: RunOptions): Promise<RunResult> {
+    const { abortOnError = true } = options;
     try {
         return await util.runCmd('make', options);
     } catch (err) {
-        if (options.abortOnError === true) {
+        if (abortOnError) {
             log.error(`Failed running make with: ${err.message}`);
         } else {
             throw err;

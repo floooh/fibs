@@ -129,27 +129,33 @@ export function validConfigForPlatform(config: Config, platform: Platform): bool
 }
 
 export async function runCmd(cmd: string, options: RunOptions): Promise<RunResult> {
-    const cmdLine = [cmd, ...options.args];
-    const showCmd = options.showCmd ?? true;
-    const abortOnError = options.abortOnError ?? true;
+    const {
+        showCmd = true,
+        abortOnError = true,
+        args,
+        cwd,
+        stdout,
+        stderr,
+    } = options;
+    const cmdLine = [cmd, ...args];
     if (showCmd) {
         log.run(cmdLine);
     }
     try {
         const p = Deno.run({
             cmd: cmdLine,
-            cwd: options.cwd,
-            stdout: options.stdout,
-            stderr: options.stderr,
+            cwd: cwd,
+            stdout: stdout,
+            stderr: stderr,
         });
         const res: RunResult = {
             exitCode: (await p.status()).code,
-            stdout: (options.stdout === 'piped') ? new TextDecoder().decode(await p.output()) : '',
-            stderr: (options.stderr === 'piped') ? new TextDecoder().decode(await p.stderrOutput()) : '',
+            stdout: (stdout === 'piped') ? new TextDecoder().decode(await p.output()) : '',
+            stderr: (stderr === 'piped') ? new TextDecoder().decode(await p.stderrOutput()) : '',
         };
         return res;
     } catch (err) {
-        if (abortOnError === true) {
+        if (abortOnError) {
             log.error(`Failed running '${cmd}' with: ${err.message}`);
         } else {
             throw err;

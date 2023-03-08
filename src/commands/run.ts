@@ -29,10 +29,10 @@ async function runFn(project: Project) {
     const path = `${dir}/${target.name}`;
     if (config.platform === 'emscripten') {
         log.error('FIXME: implement run for Emscripten');
-    } else if (config.platform === 'android') {
-        log.error('FIXME: implement run for Android');
     } else if (config.platform === 'wasi') {
         log.error('FIXME: implement run for wasi');
+    } else if (config.platform === 'android') {
+        log.error('FIXME: implement run for Android');
     } else {
         const res = await util.runCmd(path, {
             args: Deno.args.slice(2),
