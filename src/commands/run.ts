@@ -1,4 +1,4 @@
-import { CommandDesc, log, Project, util } from '../../mod.ts';
+import { CommandDesc, log, Project, util, http, host } from '../../mod.ts';
 
 export const runCmd: CommandDesc = {
     help: help,
@@ -28,7 +28,19 @@ async function runFn(project: Project) {
     const dir = util.distDir(project, config);
     const path = `${dir}/${target.name}`;
     if (config.platform === 'emscripten') {
-        log.error('FIXME: implement run for Emscripten');
+        const url = `http://localhost:8080/${target.name}.html`;
+        switch (host.platform()) {
+            case 'macos':
+                util.runCmd('open', { args: [ url ] });
+                break;
+            case 'linux':
+                util.runCmd('xdg-open', { args: [ url ] });
+                break;
+            case 'windows':
+                util.runCmd('cmd', { args: [ '/c', 'start', url ]});
+                break;
+        }
+        await http.serve({ target: dir, port: '8080' });
     } else if (config.platform === 'wasi') {
         log.error('FIXME: implement run for wasi');
     } else if (config.platform === 'android') {
