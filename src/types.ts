@@ -1,5 +1,5 @@
 export type ProjectDesc = {
-    name: string;
+    name?: string;
     imports?: Record<string, ImportDesc>;
     targets?: Record<string, TargetDesc>;
     commands?: Record<string, CommandDesc>;
@@ -45,7 +45,7 @@ export type Platform =
 
 export type Compiler = 'msvc' | 'gcc' | 'clang' | 'appleclang';
 
-export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll';
+export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll' | 'void';
 
 export type BuildType = 'release' | 'debug';
 
@@ -150,7 +150,7 @@ export type TargetDependencies = {
 export type TargetDesc = {
     type: TargetType;
     dir?: string;
-    sources: string[];
+    sources?: string[];
     libs?: string[];
     frameworks?: string[];
     includeDirectories?: TargetIncludeDirectoriesDesc;

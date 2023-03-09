@@ -17,6 +17,7 @@ import {
     TargetLinkOptions,
     TargetLinkOptionsDesc,
     TargetLinkOptionsFunc,
+    TargetType,
     Tool,
 } from './types.ts';
 import * as settings from './settings.ts';
@@ -30,7 +31,7 @@ export async function setup(
 ): Promise<Project> {
     // start populating project with std properties
     const project: Project = {
-        name: rootDesc.name,
+        name: rootDesc.name ?? 'project',
         dir: rootDir,
         imports: {},
         settings: {},
@@ -126,15 +127,15 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
                 importDir,
                 dir: desc.dir,
                 type: desc.type,
-                sources: desc.sources,
+                sources: desc.sources ?? [],
                 deps: {
                     libs: desc.libs ?? [],
                     frameworks: desc.frameworks ?? [],
                 },
-                includeDirectories: toIncludeDirectories(desc.includeDirectories),
-                compileDefinitions: toCompileDefinitions(desc.compileDefinitions),
-                compileOptions: toCompileOptions(desc.compileOptions),
-                linkOptions: toLinkOptions(desc.linkOptions),
+                includeDirectories: toIncludeDirectories(desc.includeDirectories, desc.type),
+                compileDefinitions: toCompileDefinitions(desc.compileDefinitions, desc.type),
+                compileOptions: toCompileOptions(desc.compileOptions, desc.type),
+                linkOptions: toLinkOptions(desc.linkOptions, desc.type),
             };
             into.targets[name] = target;
         }
@@ -184,7 +185,7 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
     }
 }
 
-function toIncludeDirectories(desc: TargetIncludeDirectoriesDesc | undefined): TargetIncludeDirectories {
+function toIncludeDirectories(desc: TargetIncludeDirectoriesDesc | undefined, type: TargetType): TargetIncludeDirectories {
     const res: TargetIncludeDirectories = {
         system: false,
         interface: [],
@@ -193,7 +194,11 @@ function toIncludeDirectories(desc: TargetIncludeDirectoriesDesc | undefined): T
     };
     if (desc) {
         if (Array.isArray(desc)) {
-            res.public = desc;
+            if (type === 'void') {
+                res.interface = desc;
+            } else {
+                res.public = desc;
+            }
         } else {
             res.system = desc.system ?? false;
             res.interface = desc.interface ?? [];
@@ -204,27 +209,39 @@ function toIncludeDirectories(desc: TargetIncludeDirectoriesDesc | undefined): T
     return res;
 }
 
-function toCompileDefinitions(desc: TargetCompileDefinitionsDesc | undefined): TargetCompileDefinitions {
+function toCompileDefinitions(desc: TargetCompileDefinitionsDesc | undefined, type: TargetType): TargetCompileDefinitions {
     const res: TargetCompileDefinitions = {
         interface: {},
         private: {},
         public: {},
     };
     if (desc) {
-        if (typeof desc.interface === 'object') {
-            res.interface = desc.interface;
-        }
-        if (typeof desc.private === 'object') {
-            res.private = desc.private;
-        }
-        if (typeof desc.public === 'object') {
-            res.public = desc.public;
+        if ((typeof desc.interface === undefined)
+            && (typeof desc.private === undefined)
+            && (typeof desc.public === undefined))
+        {
+            // FIXME: that's ugly
+            if (type === 'void') {
+                res.interface = desc as any;
+            } else {
+                res.public = desc as any;
+            }
+        } else {
+            if (typeof desc.interface === 'object') {
+                res.interface = desc.interface;
+            }
+            if (typeof desc.private === 'object') {
+                res.private = desc.private;
+            }
+            if (typeof desc.public === 'object') {
+                res.public = desc.public;
+            }
         }
     }
     return res;
 }
 
-function toCompileOptions(desc: TargetCompileOptionsDesc | TargetCompileOptionsFunc | undefined): TargetCompileOptions | TargetCompileOptionsFunc {
+function toCompileOptions(desc: TargetCompileOptionsDesc | TargetCompileOptionsFunc | undefined, type: TargetType): TargetCompileOptions | TargetCompileOptionsFunc {
     const res: TargetCompileOptions = {
         interface: [],
         private: [],
@@ -235,7 +252,11 @@ function toCompileOptions(desc: TargetCompileOptionsDesc | TargetCompileOptionsF
             return desc;
         }
         else if (Array.isArray(desc)) {
-            res.public = desc;
+            if (type === 'void') {
+                res.interface = desc;
+            } else {
+                res.public = desc;
+            }
         } else {
             res.interface = desc.interface ?? [];
             res.private = desc.private ?? [];
@@ -245,7 +266,7 @@ function toCompileOptions(desc: TargetCompileOptionsDesc | TargetCompileOptionsF
     return res;
 }
 
-function toLinkOptions(desc: TargetLinkOptionsDesc | TargetLinkOptionsFunc | undefined): TargetLinkOptions | TargetLinkOptionsFunc {
+function toLinkOptions(desc: TargetLinkOptionsDesc | TargetLinkOptionsFunc | undefined, type: TargetType): TargetLinkOptions | TargetLinkOptionsFunc {
     const res: TargetLinkOptions = {
         interface: [],
         private: [],
@@ -256,7 +277,11 @@ function toLinkOptions(desc: TargetLinkOptionsDesc | TargetLinkOptionsFunc | und
             return desc;
         }
         else if (Array.isArray(desc)) {
-            res.public = desc;
+            if (type === 'void') {
+                res.interface = desc;
+            } else {
+                res.public = desc;
+            }
         } else {
             res.interface = desc.interface ?? [];
             res.private = desc.private ?? [];

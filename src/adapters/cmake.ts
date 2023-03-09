@@ -101,11 +101,16 @@ function genTarget(project: Project, config: Config, target: Target): string {
         case 'dll':
             str += `add_library(${target.name} SHARED\n`;
             break;
+        case 'void':
+            str += `add_library(${target.name} INTERFACE)\n`;
+            break;
     }
-    target.sources.forEach((source) => {
-        str += `    ${filePath(target.importDir, target.dir, source)}\n`;
-    });
-    str += ')\n';
+    if (target.type !== 'void') {
+        target.sources.forEach((source) => {
+            str += `    ${filePath(target.importDir, target.dir, source)}\n`;
+        });
+        str += ')\n';
+    }
     return str;
 }
 
