@@ -1,4 +1,4 @@
-import { CommandDesc, host, log, Project } from '../../mod.ts';
+import { CommandDesc, conf, host, log, Project } from '../../mod.ts';
 import { colors } from '../../deps.ts';
 
 export const diagCmd: CommandDesc = {
@@ -49,7 +49,7 @@ async function run(project: Project) {
         if (separator) {
             log.section('configs');
         }
-        log.warn('FIXME: diag configs');
+        await configs(project);
         log.print();
     }
     if (which.includes('imports')) {
@@ -82,6 +82,23 @@ async function tools(project: Project) {
                 res = `${colors.red('NOT FOUND')} (${tool.notFoundMsg})`;
             }
             log.print(`${tool.name}:\t${res}`);
+        }
+    }
+}
+
+async function configs(project: Project) {
+    const configs = project.configs;
+    for (const configName in configs) {
+        const config = configs[configName];
+        log.write(`${config.name}: `)
+        const res = await conf.validate(project, config, { silent: true, abortOnError: false });
+        if (res.valid) {
+            log.write(colors.green('ok\n'));
+        } else {
+            log.write(colors.red('FAILED\n'));
+            for (const hint of res.hints) {
+                log.info(`  ${hint}`);
+            }
         }
     }
 }
