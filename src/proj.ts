@@ -21,6 +21,7 @@ import {
 } from './types.ts';
 import * as settings from './settings.ts';
 import * as log from './log.ts';
+import * as imports from './imports.ts';
 
 export async function setup(
     rootDir: string,
@@ -31,6 +32,7 @@ export async function setup(
     const project: Project = {
         name: rootDesc.name,
         dir: rootDir,
+        imports: {},
         settings: {},
         targets: {},
         commands: {},
@@ -41,9 +43,9 @@ export async function setup(
     };
 
     // first integrate std project properties (tools, commands, ...)
-    integrate(project, stdDesc, rootDir);
+    await integrate(project, stdDesc, rootDir);
     // followed by the root project properties
-    integrate(project, rootDesc, rootDir);
+    await integrate(project, rootDesc, rootDir);
 
     // FIXME: resolve and integrate imports...
 
@@ -86,7 +88,29 @@ function resolveConfigs(project: Project) {
     }
 }
 
-function integrate(into: Project, other: ProjectDesc, importDir: string) {
+async function integrate(into: Project, other: ProjectDesc, importDir: string) {
+    // important to keep imports at the top!
+    if (other.imports) {
+        for (const name in other.imports) {
+            const imp = other.imports[name];
+            let projDesc = imp.projectDesc;
+            const res = await imports.fetch(into, { name, url: imp.url, ref: imp.ref });
+            if (res.valid) {
+                if (projDesc === undefined) {
+                    projDesc = res.projectDesc;
+                }
+            }
+            if (projDesc) {
+                await integrate(into, projDesc, res.path);
+            }
+            into.imports[name] = {
+                name,
+                importDir: res.path,
+                url: imp.url,
+                ref: imp.ref ?? null,
+            };
+        }
+    }
     if (other.configs) {
         for (const name in other.configs) {
             into.configDescs[name] = { ...other.configs[name], importDir };

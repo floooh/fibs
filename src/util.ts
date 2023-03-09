@@ -92,6 +92,16 @@ export function ensureSdkDir(project: Project): string {
     return path;
 }
 
+export function importsDir(project: Project): string {
+    return `${fibsDir(project)}/imports`;
+}
+
+export function ensureImportsDir(project: Project): string {
+    const path = importsDir(project);
+    fs.ensureDirSync(path);
+    return path;
+}
+
 export function defaultConfigForPlatform(platform: Platform): string {
     switch (platform) {
         case 'windows':

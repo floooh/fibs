@@ -1,5 +1,6 @@
 export type ProjectDesc = {
     name: string;
+    imports?: Record<string, ImportDesc>;
     targets?: Record<string, TargetDesc>;
     commands?: Record<string, CommandDesc>;
     tools?: Record<string, ToolDesc>;
@@ -14,6 +15,7 @@ export type Project = {
     name: string;
     dir: string;
     settings: Settings;
+    imports: Record<string, Import>;
     targets: Record<string, Target>;
     commands: Record<string, Command>;
     tools: Record<string, Tool>;
@@ -72,6 +74,19 @@ export type Config = {
     environment: Record<string, string>;
     defines: Record<string, string>;
 };
+
+export type ImportDesc = {
+    url: string;
+    ref?: string;
+    projectDesc?: ProjectDesc;
+};
+
+export type Import = {
+    name: string;
+    importDir: string;
+    url: string;
+    ref: string | null;
+}
 
 export type TargetIncludeDirectoriesDesc = string[] | {
     system?: boolean;
