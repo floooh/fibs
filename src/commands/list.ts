@@ -10,6 +10,7 @@ function help() {
         'list',
         'list settings',
         'list configs',
+        'list imports',
         'list targets [--all] [--exe] [--lib] [--dll]',
     ], 'list available configs, current settings, targets, ...');
 }
@@ -20,6 +21,7 @@ type ListArgs = {
     all: boolean;
     settings: boolean;
     configs: boolean;
+    imports: boolean,
     targetTypes: TargetType[];
 };
 
@@ -46,6 +48,15 @@ async function run(project: Project) {
     }
     if (args.all) {
         log.print();
+        log.section('imports');
+    }
+    if (args.all || args.imports) {
+        for (const key in project.imports) {
+            log.print(`${project.imports[key].name}: ${project.imports[key].importDir}`);
+        }
+    }
+    if (args.all) {
+        log.print();
         log.section('targets');
     }
     if (args.all || (args.targetTypes.length > 0)) {
@@ -65,10 +76,11 @@ async function run(project: Project) {
 }
 
 function parseArgs(): ListArgs {
-    let args: ListArgs = {
+    const args: ListArgs = {
         all: false,
         settings: false,
         configs: false,
+        imports: false,
         targetTypes: [],
     };
     if (Deno.args.length === 1) {
@@ -82,6 +94,9 @@ function parseArgs(): ListArgs {
                 break;
             case 'configs':
                 args.configs = true;
+                break;
+            case 'imports':
+                args.imports = true;
                 break;
             case 'targets':
                 if (Deno.args.length === 2) {
