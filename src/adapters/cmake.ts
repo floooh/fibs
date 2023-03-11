@@ -107,7 +107,7 @@ function genTarget(project: Project, config: Config, tgt: Target): string {
                 if (config.platform === 'windows') {
                     subtype = 'WIN32';
                 } else if ((config.platform === 'macos') || (config.platform === 'ios')) {
-                    subtype = 'MACOSX_BUNDLE';
+                    subtype = ' MACOSX_BUNDLE';
                 }
             }
             str += `add_executable(${tgt.name}${subtype}\n`;
