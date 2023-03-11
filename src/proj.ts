@@ -6,23 +6,12 @@ import {
     ConfigDescWithImportDir,
     Project,
     ProjectDesc,
-    Target,
-    TargetCompileDefinitions,
-    TargetCompileDefinitionsDesc,
-    TargetIncludeDirectories,
-    TargetIncludeDirectoriesDesc,
-    TargetCompileOptions,
-    TargetCompileOptionsDesc,
-    TargetCompileOptionsFunc,
-    TargetLinkOptions,
-    TargetLinkOptionsDesc,
-    TargetLinkOptionsFunc,
-    TargetType,
     Tool,
 } from './types.ts';
 import * as settings from './settings.ts';
 import * as log from './log.ts';
 import * as imports from './imports.ts';
+import * as target from './target.ts';
 
 export async function setup(
     rootDir: string,
@@ -118,26 +107,20 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
         }
     }
     if (other.targets) {
-        // FIXME: any paths in target need to be resolved relative to the
-        // integrated ProjectDesc's path (e.g. relative to the '@.' path alias)
         for (const name in other.targets) {
             const desc = other.targets[name];
-            const target: Target = {
+            into.targets[name] = {
                 name,
                 importDir,
                 dir: desc.dir,
                 type: desc.type,
                 sources: desc.sources ?? [],
-                deps: {
-                    libs: desc.libs ?? [],
-                    frameworks: desc.frameworks ?? [],
-                },
-                includeDirectories: toIncludeDirectories(desc.includeDirectories, desc.type),
-                compileDefinitions: toCompileDefinitions(desc.compileDefinitions, desc.type),
-                compileOptions: toCompileOptions(desc.compileOptions, desc.type),
-                linkOptions: toLinkOptions(desc.linkOptions, desc.type),
+                libs: desc.libs ?? [],
+                includeDirectories: target.asTargetItemsOrFunc(desc.includeDirectories, desc.type),
+                compileDefinitions: target.asTargetItemsOrFunc(desc.compileDefinitions, desc.type),
+                compileOptions: target.asTargetItemsOrFunc(desc.compileOptions, desc.type),
+                linkOptions: target.asTargetItemsOrFunc(desc.linkOptions, desc.type),
             };
-            into.targets[name] = target;
         }
     }
     if (other.commands) {
@@ -183,112 +166,6 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
             into.settings[key] = other.settings[key];
         }
     }
-}
-
-function toIncludeDirectories(desc: TargetIncludeDirectoriesDesc | undefined, type: TargetType): TargetIncludeDirectories {
-    const res: TargetIncludeDirectories = {
-        system: false,
-        interface: [],
-        private: [],
-        public: [],
-    };
-    if (desc) {
-        if (Array.isArray(desc)) {
-            if (type === 'void') {
-                res.interface = desc;
-            } else {
-                res.public = desc;
-            }
-        } else {
-            res.system = desc.system ?? false;
-            res.interface = desc.interface ?? [];
-            res.private = desc.private ?? [];
-            res.public = desc.public ?? [];
-        }
-    }
-    return res;
-}
-
-function toCompileDefinitions(desc: TargetCompileDefinitionsDesc | undefined, type: TargetType): TargetCompileDefinitions {
-    const res: TargetCompileDefinitions = {
-        interface: {},
-        private: {},
-        public: {},
-    };
-    if (desc) {
-        if ((typeof desc.interface === undefined)
-            && (typeof desc.private === undefined)
-            && (typeof desc.public === undefined))
-        {
-            // FIXME: that's ugly
-            if (type === 'void') {
-                res.interface = desc as any;
-            } else {
-                res.public = desc as any;
-            }
-        } else {
-            if (typeof desc.interface === 'object') {
-                res.interface = desc.interface;
-            }
-            if (typeof desc.private === 'object') {
-                res.private = desc.private;
-            }
-            if (typeof desc.public === 'object') {
-                res.public = desc.public;
-            }
-        }
-    }
-    return res;
-}
-
-function toCompileOptions(desc: TargetCompileOptionsDesc | TargetCompileOptionsFunc | undefined, type: TargetType): TargetCompileOptions | TargetCompileOptionsFunc {
-    const res: TargetCompileOptions = {
-        interface: [],
-        private: [],
-        public: [],
-    };
-    if (desc) {
-        if (typeof desc === 'function') {
-            return desc;
-        }
-        else if (Array.isArray(desc)) {
-            if (type === 'void') {
-                res.interface = desc;
-            } else {
-                res.public = desc;
-            }
-        } else {
-            res.interface = desc.interface ?? [];
-            res.private = desc.private ?? [];
-            res.public = desc.public ?? [];
-        }
-    }
-    return res;
-}
-
-function toLinkOptions(desc: TargetLinkOptionsDesc | TargetLinkOptionsFunc | undefined, type: TargetType): TargetLinkOptions | TargetLinkOptionsFunc {
-    const res: TargetLinkOptions = {
-        interface: [],
-        private: [],
-        public: [],
-    };
-    if (desc) {
-        if (typeof desc === 'function') {
-            return desc;
-        }
-        else if (Array.isArray(desc)) {
-            if (type === 'void') {
-                res.interface = desc;
-            } else {
-                res.public = desc;
-            }
-        } else {
-            res.interface = desc.interface ?? [];
-            res.private = desc.private ?? [];
-            res.public = desc.public ?? [];
-        }
-    }
-    return res;
 }
 
 function resolveConfigDesc(configs: Record<string, ConfigDescWithImportDir>, name: string): ConfigDescWithImportDir {

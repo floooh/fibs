@@ -1,4 +1,4 @@
-import { Config, Project } from './types.ts';
+import { Config, Project, Compiler } from './types.ts';
 import * as emsdk from './emsdk.ts';
 import * as wasisdk from './wasisdk.ts';
 import * as util from './util.ts';
@@ -69,4 +69,16 @@ export async function validate(project: Project, config: Config, options: Valida
         }
     }
     return res;
+}
+
+export function compilers(config: Config): Compiler[] {
+    switch (config.platform) {
+        case 'windows': return ['msvc', 'gcc', 'clang'];
+        case 'linux': return ['gcc', 'clang'];
+        case 'android': return ['clang'];
+        case 'emscripten': return ['clang'];
+        case 'wasi': return ['clang'];
+        case 'macos': return ['appleclang'];
+        case 'ios': return ['appleclang'];
+    }
 }

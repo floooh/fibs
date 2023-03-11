@@ -1,4 +1,19 @@
-import { AdapterDesc, AdapterOptions, BuildType, Config, cmake, host, log, Project, Target, util } from '../../mod.ts';
+import {
+    AdapterDesc,
+    AdapterOptions,
+    BuildType,
+    Config,
+    Compiler,
+    cmake,
+    host,
+    log,
+    Project,
+    Target,
+    TargetBuildContext,
+    util,
+    target,
+conf,
+} from '../../mod.ts';
 
 export const cmakeAdapter: AdapterDesc = {
     configure: configure,
@@ -54,12 +69,14 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     let str = '';
     str += genProlog(project, config);
     const targets = Object.values(project.targets);
-    targets.forEach((target) => {
-        str += genTarget(project, config, target);
+    targets.forEach((tgt) => {
+        str += genTarget(project, config, tgt);
     });
-    targets.forEach((target) => {
-        str += genTargetDependencies(project, config, target);
-        str += genTargetIncludeDirectories(project, config, target);
+    targets.forEach((tgt) => {
+        str += genTargetDependencies(project, config, tgt);
+        str += genTargetIncludeDirectories(project, config, tgt);
+        str += genTargetCompileDefinitions(project, config, tgt);
+        str += genTargetCompileOptions(project, config, tgt);
     });
     return str;
 }
@@ -80,74 +97,164 @@ function genProlog(project: Project, config: Config): string {
     return str;
 }
 
-function genTarget(project: Project, config: Config, target: Target): string {
+function genTarget(project: Project, config: Config, tgt: Target): string {
     let str = '';
     let subtype = '';
-    switch (target.type) {
+    switch (tgt.type) {
         case 'plain-exe':
         case 'windowed-exe':
-            if (target.type === 'windowed-exe') {
+            if (tgt.type === 'windowed-exe') {
                 if (config.platform === 'windows') {
                     subtype = 'WIN32';
                 } else if ((config.platform === 'macos') || (config.platform === 'ios')) {
                     subtype = 'MACOSX_BUNDLE';
                 }
             }
-            str += `add_executable(${target.name}${subtype}\n`;
+            str += `add_executable(${tgt.name}${subtype}\n`;
             break;
         case 'lib':
-            str += `add_library(${target.name} STATIC\n`;
+            str += `add_library(${tgt.name} STATIC\n`;
             break;
         case 'dll':
-            str += `add_library(${target.name} SHARED\n`;
+            str += `add_library(${tgt.name} SHARED\n`;
             break;
         case 'void':
-            str += `add_library(${target.name} INTERFACE)\n`;
+            str += `add_library(${tgt.name} INTERFACE)\n`;
             break;
     }
-    if (target.type !== 'void') {
-        target.sources.forEach((source) => {
-            str += `    ${filePath(target.importDir, target.dir, source)}\n`;
+    if (tgt.type !== 'void') {
+        tgt.sources.forEach((source) => {
+            str += `    ${filePath(tgt.importDir, tgt.dir, source)}\n`;
         });
         str += ')\n';
     }
     return str;
 }
 
-function genTargetDependencies(project: Project, config: Config, target: Target): string {
-    let str = '';
-    if (target.deps.libs.length > 0) {
-        if (target.type === 'lib') {
-            str += `target_link_libraries(${target.name} INTERFACE ${target.deps.libs.join(' ')})\n`;
-        } else {
-            str += `target_link_libraries(${target.name} ${target.deps.libs.join(' ')})\n`;
-        }
+function compilerId(compiler: Compiler): string {
+    switch (compiler) {
+        case 'msvc': return 'MSVC';
+        case 'gcc': return 'GNU';
+        case 'clang': return 'Clang';
+        case 'appleclang': return 'AppleClang';
     }
-    // FIXME: osx frameworks
+}
+
+function genTargetDependencies(project: Project, config: Config, tgt: Target): string {
+    let str = '';
+    conf.compilers(config).forEach((compiler) => {
+        let libs: string[];
+        if (typeof tgt.libs === 'function') {
+            const ctx: TargetBuildContext = {
+                config,
+                compiler,
+                target: tgt,
+            };
+            libs = tgt.libs(ctx);
+        } else {
+            libs = tgt.libs;
+        }
+        libs = libs.map((lib) => `"${lib}"`);
+        if (libs.length > 0) {
+            str += `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
+            if ((tgt.type === 'lib') || (tgt.type === 'void')) {
+                str += `  target_link_libraries(${tgt.name} INTERFACE ${libs.join(' ')})\n`;
+            } else {
+                str += `  target_link_libraries(${tgt.name} ${libs.join(' ')})\n`;
+            }
+            str += 'endif()\n'
+        }
+    });
     return str;
 }
 
-function genTargetIncludeDirectories(project: Project, config: Config, target: Target): string {
+function genTargetIncludeDirectories(project: Project, config: Config, tgt: Target): string {
     let str = '';
-    const system = (target.includeDirectories.system === true) ? ' SYSTEM' : '';
-    if (target.includeDirectories.interface) {
-        const items = target.includeDirectories.interface.map((rest) => filePath(target.importDir, target.dir, rest));
-        if (items.length > 0) {
-            str += `target_include_directories(${target.name}${system} INTERFACE ${items.join(' ')})\n`;
+    conf.compilers(config).forEach((compiler) => {
+        const ctx: TargetBuildContext = {
+            config,
+            compiler,
+            target: tgt,
+        };
+        let items = target.resolveTargetItems(tgt.includeDirectories, ctx);
+        const hasInterface = Object.values(items.interface).length > 0;
+        const hasPrivate = Object.values(items.private).length > 0;
+        const hasPublic = Object.values(items.public).length > 0;
+        if (hasInterface || hasPrivate || hasPublic) {
+            str += `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
+            if (hasInterface) {
+                const dirs = items.interface.map((dir) => filePath(tgt.importDir, tgt.dir, dir));
+                str += `  target_include_directories(${tgt.name} INTERFACE ${dirs.join(' ')})\n`;
+            }
+            if (hasPrivate) {
+                const dirs = items.private.map((dir) => filePath(tgt.importDir, tgt.dir, dir));
+                str += `  target_include_directories(${tgt.name} PRIVATE ${dirs.join(' ')})\n`;
+            }
+            if (hasPublic) {
+                const dirs = items.public.map((dir) => filePath(tgt.importDir, tgt.dir, dir));
+                str += `  target_include_directories(${tgt.name} PUBLIC ${dirs.join(' ')})\n`;
+            }
+            str += 'endif()\n'
         }
-    }
-    if (target.includeDirectories.private) {
-        const items = target.includeDirectories.private.map((rest) => filePath(target.importDir, target.dir, rest));
-        if (items.length > 0) {
-            str += `target_include_directories(${target.name}${system} PRIVATE ${items.join(' ')})\n`;
+    });
+    return str;
+}
+
+function genTargetCompileDefinitions(project: Project, config: Config, tgt: Target): string {
+    let str = '';
+    conf.compilers(config).forEach((compiler) => {
+        const ctx: TargetBuildContext = {
+            config,
+            compiler,
+            target: tgt,
+        };
+        const defs = target.resolveTargetItems(tgt.compileDefinitions, ctx);
+        const hasInterface = Object.values(defs.interface).length > 0;
+        const hasPrivate = Object.values(defs.private).length > 0;
+        const hasPublic = Object.values(defs.public).length > 0;
+        if (hasInterface || hasPrivate || hasPublic) {
+            str += `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
+            if (hasInterface) {
+                str += `  target_compile_definitions(${tgt.name} INTERFACE ${defs.interface.join(' ')})\n`;
+            }
+            if (hasPrivate) {
+                str += `  target_compile_definitions(${tgt.name} PRIVATE ${defs.private.join(' ')})\n`;
+            }
+            if (hasPublic) {
+                str += `  target_compile_definitions(${tgt.name} PUBLIC ${defs.public.join(' ')})\n`;
+            }
+            str += 'endif()\n'
         }
-    }
-    if (target.includeDirectories.public) {
-        const items = target.includeDirectories.public.map((rest) => filePath(target.importDir, target.dir, rest));
-        if (items.length > 0) {
-            str += `target_include_directories(${target.name}${system} PUBLIC ${items.join(' ')})\n`;
+    });
+    return str;
+}
+
+function genTargetCompileOptions(project: Project, config: Config, tgt: Target): string {
+    let str = '';
+    conf.compilers(config).forEach((compiler) => {
+        const ctx: TargetBuildContext = {
+            config,
+            compiler,
+            target: tgt,
+        };
+        const opts = target.resolveTargetItems(tgt.compileOptions, ctx);
+        const hasInterface = opts.interface.length > 0;
+        const hasPrivate = opts.private.length > 0;
+        const hasPublic = opts.public.length > 0;
+        if (hasInterface || hasPrivate || hasPublic) {
+            str += `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
+            if (hasInterface) {
+                str += `  target_compile_options(${tgt.name} INTERFACE ${opts.interface.join(' ')})\n`;
+            }
+            if (hasPrivate) {
+                str += `  target_compile_options(${tgt.name} PRIVATE ${opts.private.join(' ')})\n`;
+            }
+            if (hasPublic) {
+                str += `  target_compile_options(${tgt.name} PUBLIC ${opts.public.join(' ')})\n`;
+            }
+            str += 'endif()\n'
         }
-    }
+    });
     return str;
 }
 
