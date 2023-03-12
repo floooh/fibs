@@ -28,7 +28,9 @@ async function runFn(project: Project) {
     const config = util.activeConfig(project);
     const dir = util.distDir(project, config);
     const path = `${dir}/${target.name}`;
-    if (config.platform === 'emscripten') {
+    if ((config.platform === 'macos') && (target.type === 'windowed-exe')) {
+        util.runCmd('open', { args: [ `${path}.app` ]});
+    } else if (config.platform === 'emscripten') {
         const url = `http://localhost:8080/${target.name}.html`;
         switch (host.platform()) {
             case 'macos':
