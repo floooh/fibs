@@ -77,6 +77,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
         str += genTargetIncludeDirectories(project, config, tgt);
         str += genTargetCompileDefinitions(project, config, tgt);
         str += genTargetCompileOptions(project, config, tgt);
+        str += genTargetLinkOptions(project, config, tgt);
     });
     return str;
 }
@@ -85,7 +86,7 @@ function genProlog(project: Project, config: Config): string {
     let str = '';
     str += 'cmake_minimum_required(VERSION 3.2)\n';
     str += `project(${project.name})\n`;
-    str += 'set(CMAKE_C_STANDARD 99)\n'; // FIXME: make configurable
+    str += 'set(CMAKE_C_STANDARD 11)\n'; // FIXME: make configurable
     str += 'set(CMAKE_CXX_STANDARD 14)\n'; // FIXME: make configurable
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
@@ -251,6 +252,35 @@ function genTargetCompileOptions(project: Project, config: Config, tgt: Target):
             }
             if (hasPublic) {
                 str += `  target_compile_options(${tgt.name} PUBLIC ${opts.public.join(' ')})\n`;
+            }
+            str += 'endif()\n'
+        }
+    });
+    return str;
+}
+
+function genTargetLinkOptions(project: Project, config: Config, tgt: Target): string {
+    let str = '';
+    conf.compilers(config).forEach((compiler) => {
+        const ctx: TargetBuildContext = {
+            config,
+            compiler,
+            target: tgt,
+        };
+        const opts = target.resolveTargetItems(tgt.linkOptions, ctx);
+        const hasInterface = opts.interface.length > 0;
+        const hasPrivate = opts.private.length > 0;
+        const hasPublic = opts.public.length > 0;
+        if (hasInterface || hasPrivate || hasPublic) {
+            str += `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
+            if (hasInterface) {
+                str += `  target_link_options(${tgt.name} INTERFACE ${opts.interface.join(' ')})\n`;
+            }
+            if (hasPrivate) {
+                str += `  target_lin_options(${tgt.name} PRIVATE ${opts.private.join(' ')})\n`;
+            }
+            if (hasPublic) {
+                str += `  target_link_options(${tgt.name} PUBLIC ${opts.public.join(' ')})\n`;
             }
             str += 'endif()\n'
         }
