@@ -18,7 +18,7 @@ export type Project = {
     dir: string;
     settings: Settings;
     variables: Record<string, string | boolean>;
-    compileOptions: Array<string | ProjectItemsFunc>;
+    compileOptions: (string | ProjectItemsFunc)[];
     imports: Record<string, Import>;
     targets: Record<string, Target>;
     commands: Record<string, Command>;
@@ -93,14 +93,15 @@ export type Import = {
 };
 
 export type ProjectBuildContext = {
+    project: Project;
     config: Config;
     compiler: Compiler;
-    dir: string;
 };
 
 export type ProjectItemsFunc = (context: ProjectBuildContext) => string[];
 
 export type TargetBuildContext = {
+    project: Project;
     config: Config;
     compiler: Compiler;
     target: Target;

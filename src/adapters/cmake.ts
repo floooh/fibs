@@ -8,6 +8,7 @@ import {
     host,
     log,
     Project,
+    ProjectBuildContext,
     Target,
     TargetItems,
     TargetBuildContext,
@@ -59,6 +60,7 @@ export async function build(project: Project, config: Config, options: AdapterOp
 function genCMakeListsTxt(project: Project, config: Config): string {
     let str = '';
     str += genProlog(project, config);
+    str += genCompileOptions(project, config);
     const targets = Object.values(project.targets);
     targets.forEach((target) => {
         str += genTarget(project, config, target);
@@ -84,6 +86,41 @@ function genProlog(project: Project, config: Config): string {
     } else if (config.platform === 'wasi') {
         str += 'set(CMAKE_EXECUTABLE_SUFFIX ".wasm")\n';
     }
+    return str;
+}
+
+function compilerId(compiler: Compiler): string {
+    switch (compiler) {
+        case 'msvc': return 'MSVC';
+        case 'gcc': return 'GNU';
+        case 'clang': return 'Clang';
+        case 'appleclang': return 'AppleClang';
+    }
+}
+
+function genIfCompiler(compiler: Compiler): string {
+    return `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
+}
+
+function genEndif(): string {
+    return 'endif()\n';
+}
+
+function genCompileOptions(project: Project, config: Config): string {
+    let str = '';
+    conf.compilers(config).forEach((compiler) => {
+        const ctx: ProjectBuildContext = {
+            project,
+            config,
+            compiler,
+        };
+        const resolvedItems = util.resolveProjectItems(project.compileOptions, ctx, false);
+        if (resolvedItems.length > 0) {
+            str += genIfCompiler(compiler);
+            str += `  add_compile_options(${resolvedItems.join(' ')})\n`;
+            str += genEndif();
+        }
+    });
     return str;
 }
 
@@ -122,21 +159,13 @@ function genTarget(project: Project, config: Config, target: Target): string {
     return str;
 }
 
-function compilerId(compiler: Compiler): string {
-    switch (compiler) {
-        case 'msvc': return 'MSVC';
-        case 'gcc': return 'GNU';
-        case 'clang': return 'Clang';
-        case 'appleclang': return 'AppleClang';
-    }
-}
-
 function genTargetDependencies(project: Project, config: Config, target: Target): string {
     let str = '';
     conf.compilers(config).forEach((compiler) => {
         let libs: string[];
         if (typeof target.libs === 'function') {
             const ctx: TargetBuildContext = {
+                project,
                 config,
                 compiler,
                 target,
@@ -147,13 +176,13 @@ function genTargetDependencies(project: Project, config: Config, target: Target)
         }
         libs = libs.map((lib) => `"${lib}"`);
         if (libs.length > 0) {
-            str += `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
+            str += genIfCompiler(compiler);
             if ((target.type === 'lib') || (target.type === 'interface')) {
                 str += `  target_link_libraries(${target.name} INTERFACE ${libs.join(' ')})\n`;
             } else {
                 str += `  target_link_libraries(${target.name} ${libs.join(' ')})\n`;
             }
-            str += 'endif()\n'
+            str += genEndif();
         }
     });
     return str;
@@ -163,16 +192,17 @@ function genTargetItems(project: Project, config: Config, target: Target, statem
     let str = '';
     conf.compilers(config).forEach((compiler) => {
         const ctx: TargetBuildContext = {
+            project,
             config,
             compiler,
             target,
         };
-        const resolvedItems = util.resolveTargetItems(project, items, ctx, itemsAreFilePaths);
+        const resolvedItems = util.resolveTargetItems(items, ctx, itemsAreFilePaths);
         const hasInterface = Object.values(resolvedItems.interface).length > 0;
         const hasPrivate = Object.values(resolvedItems.private).length > 0;
         const hasPublic = Object.values(resolvedItems.public).length > 0;
         if (hasInterface || hasPrivate || hasPublic) {
-            str += `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
+            str += genIfCompiler(compiler);
             if (hasInterface) {
                 str += `  ${statement}(${target.name} INTERFACE ${resolvedItems.interface.join(' ')})\n`;
             }
@@ -182,7 +212,7 @@ function genTargetItems(project: Project, config: Config, target: Target, statem
             if (hasPublic) {
                 str += `  ${statement}(${target.name} PUBLIC ${resolvedItems.public.join(' ')})\n`;
             }
-            str += 'endif()\n'
+            str += genEndif();
         }
     });
     return str;

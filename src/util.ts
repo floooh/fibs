@@ -8,6 +8,8 @@ import {
     TargetItemsDesc,
     TargetItems,
     TargetItemsFunc,
+    ProjectBuildContext,
+    ProjectItemsFunc,
 } from './types.ts';
 import * as log from './log.ts';
 import { fs } from '../deps.ts';
@@ -286,8 +288,8 @@ export type ResolvedTargetItems = {
     public: string[],
 }
 
-export function resolveTargetItems(project: Project, items: TargetItems, buildContext: TargetBuildContext, itemsAreFilePaths: boolean): ResolvedTargetItems {
-    const aliasMap = buildAliasMap(project, buildContext.config, buildContext.target.importDir);
+export function resolveTargetItems(items: TargetItems, buildContext: TargetBuildContext, itemsAreFilePaths: boolean): ResolvedTargetItems {
+    const aliasMap = buildAliasMap(buildContext.project, buildContext.config, buildContext.target.importDir);
     const resolve = (items: string[] | TargetItemsFunc): string[] => {
         let resolvedItems = (typeof items === 'function') ? items(buildContext) : items;
         if (itemsAreFilePaths) {
@@ -302,4 +304,24 @@ export function resolveTargetItems(project: Project, items: TargetItems, buildCo
         private: resolve(items.private),
         public: resolve(items.public),
     };
+}
+
+export function resolveProjectItems(items: (string|ProjectItemsFunc)[], buildContext: ProjectBuildContext, itemsAreFilePaths: boolean): string[] {
+    const aliasMap = buildAliasMap(buildContext.project, buildContext.config, buildContext.project.dir);
+    const baseDir = buildContext.project.dir;
+    const subDir = undefined;
+    const resolveAliasOrPath = (items: string[]) => {
+        if (itemsAreFilePaths) {
+            return items.map((item) => resolveFilePath(baseDir, subDir, item, aliasMap));
+        } else {
+            return items.map((item) => resolveAlias(item, aliasMap));
+        }
+    };
+    return items.flatMap((item) => {
+        if (typeof item === 'function') {
+            return resolveAliasOrPath(item(buildContext));
+        } else {
+            return resolveAliasOrPath([item]);
+        }
+    });
 }
