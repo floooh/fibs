@@ -9,6 +9,7 @@ import {
     log,
     Project,
     ProjectBuildContext,
+    ProjectItemsFunc,
     Target,
     TargetItems,
     TargetBuildContext,
@@ -60,7 +61,9 @@ export async function build(project: Project, config: Config, options: AdapterOp
 function genCMakeListsTxt(project: Project, config: Config): string {
     let str = '';
     str += genProlog(project, config);
+    str += genCompileDefinitions(project, config);
     str += genCompileOptions(project, config);
+    str += genLinkOptions(project, config);
     const targets = Object.values(project.targets);
     targets.forEach((target) => {
         str += genTarget(project, config, target);
@@ -77,7 +80,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
 
 function genProlog(project: Project, config: Config): string {
     let str = '';
-    str += 'cmake_minimum_required(VERSION 3.2)\n';
+    str += 'cmake_minimum_required(VERSION 3.20)\n';
     str += `project(${project.name})\n`;
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
@@ -106,7 +109,7 @@ function genEndif(): string {
     return 'endif()\n';
 }
 
-function genCompileOptions(project: Project, config: Config): string {
+function genGlobalItems(project: Project, config: Config, statement: string, items: (string | ProjectItemsFunc)[], itemsAreFilePaths: boolean): string {
     let str = '';
     conf.compilers(config).forEach((compiler) => {
         const ctx: ProjectBuildContext = {
@@ -114,14 +117,27 @@ function genCompileOptions(project: Project, config: Config): string {
             config,
             compiler,
         };
-        const resolvedItems = util.resolveProjectItems(project.compileOptions, ctx, false);
+        const resolvedItems = util.resolveProjectItems(items, ctx, itemsAreFilePaths);
         if (resolvedItems.length > 0) {
             str += genIfCompiler(compiler);
-            str += `  add_compile_options(${resolvedItems.join(' ')})\n`;
+            str += `  ${statement}(${resolvedItems.join(' ')})\n`;
             str += genEndif();
         }
     });
     return str;
+
+}
+
+function genCompileDefinitions(project: Project, config: Config): string {
+    return genGlobalItems(project, config, 'add_compile_definitions', project.compileDefinitions, false);
+}
+
+function genCompileOptions(project: Project, config: Config): string {
+    return genGlobalItems(project, config, 'add_compile_options', project.compileOptions, false);
+}
+
+function genLinkOptions(project: Project, config: Config): string {
+    return genGlobalItems(project, config, 'add_link_options', project.linkOptions, false);
 }
 
 function genTarget(project: Project, config: Config, target: Target): string {

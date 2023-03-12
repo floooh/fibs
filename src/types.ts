@@ -1,7 +1,9 @@
 export type ProjectDesc = {
     name?: string;
     variables?: Record<string, string | boolean>;
+    compileDefinitions?: string[] | ProjectItemsFunc;
     compileOptions?: string[] | ProjectItemsFunc;
+    linkOptions?: string[] | ProjectItemsFunc;
     imports?: Record<string, ImportDesc>;
     targets?: Record<string, TargetDesc>;
     commands?: Record<string, CommandDesc>;
@@ -18,7 +20,9 @@ export type Project = {
     dir: string;
     settings: Settings;
     variables: Record<string, string | boolean>;
+    compileDefinitions: (string | ProjectItemsFunc)[];
     compileOptions: (string | ProjectItemsFunc)[];
+    linkOptions: (string | ProjectItemsFunc)[];
     imports: Record<string, Import>;
     targets: Record<string, Target>;
     commands: Record<string, Command>;

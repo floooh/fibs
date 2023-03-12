@@ -24,7 +24,9 @@ export async function setup(
         dir: rootDir,
         settings: {},
         variables: {},
+        compileDefinitions: [],
         compileOptions: [],
+        linkOptions: [],
         imports: {},
         targets: {},
         commands: {},
@@ -108,11 +110,25 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
             into.variables[name] = other.variables[name];
         }
     }
+    if (other.compileDefinitions) {
+        if (typeof other.compileDefinitions === 'function') {
+            into.compileDefinitions.push(other.compileDefinitions);
+        } else {
+            into.compileDefinitions.push(...other.compileDefinitions);
+        }
+    }
     if (other.compileOptions) {
         if (typeof other.compileOptions === 'function') {
             into.compileOptions.push(other.compileOptions);
         } else {
             into.compileOptions.push(...other.compileOptions);
+        }
+    }
+    if (other.linkOptions) {
+        if (typeof other.linkOptions === 'function') {
+            into.linkOptions.push(other.linkOptions);
+        } else {
+            into.linkOptions.push(...other.linkOptions);
         }
     }
     if (other.configs) {
