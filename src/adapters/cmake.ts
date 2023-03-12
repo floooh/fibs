@@ -61,6 +61,7 @@ export async function build(project: Project, config: Config, options: AdapterOp
 function genCMakeListsTxt(project: Project, config: Config): string {
     let str = '';
     str += genProlog(project, config);
+    str += genIncludeDirectories(project, config);
     str += genCompileDefinitions(project, config);
     str += genCompileOptions(project, config);
     str += genLinkOptions(project, config);
@@ -125,7 +126,10 @@ function genGlobalItems(project: Project, config: Config, statement: string, ite
         }
     });
     return str;
+}
 
+function genIncludeDirectories(project: Project, config: Config): string {
+    return genGlobalItems(project, config, 'include_directories', project.includeDirectories, true);
 }
 
 function genCompileDefinitions(project: Project, config: Config): string {

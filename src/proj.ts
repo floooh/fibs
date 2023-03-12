@@ -24,6 +24,7 @@ export async function setup(
         dir: rootDir,
         settings: {},
         variables: {},
+        includeDirectories: [],
         compileDefinitions: [],
         compileOptions: [],
         linkOptions: [],
@@ -108,6 +109,13 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
     if (other.variables) {
         for (const name in other.variables) {
             into.variables[name] = other.variables[name];
+        }
+    }
+    if (other.includeDirectories) {
+        if (typeof other.includeDirectories === 'function') {
+            into.includeDirectories.push(other.includeDirectories);
+        } else {
+            into.includeDirectories.push(...other.includeDirectories);
         }
     }
     if (other.compileDefinitions) {

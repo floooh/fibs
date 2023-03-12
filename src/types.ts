@@ -1,6 +1,7 @@
 export type ProjectDesc = {
     name?: string;
     variables?: Record<string, string | boolean>;
+    includeDirectories?: string[] | ProjectItemsFunc;
     compileDefinitions?: string[] | ProjectItemsFunc;
     compileOptions?: string[] | ProjectItemsFunc;
     linkOptions?: string[] | ProjectItemsFunc;
@@ -20,6 +21,7 @@ export type Project = {
     dir: string;
     settings: Settings;
     variables: Record<string, string | boolean>;
+    includeDirectories: (string | ProjectItemsFunc)[];
     compileDefinitions: (string | ProjectItemsFunc)[];
     compileOptions: (string | ProjectItemsFunc)[];
     linkOptions: (string | ProjectItemsFunc)[];
