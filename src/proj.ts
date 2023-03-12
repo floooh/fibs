@@ -22,8 +22,9 @@ export async function setup(
     const project: Project = {
         name: rootDesc.name ?? 'project',
         dir: rootDir,
-        imports: {},
         settings: {},
+        variables: {},
+        imports: {},
         targets: {},
         commands: {},
         tools: {},
@@ -99,6 +100,11 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
                 url: imp.url,
                 ref: imp.ref ?? null,
             };
+        }
+    }
+    if (other.variables) {
+        for (const name in other.variables) {
+            into.variables[name] = other.variables[name];
         }
     }
     if (other.configs) {

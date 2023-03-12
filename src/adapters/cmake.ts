@@ -86,8 +86,6 @@ function genProlog(project: Project, config: Config): string {
     let str = '';
     str += 'cmake_minimum_required(VERSION 3.2)\n';
     str += `project(${project.name})\n`;
-    str += 'set(CMAKE_C_STANDARD 11)\n'; // FIXME: make configurable
-    str += 'set(CMAKE_CXX_STANDARD 14)\n'; // FIXME: make configurable
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     if (config.platform === 'emscripten') {
@@ -177,7 +175,7 @@ function genTargetIncludeDirectories(project: Project, config: Config, tgt: Targ
             compiler,
             target: tgt,
         };
-        let items = target.resolveTargetItems(tgt.includeDirectories, ctx);
+        let items = target.resolveTargetItems(project, tgt.includeDirectories, ctx);
         const hasInterface = Object.values(items.interface).length > 0;
         const hasPrivate = Object.values(items.private).length > 0;
         const hasPublic = Object.values(items.public).length > 0;
@@ -209,7 +207,7 @@ function genTargetCompileDefinitions(project: Project, config: Config, tgt: Targ
             compiler,
             target: tgt,
         };
-        const defs = target.resolveTargetItems(tgt.compileDefinitions, ctx);
+        const defs = target.resolveTargetItems(project, tgt.compileDefinitions, ctx);
         const hasInterface = Object.values(defs.interface).length > 0;
         const hasPrivate = Object.values(defs.private).length > 0;
         const hasPublic = Object.values(defs.public).length > 0;
@@ -238,7 +236,7 @@ function genTargetCompileOptions(project: Project, config: Config, tgt: Target):
             compiler,
             target: tgt,
         };
-        const opts = target.resolveTargetItems(tgt.compileOptions, ctx);
+        const opts = target.resolveTargetItems(project, tgt.compileOptions, ctx);
         const hasInterface = opts.interface.length > 0;
         const hasPrivate = opts.private.length > 0;
         const hasPublic = opts.public.length > 0;
@@ -267,7 +265,7 @@ function genTargetLinkOptions(project: Project, config: Config, tgt: Target): st
             compiler,
             target: tgt,
         };
-        const opts = target.resolveTargetItems(tgt.linkOptions, ctx);
+        const opts = target.resolveTargetItems(project, tgt.linkOptions, ctx);
         const hasInterface = opts.interface.length > 0;
         const hasPrivate = opts.private.length > 0;
         const hasPublic = opts.public.length > 0;
@@ -344,8 +342,19 @@ function isMultiConfigGenerator(config: Config): boolean {
     }
 }
 
+function resolveCacheVariable(val: string | boolean, aliasMap: Record<string, string>): any {
+    if (typeof val === 'boolean') {
+        return {
+            type: 'BOOL',
+            value: val ? 'ON' : 'OFF',
+        };
+    } else {
+        return util.resolveAlias(val, aliasMap);
+    }
+
+}
+
 function genCacheVariables(project: Project, config: Config): Record<string, any> {
-    const aliasMap = util.aliasMap(project, config, config.importDir);
     let res: Record<string, any> = {};
     if (!isMultiConfigGenerator(config)) {
         res.CMAKE_BUILD_TYPE = asCMakeBuildType(config.buildType);
@@ -353,16 +362,13 @@ function genCacheVariables(project: Project, config: Config): Record<string, any
     if (config.platform !== 'android') {
         res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = util.distDir(project, config);
     }
+    const projectAliasMap = util.aliasMap(project, config, project.dir);
+    for (const key in project.variables) {
+        res[key] = resolveCacheVariable(project.variables[key], projectAliasMap);
+    }
+    const configAliasMap = util.aliasMap(project, config, config.importDir);
     for (const key in config.variables) {
-        const val = config.variables[key];
-        if (typeof val === 'boolean') {
-            res[key] = {
-                type: 'BOOL',
-                value: val ? 'ON' : 'OFF',
-            };
-        } else {
-            res[key] = util.resolveAlias(val, aliasMap);
-        }
+        res[key] = resolveCacheVariable(config.variables[key], configAliasMap);
     }
     return res;
 }

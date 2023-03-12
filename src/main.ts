@@ -50,6 +50,10 @@ const stdDesc: ProjectDesc = {
     tools,
     adapters,
     configs,
+    variables: {
+        CMAKE_C_STANDARD: '99',
+        CMAKE_CXX_STANDARD: '11',
+    },
     settings: {
         config: {
             default: util.defaultConfigForPlatform(host.platform()),
