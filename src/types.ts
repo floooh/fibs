@@ -1,6 +1,7 @@
 export type ProjectDesc = {
     name?: string;
     variables?: Record<string, string | boolean>;
+    compileOptions?: string[] | ProjectItemsFunc;
     imports?: Record<string, ImportDesc>;
     targets?: Record<string, TargetDesc>;
     commands?: Record<string, CommandDesc>;
@@ -17,6 +18,7 @@ export type Project = {
     dir: string;
     settings: Settings;
     variables: Record<string, string | boolean>;
+    compileOptions: Array<string | ProjectItemsFunc>;
     imports: Record<string, Import>;
     targets: Record<string, Target>;
     commands: Record<string, Command>;
@@ -47,7 +49,7 @@ export type Platform =
 
 export type Compiler = 'msvc' | 'gcc' | 'clang' | 'appleclang';
 
-export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll' | 'void';
+export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll' | 'interface';
 
 export type BuildType = 'release' | 'debug';
 
@@ -90,6 +92,14 @@ export type Import = {
     ref: string | null;
 };
 
+export type ProjectBuildContext = {
+    config: Config;
+    compiler: Compiler;
+    dir: string;
+};
+
+export type ProjectItemsFunc = (context: ProjectBuildContext) => string[];
+
 export type TargetBuildContext = {
     config: Config;
     compiler: Compiler;
@@ -98,10 +108,16 @@ export type TargetBuildContext = {
 
 export type TargetItemsFunc = (context: TargetBuildContext) => string[];
 
+export type TargetItemsDesc = {
+    interface?: string[] | TargetItemsFunc;
+    private?: string[] | TargetItemsFunc;
+    public?: string[] | TargetItemsFunc;
+}
+
 export type TargetItems = {
-    interface: string[];
-    private: string[];
-    public: string[];
+    interface: string[] | TargetItemsFunc;
+    private: string[] | TargetItemsFunc;
+    public: string[] | TargetItemsFunc;
 };
 
 export type TargetDesc = {
@@ -109,10 +125,10 @@ export type TargetDesc = {
     dir?: string;
     sources?: string[];
     libs?: string[] | TargetItemsFunc;
-    includeDirectories?: string[] | TargetItemsFunc;
-    compileDefinitions?: string[] | TargetItemsFunc;
-    compileOptions?: string[] | TargetItemsFunc;
-    linkOptions?: string[] | TargetItemsFunc;
+    includeDirectories?: TargetItemsDesc;
+    compileDefinitions?: TargetItemsDesc;
+    compileOptions?: TargetItemsDesc;
+    linkOptions?: TargetItemsDesc;
 };
 
 export type Target = {
@@ -122,10 +138,10 @@ export type Target = {
     type: TargetType;
     sources: string[];
     libs: string[] | TargetItemsFunc;
-    includeDirectories: TargetItems | TargetItemsFunc;
-    compileDefinitions: TargetItems | TargetItemsFunc;
-    compileOptions: TargetItems | TargetItemsFunc;
-    linkOptions: TargetItems | TargetItemsFunc;
+    includeDirectories: TargetItems;
+    compileDefinitions: TargetItems;
+    compileOptions: TargetItems;
+    linkOptions: TargetItems;
 };
 
 export interface CommandDesc {

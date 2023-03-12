@@ -9,9 +9,9 @@ import {
     log,
     Project,
     Target,
+    TargetItems,
     TargetBuildContext,
     util,
-    target,
 conf,
 } from '../../mod.ts';
 
@@ -56,28 +56,19 @@ export async function build(project: Project, config: Config, options: AdapterOp
     });
 }
 
-function filePath(importDir: string, dir: string | undefined, rest: string): string {
-    let str = importDir + '/';
-    if (dir !== undefined) {
-        str += dir + '/';
-    }
-    str += rest;
-    return str;
-}
-
 function genCMakeListsTxt(project: Project, config: Config): string {
     let str = '';
     str += genProlog(project, config);
     const targets = Object.values(project.targets);
-    targets.forEach((tgt) => {
-        str += genTarget(project, config, tgt);
+    targets.forEach((target) => {
+        str += genTarget(project, config, target);
     });
-    targets.forEach((tgt) => {
-        str += genTargetDependencies(project, config, tgt);
-        str += genTargetIncludeDirectories(project, config, tgt);
-        str += genTargetCompileDefinitions(project, config, tgt);
-        str += genTargetCompileOptions(project, config, tgt);
-        str += genTargetLinkOptions(project, config, tgt);
+    targets.forEach((target) => {
+        str += genTargetDependencies(project, config, target);
+        str += genTargetIncludeDirectories(project, config, target);
+        str += genTargetCompileDefinitions(project, config, target);
+        str += genTargetCompileOptions(project, config, target);
+        str += genTargetLinkOptions(project, config, target);
     });
     return str;
 }
@@ -96,34 +87,35 @@ function genProlog(project: Project, config: Config): string {
     return str;
 }
 
-function genTarget(project: Project, config: Config, tgt: Target): string {
+function genTarget(project: Project, config: Config, target: Target): string {
     let str = '';
     let subtype = '';
-    switch (tgt.type) {
+    switch (target.type) {
         case 'plain-exe':
         case 'windowed-exe':
-            if (tgt.type === 'windowed-exe') {
+            if (target.type === 'windowed-exe') {
                 if (config.platform === 'windows') {
                     subtype = 'WIN32';
                 } else if ((config.platform === 'macos') || (config.platform === 'ios')) {
                     subtype = ' MACOSX_BUNDLE';
                 }
             }
-            str += `add_executable(${tgt.name}${subtype}\n`;
+            str += `add_executable(${target.name}${subtype}\n`;
             break;
         case 'lib':
-            str += `add_library(${tgt.name} STATIC\n`;
+            str += `add_library(${target.name} STATIC\n`;
             break;
         case 'dll':
-            str += `add_library(${tgt.name} SHARED\n`;
+            str += `add_library(${target.name} SHARED\n`;
             break;
-        case 'void':
-            str += `add_library(${tgt.name} INTERFACE)\n`;
+        case 'interface':
+            str += `add_library(${target.name} INTERFACE)\n`;
             break;
     }
-    if (tgt.type !== 'void') {
-        tgt.sources.forEach((source) => {
-            str += `    ${filePath(tgt.importDir, tgt.dir, source)}\n`;
+    if (target.type !== 'interface') {
+        const aliasMap = util.buildAliasMap(project, config, target.importDir);
+        target.sources.forEach((source) => {
+            str += `    ${util.resolveFilePath(target.importDir, target.dir, source, aliasMap)}\n`;
         });
         str += ')\n';
     }
@@ -139,27 +131,27 @@ function compilerId(compiler: Compiler): string {
     }
 }
 
-function genTargetDependencies(project: Project, config: Config, tgt: Target): string {
+function genTargetDependencies(project: Project, config: Config, target: Target): string {
     let str = '';
     conf.compilers(config).forEach((compiler) => {
         let libs: string[];
-        if (typeof tgt.libs === 'function') {
+        if (typeof target.libs === 'function') {
             const ctx: TargetBuildContext = {
                 config,
                 compiler,
-                target: tgt,
+                target,
             };
-            libs = tgt.libs(ctx);
+            libs = target.libs(ctx);
         } else {
-            libs = tgt.libs;
+            libs = target.libs;
         }
         libs = libs.map((lib) => `"${lib}"`);
         if (libs.length > 0) {
             str += `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
-            if ((tgt.type === 'lib') || (tgt.type === 'void')) {
-                str += `  target_link_libraries(${tgt.name} INTERFACE ${libs.join(' ')})\n`;
+            if ((target.type === 'lib') || (target.type === 'interface')) {
+                str += `  target_link_libraries(${target.name} INTERFACE ${libs.join(' ')})\n`;
             } else {
-                str += `  target_link_libraries(${tgt.name} ${libs.join(' ')})\n`;
+                str += `  target_link_libraries(${target.name} ${libs.join(' ')})\n`;
             }
             str += 'endif()\n'
         }
@@ -167,123 +159,50 @@ function genTargetDependencies(project: Project, config: Config, tgt: Target): s
     return str;
 }
 
-function genTargetIncludeDirectories(project: Project, config: Config, tgt: Target): string {
+function genTargetItems(project: Project, config: Config, target: Target, statement: string, items: TargetItems, itemsAreFilePaths: boolean): string {
     let str = '';
     conf.compilers(config).forEach((compiler) => {
         const ctx: TargetBuildContext = {
             config,
             compiler,
-            target: tgt,
+            target,
         };
-        let items = target.resolveTargetItems(project, tgt.includeDirectories, ctx);
-        const hasInterface = Object.values(items.interface).length > 0;
-        const hasPrivate = Object.values(items.private).length > 0;
-        const hasPublic = Object.values(items.public).length > 0;
+        const resolvedItems = util.resolveTargetItems(project, items, ctx, itemsAreFilePaths);
+        const hasInterface = Object.values(resolvedItems.interface).length > 0;
+        const hasPrivate = Object.values(resolvedItems.private).length > 0;
+        const hasPublic = Object.values(resolvedItems.public).length > 0;
         if (hasInterface || hasPrivate || hasPublic) {
             str += `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
             if (hasInterface) {
-                const dirs = items.interface.map((dir) => filePath(tgt.importDir, tgt.dir, dir));
-                str += `  target_include_directories(${tgt.name} INTERFACE ${dirs.join(' ')})\n`;
+                str += `  ${statement}(${target.name} INTERFACE ${resolvedItems.interface.join(' ')})\n`;
             }
             if (hasPrivate) {
-                const dirs = items.private.map((dir) => filePath(tgt.importDir, tgt.dir, dir));
-                str += `  target_include_directories(${tgt.name} PRIVATE ${dirs.join(' ')})\n`;
+                str += `  ${statement}(${target.name} PRIVATE ${resolvedItems.private.join(' ')})\n`;
             }
             if (hasPublic) {
-                const dirs = items.public.map((dir) => filePath(tgt.importDir, tgt.dir, dir));
-                str += `  target_include_directories(${tgt.name} PUBLIC ${dirs.join(' ')})\n`;
+                str += `  ${statement}(${target.name} PUBLIC ${resolvedItems.public.join(' ')})\n`;
             }
             str += 'endif()\n'
         }
     });
     return str;
+
 }
 
-function genTargetCompileDefinitions(project: Project, config: Config, tgt: Target): string {
-    let str = '';
-    conf.compilers(config).forEach((compiler) => {
-        const ctx: TargetBuildContext = {
-            config,
-            compiler,
-            target: tgt,
-        };
-        const defs = target.resolveTargetItems(project, tgt.compileDefinitions, ctx);
-        const hasInterface = Object.values(defs.interface).length > 0;
-        const hasPrivate = Object.values(defs.private).length > 0;
-        const hasPublic = Object.values(defs.public).length > 0;
-        if (hasInterface || hasPrivate || hasPublic) {
-            str += `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
-            if (hasInterface) {
-                str += `  target_compile_definitions(${tgt.name} INTERFACE ${defs.interface.join(' ')})\n`;
-            }
-            if (hasPrivate) {
-                str += `  target_compile_definitions(${tgt.name} PRIVATE ${defs.private.join(' ')})\n`;
-            }
-            if (hasPublic) {
-                str += `  target_compile_definitions(${tgt.name} PUBLIC ${defs.public.join(' ')})\n`;
-            }
-            str += 'endif()\n'
-        }
-    });
-    return str;
+function genTargetIncludeDirectories(project: Project, config: Config, target: Target): string {
+    return genTargetItems(project, config, target, 'target_include_directories', target.includeDirectories, true);
 }
 
-function genTargetCompileOptions(project: Project, config: Config, tgt: Target): string {
-    let str = '';
-    conf.compilers(config).forEach((compiler) => {
-        const ctx: TargetBuildContext = {
-            config,
-            compiler,
-            target: tgt,
-        };
-        const opts = target.resolveTargetItems(project, tgt.compileOptions, ctx);
-        const hasInterface = opts.interface.length > 0;
-        const hasPrivate = opts.private.length > 0;
-        const hasPublic = opts.public.length > 0;
-        if (hasInterface || hasPrivate || hasPublic) {
-            str += `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
-            if (hasInterface) {
-                str += `  target_compile_options(${tgt.name} INTERFACE ${opts.interface.join(' ')})\n`;
-            }
-            if (hasPrivate) {
-                str += `  target_compile_options(${tgt.name} PRIVATE ${opts.private.join(' ')})\n`;
-            }
-            if (hasPublic) {
-                str += `  target_compile_options(${tgt.name} PUBLIC ${opts.public.join(' ')})\n`;
-            }
-            str += 'endif()\n'
-        }
-    });
-    return str;
+function genTargetCompileDefinitions(project: Project, config: Config, target: Target): string {
+    return genTargetItems(project, config, target, 'target_compile_definitions', target.compileDefinitions, false);
 }
 
-function genTargetLinkOptions(project: Project, config: Config, tgt: Target): string {
-    let str = '';
-    conf.compilers(config).forEach((compiler) => {
-        const ctx: TargetBuildContext = {
-            config,
-            compiler,
-            target: tgt,
-        };
-        const opts = target.resolveTargetItems(project, tgt.linkOptions, ctx);
-        const hasInterface = opts.interface.length > 0;
-        const hasPrivate = opts.private.length > 0;
-        const hasPublic = opts.public.length > 0;
-        if (hasInterface || hasPrivate || hasPublic) {
-            str += `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
-            if (hasInterface) {
-                str += `  target_link_options(${tgt.name} INTERFACE ${opts.interface.join(' ')})\n`;
-            }
-            if (hasPrivate) {
-                str += `  target_lin_options(${tgt.name} PRIVATE ${opts.private.join(' ')})\n`;
-            }
-            if (hasPublic) {
-                str += `  target_link_options(${tgt.name} PUBLIC ${opts.public.join(' ')})\n`;
-            }
-            str += 'endif()\n'
-        }
-    });
-    return str;
+function genTargetCompileOptions(project: Project, config: Config, target: Target): string {
+    return genTargetItems(project, config, target, 'target_compile_options', target.compileOptions, false);
+}
+
+function genTargetLinkOptions(project: Project, config: Config, target: Target): string {
+    return genTargetItems(project, config, target, 'target_link_options', target.linkOptions, false);
 }
 
 function genCMakePresetsJson(project: Project, config: Config): string {
@@ -303,7 +222,7 @@ function genCMakePresetsJson(project: Project, config: Config): string {
 function genConfigurePresets(project: Project, config: Config): any[] {
     const res = [];
     if (util.validConfigForPlatform(config, host.platform())) {
-        const aliasMap = util.aliasMap(project, config, config.importDir);
+        const aliasMap = util.buildAliasMap(project, config, config.importDir);
         res.push({
             name: config.name,
             displayName: config.name,
@@ -362,11 +281,11 @@ function genCacheVariables(project: Project, config: Config): Record<string, any
     if (config.platform !== 'android') {
         res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = util.distDir(project, config);
     }
-    const projectAliasMap = util.aliasMap(project, config, project.dir);
+    const projectAliasMap = util.buildAliasMap(project, config, project.dir);
     for (const key in project.variables) {
         res[key] = resolveCacheVariable(project.variables[key], projectAliasMap);
     }
-    const configAliasMap = util.aliasMap(project, config, config.importDir);
+    const configAliasMap = util.buildAliasMap(project, config, config.importDir);
     for (const key in config.variables) {
         res[key] = resolveCacheVariable(config.variables[key], configAliasMap);
     }

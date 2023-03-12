@@ -63,9 +63,9 @@ async function run(project: Project) {
         const types = allTargetTypes;
         const targets = Object.values(project.targets);
         types.forEach((type) => {
-            targets.forEach((tgt) => {
-                if ((tgt.type === type) && (args.targetTypes.includes(type))) {
-                    log.print(`${tgt.name} (${tgt.type})`);
+            targets.forEach((target) => {
+                if ((target.type === type) && (args.targetTypes.includes(type))) {
+                    log.print(`${target.name} (${target.type})`);
                 }
             });
         });

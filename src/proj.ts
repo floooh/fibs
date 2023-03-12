@@ -11,7 +11,7 @@ import {
 import * as settings from './settings.ts';
 import * as log from './log.ts';
 import * as imports from './imports.ts';
-import * as target from './target.ts';
+import * as util from './util.ts';
 
 export async function setup(
     rootDir: string,
@@ -24,6 +24,7 @@ export async function setup(
         dir: rootDir,
         settings: {},
         variables: {},
+        compileOptions: [],
         imports: {},
         targets: {},
         commands: {},
@@ -107,6 +108,13 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
             into.variables[name] = other.variables[name];
         }
     }
+    if (other.compileOptions) {
+        if (typeof other.compileOptions === 'function') {
+            into.compileOptions.push(other.compileOptions);
+        } else {
+            into.compileOptions.push(...other.compileOptions);
+        }
+    }
     if (other.configs) {
         for (const name in other.configs) {
             into.configDescs[name] = { ...other.configs[name], importDir };
@@ -122,10 +130,10 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
                 type: desc.type,
                 sources: desc.sources ?? [],
                 libs: desc.libs ?? [],
-                includeDirectories: target.asTargetItemsOrFunc(desc.includeDirectories, desc.type),
-                compileDefinitions: target.asTargetItemsOrFunc(desc.compileDefinitions, desc.type),
-                compileOptions: target.asTargetItemsOrFunc(desc.compileOptions, desc.type),
-                linkOptions: target.asTargetItemsOrFunc(desc.linkOptions, desc.type),
+                includeDirectories: util.asTargetItems(desc.includeDirectories),
+                compileDefinitions: util.asTargetItems(desc.compileDefinitions),
+                compileOptions: util.asTargetItems(desc.compileOptions),
+                linkOptions: util.asTargetItems(desc.linkOptions),
             };
         }
     }

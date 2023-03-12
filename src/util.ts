@@ -1,4 +1,14 @@
-import { Config, Platform, Project, RunOptions, RunResult } from './types.ts';
+import {
+    Config,
+    Platform,
+    Project,
+    RunOptions,
+    RunResult,
+    TargetBuildContext,
+    TargetItemsDesc,
+    TargetItems,
+    TargetItemsFunc,
+} from './types.ts';
 import * as log from './log.ts';
 import { fs } from '../deps.ts';
 
@@ -138,7 +148,7 @@ export function validConfigForPlatform(config: Config, platform: Platform): bool
     return config.platform === platform;
 }
 
-export function aliasMap(project: Project, config: Config, importDir: string | undefined): Record<string, string> {
+export function buildAliasMap(project: Project, config: Config, importDir: string | undefined): Record<string, string> {
     return {
         '@root': project.dir,
         '@self': (importDir !== undefined) ? importDir : project.dir,
@@ -157,6 +167,19 @@ export function resolveAlias(str: string, aliasMap: Record<string,string>): stri
         }
     }
     return str;
+}
+
+export function resolveFilePath(baseDir: string, subDir: string | undefined, path: string, aliasMap: Record<string,string>): string {
+    if (path.startsWith('@')) {
+        return resolveAlias(path, aliasMap);
+    } else {
+        let str = baseDir + '/';
+        if (subDir !== undefined) {
+            str += subDir + '/';
+        }
+        str += path;
+        return str;
+    }
 }
 
 export async function runCmd(cmd: string, options: RunOptions): Promise<RunResult> {
@@ -247,4 +270,36 @@ export async function download(options: DownloadOptions): Promise<boolean> {
         }
     }
     return true;
+}
+
+export function asTargetItems(inp: TargetItemsDesc | undefined): TargetItems {
+    return {
+        interface: (inp && inp.interface) ?? [],
+        private: (inp && inp.private) ?? [],
+        public: (inp && inp.public) ?? [],
+    };
+}
+
+export type ResolvedTargetItems = {
+    interface: string[],
+    private: string[],
+    public: string[],
+}
+
+export function resolveTargetItems(project: Project, items: TargetItems, buildContext: TargetBuildContext, itemsAreFilePaths: boolean): ResolvedTargetItems {
+    const aliasMap = buildAliasMap(project, buildContext.config, buildContext.target.importDir);
+    const resolve = (items: string[] | TargetItemsFunc): string[] => {
+        let resolvedItems = (typeof items === 'function') ? items(buildContext) : items;
+        if (itemsAreFilePaths) {
+            const target = buildContext.target;
+            return resolvedItems.map((item) => resolveFilePath(target.importDir, target.dir, item, aliasMap));
+        } else {
+            return resolvedItems.map((item) => resolveAlias(item, aliasMap));
+        }
+    };
+    return {
+        interface: resolve(items.interface),
+        private: resolve(items.private),
+        public: resolve(items.public),
+    };
 }
