@@ -7,11 +7,12 @@ import {
     Project,
     ProjectDesc,
     Tool,
+    TargetItems,
+    TargetItemsDesc,
 } from './types.ts';
 import * as settings from './settings.ts';
 import * as log from './log.ts';
 import * as imports from './imports.ts';
-import * as util from './util.ts';
 
 export async function setup(
     rootDir: string,
@@ -77,10 +78,49 @@ function resolveConfigs(project: Project) {
             toolchainFile: desc.toolchainFile,
             variables: desc.variables ?? {},
             environment: desc.environment ?? {},
-            defines: desc.defines ?? {},
+            includeDirectories: [],
+            compileDefinitions: [],
+            compileOptions: [],
+            linkOptions: [],
         };
+        if (desc.includeDirectories) {
+            if (typeof desc.includeDirectories === 'function') {
+                config.includeDirectories = [desc.includeDirectories];
+            } else {
+                config.includeDirectories = desc.includeDirectories;
+            }
+        }
+        if (desc.compileDefinitions) {
+            if (typeof desc.compileDefinitions === 'function') {
+                config.compileDefinitions = [desc.compileDefinitions];
+            } else {
+                config.compileDefinitions = desc.compileDefinitions;
+            }
+        }
+        if (desc.compileOptions) {
+            if (typeof desc.compileOptions === 'function') {
+                config.compileOptions = [desc.compileOptions];
+            } else {
+                config.compileOptions = desc.compileOptions;
+            }
+        }
+        if (desc.linkOptions) {
+            if (typeof desc.linkOptions === 'function') {
+                config.linkOptions = [desc.linkOptions];
+            } else {
+                config.linkOptions = desc.linkOptions;
+            }
+        }
         project.configs[name] = config;
     }
+}
+
+export function asTargetItems(inp: TargetItemsDesc | undefined): TargetItems {
+    return {
+        interface: (inp && inp.interface) ?? [],
+        private: (inp && inp.private) ?? [],
+        public: (inp && inp.public) ?? [],
+    };
 }
 
 async function integrate(into: Project, other: ProjectDesc, importDir: string) {
@@ -154,10 +194,10 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
                 type: desc.type,
                 sources: desc.sources ?? [],
                 libs: desc.libs ?? [],
-                includeDirectories: util.asTargetItems(desc.includeDirectories),
-                compileDefinitions: util.asTargetItems(desc.compileDefinitions),
-                compileOptions: util.asTargetItems(desc.compileOptions),
-                linkOptions: util.asTargetItems(desc.linkOptions),
+                includeDirectories: asTargetItems(desc.includeDirectories),
+                compileDefinitions: asTargetItems(desc.compileDefinitions),
+                compileOptions: asTargetItems(desc.compileOptions),
+                linkOptions: asTargetItems(desc.linkOptions),
             };
         }
     }

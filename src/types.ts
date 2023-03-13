@@ -71,7 +71,10 @@ export type ConfigDesc = {
     toolchainFile?: string;
     variables?: Record<string, string | boolean>;
     environment?: Record<string, string>;
-    defines?: Record<string, string>;
+    includeDirectories?: string[] | ProjectItemsFunc;
+    compileDefinitions?: string[] | ProjectItemsFunc;
+    compileOptions?: string[] | ProjectItemsFunc;
+    linkOptions?: string[] | ProjectItemsFunc;
 };
 
 export type Config = {
@@ -84,7 +87,10 @@ export type Config = {
     toolchainFile: string | undefined;
     variables: Record<string, string | boolean>;
     environment: Record<string, string>;
-    defines: Record<string, string>;
+    includeDirectories: (string | ProjectItemsFunc)[];
+    compileDefinitions: (string | ProjectItemsFunc)[];
+    compileOptions: (string | ProjectItemsFunc)[];
+    linkOptions: (string | ProjectItemsFunc)[];
 };
 
 export type ImportDesc = {

@@ -94,6 +94,26 @@ function genProlog(project: Project, config: Config): string {
     return str;
 }
 
+export function resolveProjectItems(items: (string|ProjectItemsFunc)[], buildContext: ProjectBuildContext, itemsAreFilePaths: boolean): string[] {
+    const aliasMap = util.buildAliasMap(buildContext.project, buildContext.config, buildContext.project.dir);
+    const baseDir = buildContext.project.dir;
+    const subDir = undefined;
+    const resolveAliasOrPath = (items: string[]) => {
+        if (itemsAreFilePaths) {
+            return items.map((item) => util.resolveFilePath(baseDir, subDir, item, aliasMap));
+        } else {
+            return items.map((item) => util.resolveAlias(item, aliasMap));
+        }
+    };
+    return items.flatMap((item) => {
+        if (typeof item === 'function') {
+            return resolveAliasOrPath(item(buildContext));
+        } else {
+            return resolveAliasOrPath([item]);
+        }
+    });
+}
+
 function compilerId(compiler: Compiler): string {
     switch (compiler) {
         case 'msvc': return 'MSVC';
@@ -118,6 +138,10 @@ function generatorExpressionLanguageCompiler(language: Language, compiler: Compi
     return `"$<$<COMPILE_LANG_AND_ID:${languageId(language)},${compilerId(compiler)}>:${items.join(';')}>"`;
 }
 
+function generatorExpressionCompiler(compiler: Compiler, items: string[]): string {
+    return `"$<$<C_COMPILER_ID:${compilerId(compiler)}>:${items.join(';')}>"`;
+}
+
 function genGlobalItemsLanguageCompiler(project: Project, config: Config, statement: string, items: (string | ProjectItemsFunc)[], itemsAreFilePaths: boolean): string {
     let str = '';
     languages().forEach((language) => {
@@ -128,7 +152,7 @@ function genGlobalItemsLanguageCompiler(project: Project, config: Config, statem
                 compiler,
                 language,
             };
-            const resolvedItems = util.resolveProjectItems(items, ctx, itemsAreFilePaths);
+            const resolvedItems = resolveProjectItems(items, ctx, itemsAreFilePaths);
             if (resolvedItems.length > 0) {
                 str += `${statement}(${generatorExpressionLanguageCompiler(language, compiler, resolvedItems)})\n`;
             }
@@ -137,24 +161,32 @@ function genGlobalItemsLanguageCompiler(project: Project, config: Config, statem
     return str;
 }
 
-function generatorExpressionCompiler(compiler: Compiler, items: string[]): string {
-    return `"$<$<C_COMPILER_ID:${compilerId(compiler)}>:${items.join(';')}>"`;
-}
-
 function genIncludeDirectories(project: Project, config: Config): string {
-    return genGlobalItemsLanguageCompiler(project, config, 'include_directories', project.includeDirectories, true);
+    let str = ''
+    str += genGlobalItemsLanguageCompiler(project, config, 'include_directories', project.includeDirectories, true);
+    str += genGlobalItemsLanguageCompiler(project, config, 'include_directories', config.includeDirectories, true);
+    return str;
 }
 
 function genCompileDefinitions(project: Project, config: Config): string {
-    return genGlobalItemsLanguageCompiler(project, config, 'add_compile_definitions', project.compileDefinitions, false);
+    let str = ''
+    str += genGlobalItemsLanguageCompiler(project, config, 'add_compile_definitions', project.compileDefinitions, false);
+    str += genGlobalItemsLanguageCompiler(project, config, 'add_compile_definitions', config.compileDefinitions, false);
+    return str;
 }
 
 function genCompileOptions(project: Project, config: Config): string {
-    return genGlobalItemsLanguageCompiler(project, config, 'add_compile_options', project.compileOptions, false);
+    let str = '';
+    str += genGlobalItemsLanguageCompiler(project, config, 'add_compile_options', project.compileOptions, false);
+    str += genGlobalItemsLanguageCompiler(project, config, 'add_compile_options', config.compileOptions, false);
+    return str;
 }
 
 function genLinkOptions(project: Project, config: Config): string {
-    return genGlobalItemsLanguageCompiler(project, config, 'add_link_options', project.linkOptions, false);
+    let str = '';
+    str += genGlobalItemsLanguageCompiler(project, config, 'add_link_options', project.linkOptions, false);
+    str += genGlobalItemsLanguageCompiler(project, config, 'add_link_options', config.linkOptions, false);
+    return str;
 }
 
 function genTarget(project: Project, config: Config, target: Target): string {

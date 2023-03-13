@@ -5,11 +5,8 @@ import {
     RunOptions,
     RunResult,
     TargetBuildContext,
-    TargetItemsDesc,
     TargetItems,
     TargetItemsFunc,
-    ProjectBuildContext,
-    ProjectItemsFunc,
 } from './types.ts';
 import * as log from './log.ts';
 import { fs } from '../deps.ts';
@@ -274,14 +271,6 @@ export async function download(options: DownloadOptions): Promise<boolean> {
     return true;
 }
 
-export function asTargetItems(inp: TargetItemsDesc | undefined): TargetItems {
-    return {
-        interface: (inp && inp.interface) ?? [],
-        private: (inp && inp.private) ?? [],
-        public: (inp && inp.public) ?? [],
-    };
-}
-
 export type ResolvedTargetItems = {
     interface: string[],
     private: string[],
@@ -304,24 +293,4 @@ export function resolveTargetItems(items: TargetItems, buildContext: TargetBuild
         private: resolve(items.private),
         public: resolve(items.public),
     };
-}
-
-export function resolveProjectItems(items: (string|ProjectItemsFunc)[], buildContext: ProjectBuildContext, itemsAreFilePaths: boolean): string[] {
-    const aliasMap = buildAliasMap(buildContext.project, buildContext.config, buildContext.project.dir);
-    const baseDir = buildContext.project.dir;
-    const subDir = undefined;
-    const resolveAliasOrPath = (items: string[]) => {
-        if (itemsAreFilePaths) {
-            return items.map((item) => resolveFilePath(baseDir, subDir, item, aliasMap));
-        } else {
-            return items.map((item) => resolveAlias(item, aliasMap));
-        }
-    };
-    return items.flatMap((item) => {
-        if (typeof item === 'function') {
-            return resolveAliasOrPath(item(buildContext));
-        } else {
-            return resolveAliasOrPath([item]);
-        }
-    });
 }
