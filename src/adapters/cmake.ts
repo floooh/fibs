@@ -4,6 +4,7 @@ import {
     BuildType,
     Config,
     Compiler,
+    Language,
     cmake,
     host,
     log,
@@ -102,46 +103,58 @@ function compilerId(compiler: Compiler): string {
     }
 }
 
-function genIfCompiler(compiler: Compiler): string {
-    return `if (\${CMAKE_C_COMPILER_ID} STREQUAL ${compilerId(compiler)})\n`;
+function languageId(language: Language): string {
+    switch (language) {
+        case 'c': return 'C';
+        case 'cxx': return 'CXX';
+    }
 }
 
-function genEndif(): string {
-    return 'endif()\n';
+function languages(): Language[] {
+    return ['c', 'cxx'];
 }
 
-function genGlobalItems(project: Project, config: Config, statement: string, items: (string | ProjectItemsFunc)[], itemsAreFilePaths: boolean): string {
+function generatorExpressionLanguageCompiler(language: Language, compiler: Compiler, items: string[]): string {
+    return `"$<$<COMPILE_LANG_AND_ID:${languageId(language)},${compilerId(compiler)}>:${items.join(';')}>"`;
+}
+
+function genGlobalItemsLanguageCompiler(project: Project, config: Config, statement: string, items: (string | ProjectItemsFunc)[], itemsAreFilePaths: boolean): string {
     let str = '';
-    conf.compilers(config).forEach((compiler) => {
-        const ctx: ProjectBuildContext = {
-            project,
-            config,
-            compiler,
-        };
-        const resolvedItems = util.resolveProjectItems(items, ctx, itemsAreFilePaths);
-        if (resolvedItems.length > 0) {
-            str += genIfCompiler(compiler);
-            str += `  ${statement}(${resolvedItems.join(' ')})\n`;
-            str += genEndif();
-        }
+    languages().forEach((language) => {
+        conf.compilers(config).forEach((compiler) => {
+            const ctx: ProjectBuildContext = {
+                project,
+                config,
+                compiler,
+                language,
+            };
+            const resolvedItems = util.resolveProjectItems(items, ctx, itemsAreFilePaths);
+            if (resolvedItems.length > 0) {
+                str += `${statement}(${generatorExpressionLanguageCompiler(language, compiler, resolvedItems)})\n`;
+            }
+        });
     });
     return str;
 }
 
+function generatorExpressionCompiler(compiler: Compiler, items: string[]): string {
+    return `"$<$<C_COMPILER_ID:${compilerId(compiler)}>:${items.join(';')}>"`;
+}
+
 function genIncludeDirectories(project: Project, config: Config): string {
-    return genGlobalItems(project, config, 'include_directories', project.includeDirectories, true);
+    return genGlobalItemsLanguageCompiler(project, config, 'include_directories', project.includeDirectories, true);
 }
 
 function genCompileDefinitions(project: Project, config: Config): string {
-    return genGlobalItems(project, config, 'add_compile_definitions', project.compileDefinitions, false);
+    return genGlobalItemsLanguageCompiler(project, config, 'add_compile_definitions', project.compileDefinitions, false);
 }
 
 function genCompileOptions(project: Project, config: Config): string {
-    return genGlobalItems(project, config, 'add_compile_options', project.compileOptions, false);
+    return genGlobalItemsLanguageCompiler(project, config, 'add_compile_options', project.compileOptions, false);
 }
 
 function genLinkOptions(project: Project, config: Config): string {
-    return genGlobalItems(project, config, 'add_link_options', project.linkOptions, false);
+    return genGlobalItemsLanguageCompiler(project, config, 'add_link_options', project.linkOptions, false);
 }
 
 function genTarget(project: Project, config: Config, target: Target): string {
@@ -181,62 +194,62 @@ function genTarget(project: Project, config: Config, target: Target): string {
 
 function genTargetDependencies(project: Project, config: Config, target: Target): string {
     let str = '';
-    conf.compilers(config).forEach((compiler) => {
-        let libs: string[];
-        if (typeof target.libs === 'function') {
-            const ctx: TargetBuildContext = {
-                project,
-                config,
-                compiler,
-                target,
-            };
-            libs = target.libs(ctx);
-        } else {
-            libs = target.libs;
-        }
-        libs = libs.map((lib) => `"${lib}"`);
-        if (libs.length > 0) {
-            str += genIfCompiler(compiler);
-            if ((target.type === 'lib') || (target.type === 'interface')) {
-                str += `  target_link_libraries(${target.name} INTERFACE ${libs.join(' ')})\n`;
+    languages().forEach((language) => {
+        conf.compilers(config).forEach((compiler) => {
+            let libs: string[];
+            if (typeof target.libs === 'function') {
+                const ctx: TargetBuildContext = {
+                    project,
+                    config,
+                    compiler,
+                    target,
+                    language,
+                };
+                libs = target.libs(ctx);
             } else {
-                str += `  target_link_libraries(${target.name} ${libs.join(' ')})\n`;
+                libs = target.libs;
             }
-            str += genEndif();
-        }
+            if (libs.length > 0) {
+                let type = '';
+                if ((target.type === 'lib') || (target.type === 'interface')) {
+                    type = ' INTERFACE';
+                }
+                str += `target_link_libraries(${target.name}${type} ${generatorExpressionCompiler(compiler, libs)})\n`;
+            }
+        });
     });
     return str;
 }
 
 function genTargetItems(project: Project, config: Config, target: Target, statement: string, items: TargetItems, itemsAreFilePaths: boolean): string {
     let str = '';
-    conf.compilers(config).forEach((compiler) => {
-        const ctx: TargetBuildContext = {
-            project,
-            config,
-            compiler,
-            target,
-        };
-        const resolvedItems = util.resolveTargetItems(items, ctx, itemsAreFilePaths);
-        const hasInterface = Object.values(resolvedItems.interface).length > 0;
-        const hasPrivate = Object.values(resolvedItems.private).length > 0;
-        const hasPublic = Object.values(resolvedItems.public).length > 0;
-        if (hasInterface || hasPrivate || hasPublic) {
-            str += genIfCompiler(compiler);
-            if (hasInterface) {
-                str += `  ${statement}(${target.name} INTERFACE ${resolvedItems.interface.join(' ')})\n`;
+    languages().forEach((language) => {
+        conf.compilers(config).forEach((compiler) => {
+            const ctx: TargetBuildContext = {
+                project,
+                config,
+                compiler,
+                target,
+                language
+            };
+            const resolvedItems = util.resolveTargetItems(items, ctx, itemsAreFilePaths);
+            const hasInterface = Object.values(resolvedItems.interface).length > 0;
+            const hasPrivate = Object.values(resolvedItems.private).length > 0;
+            const hasPublic = Object.values(resolvedItems.public).length > 0;
+            if (hasInterface || hasPrivate || hasPublic) {
+                if (hasInterface) {
+                    str += `${statement}(${target.name} INTERFACE ${generatorExpressionLanguageCompiler(language, compiler, resolvedItems.interface)})\n`;
+                }
+                if (hasPrivate) {
+                    str += `${statement}(${target.name} PRIVATE ${generatorExpressionLanguageCompiler(language, compiler, resolvedItems.private)})\n`;
+                }
+                if (hasPublic) {
+                    str += `${statement}(${target.name} PUBLIC ${generatorExpressionLanguageCompiler(language, compiler, resolvedItems.public)})\n`;
+                }
             }
-            if (hasPrivate) {
-                str += `  ${statement}(${target.name} PRIVATE ${resolvedItems.private.join(' ')})\n`;
-            }
-            if (hasPublic) {
-                str += `  ${statement}(${target.name} PUBLIC ${resolvedItems.public.join(' ')})\n`;
-            }
-            str += genEndif();
-        }
+        });
     });
     return str;
-
 }
 
 function genTargetIncludeDirectories(project: Project, config: Config, target: Target): string {

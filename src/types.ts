@@ -55,6 +55,8 @@ export type Platform =
 
 export type Compiler = 'msvc' | 'gcc' | 'clang' | 'appleclang';
 
+export type Language = 'c' | 'cxx';
+
 export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll' | 'interface';
 
 export type BuildType = 'release' | 'debug';
@@ -102,6 +104,7 @@ export type ProjectBuildContext = {
     project: Project;
     config: Config;
     compiler: Compiler;
+    language: Language | undefined;
 };
 
 export type ProjectItemsFunc = (context: ProjectBuildContext) => string[];
@@ -111,6 +114,7 @@ export type TargetBuildContext = {
     config: Config;
     compiler: Compiler;
     target: Target;
+    language: Language | undefined;
 };
 
 export type TargetItemsFunc = (context: TargetBuildContext) => string[];
