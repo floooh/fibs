@@ -42,9 +42,6 @@ export async function setup(
     await integrate(project, stdDesc, rootDir);
     // followed by the root project properties
     await integrate(project, rootDesc, rootDir);
-
-    // FIXME: resolve and integrate imports...
-
     // build resulting config list (happens as a post-step because configs can be inherited)
     resolveConfigs(project);
 
