@@ -302,7 +302,7 @@ function genTargetLinkOptions(project: Project, config: Config, target: Target):
 
 function genCMakePresetsJson(project: Project, config: Config): string {
     let preset: any = {
-        version: 6,
+        version: 3,
         cmakeMinimumRequired: {
             major: 3,
             minor: 21,
@@ -327,6 +327,8 @@ function genConfigurePresets(project: Project, config: Config): any[] {
             cacheVariables: genCacheVariables(project, config),
             environment: config.environment,
         });
+    } else {
+        log.error(`config '${config.name} is not valid for platform '${host.platform()}`);
     }
     return res;
 }
