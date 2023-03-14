@@ -197,7 +197,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
         case 'windowed-exe':
             if (target.type === 'windowed-exe') {
                 if (config.platform === 'windows') {
-                    subtype = 'WIN32';
+                    subtype = ' WIN32';
                 } else if ((config.platform === 'macos') || (config.platform === 'ios')) {
                     subtype = ' MACOSX_BUNDLE';
                 }
