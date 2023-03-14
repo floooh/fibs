@@ -19,7 +19,7 @@ export async function run(project: Project, args: string[]): Promise<number> {
     if (!util.fileExists(cmd)) {
         log.error(`emsdk tool not found at ${toolPath}, run 'fibs emsdk install`);
     }
-    const res = await util.runCmd(cmd, { args, cwd: dir(project) })
+    const res = await util.runCmd(cmd, { args, cwd: dir(project), winUseCmd: true })
     return res.exitCode;
 }
 
