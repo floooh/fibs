@@ -18,7 +18,7 @@ export async function main() {
     }
     try {
         // try to import a fibs.ts file from current directory
-        const cwd = Deno.cwd();
+        const cwd = Deno.cwd().replaceAll('\\', '/');
         const rootPath = `${cwd}/fibs.ts`;
         if (!util.fileExists(rootPath)) {
             log.error("current directory is not a fibs project (no fibs.ts found)");
