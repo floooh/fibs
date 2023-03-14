@@ -22,8 +22,8 @@ export async function run(options: RunOptions): Promise<RunResult> {
 
 export async function exists(): Promise<boolean> {
     try {
-        await run({ args: ['--version'], stdout: 'piped', showCmd: false, abortOnError: false });
-        return true;
+        const res = await run({ args: ['--version'], stdout: 'piped', stderr: 'piped', showCmd: false, abortOnError: false, winUseCmd: true });
+        return res.exitCode === 0;
     } catch (_err) {
         return false;
     }

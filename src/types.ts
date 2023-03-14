@@ -180,6 +180,7 @@ export type RunOptions = {
     stderr?: 'inherit' | 'piped';
     showCmd?: boolean;
     abortOnError?: boolean;
+    winUseCmd?: boolean;
 };
 
 export type RunResult = {

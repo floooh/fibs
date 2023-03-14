@@ -189,8 +189,14 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
         cwd,
         stdout,
         stderr,
+        winUseCmd,
     } = options;
-    const cmdLine = [cmd, ...args];
+    let cmdLine;
+    if ((Deno.build.os === 'windows') && winUseCmd) {
+        cmdLine = ['cmd', '/c', cmd, ...args];
+    } else {
+        cmdLine = [cmd, ...args];
+    }
     if (showCmd) {
         log.run(cmdLine);
     }
