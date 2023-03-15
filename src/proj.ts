@@ -287,18 +287,3 @@ export async function build(
 ): Promise<void> {
     await adapter.build(project, config, options);
 }
-
-/*
-  FIXME for importing
-
-  try {
-    const importPath = `${path.toFileUrl(Deno.cwd()).href}/${project.path}/fibs.ts";
-    const module = await import(importPath);
-    if (module[''] !== undefined) {
-      project.commands = module['commands'];
-    }
-  } catch (err) {
-    log.error(err);
-  }
-
-*/
