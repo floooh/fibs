@@ -157,7 +157,7 @@ export function buildAliasMap(project: Project, config: Config, importDir: strin
     };
 }
 
-export function resolveAlias(str: string, aliasMap: Record<string,string>): string {
+export function resolveAlias(str: string, aliasMap: Record<string, string>): string {
     if ((str !== undefined) && str.startsWith('@')) {
         for (const k in aliasMap) {
             if (str.startsWith(k)) {
@@ -168,16 +168,24 @@ export function resolveAlias(str: string, aliasMap: Record<string,string>): stri
     return str;
 }
 
-export function resolveFilePath(baseDir: string, subDir: string | undefined, path: string, aliasMap: Record<string,string>): string {
+export function resolveDirPath(baseDir: string, subDir: string | undefined): string {
+    let str = baseDir + '/';
+    if (subDir !== undefined) {
+        str += subDir + '/';
+    }
+    return str;
+}
+
+export function resolveFilePath(
+    baseDir: string,
+    subDir: string | undefined,
+    path: string,
+    aliasMap: Record<string, string>,
+): string {
     if (path.startsWith('@')) {
         return resolveAlias(path, aliasMap);
     } else {
-        let str = baseDir + '/';
-        if (subDir !== undefined) {
-            str += subDir + '/';
-        }
-        str += path;
-        return str;
+        return resolveDirPath(baseDir, subDir) + path;
     }
 }
 
@@ -223,10 +231,10 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
 }
 
 export type DownloadOptions = {
-    url: string,
-    dir: string,
-    filename: string,
-    abortOnError?: boolean,
+    url: string;
+    dir: string;
+    filename: string;
+    abortOnError?: boolean;
 };
 
 export async function download(options: DownloadOptions): Promise<boolean> {
@@ -264,8 +272,7 @@ export async function download(options: DownloadOptions): Promise<boolean> {
                 return false;
             }
         }
-    }
-    catch (err) {
+    } catch (err) {
         const msg = `Downloading '${url} to ${path} failed with: ${err.message}`;
         if (abortOnError) {
             log.error(msg);
@@ -278,12 +285,16 @@ export async function download(options: DownloadOptions): Promise<boolean> {
 }
 
 export type ResolvedTargetItems = {
-    interface: string[],
-    private: string[],
-    public: string[],
-}
+    interface: string[];
+    private: string[];
+    public: string[];
+};
 
-export function resolveTargetItems(items: TargetItems, buildContext: TargetBuildContext, itemsAreFilePaths: boolean): ResolvedTargetItems {
+export function resolveTargetItems(
+    items: TargetItems,
+    buildContext: TargetBuildContext,
+    itemsAreFilePaths: boolean,
+): ResolvedTargetItems {
     const aliasMap = buildAliasMap(buildContext.project, buildContext.config, buildContext.target.importDir);
     const resolve = (items: string[] | TargetItemsFunc): string[] => {
         let resolvedItems = (typeof items === 'function') ? items(buildContext) : items;

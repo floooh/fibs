@@ -21,7 +21,7 @@ export async function main() {
         const cwd = Deno.cwd().replaceAll('\\', '/');
         const rootPath = `${cwd}/fibs.ts`;
         if (!util.fileExists(rootPath)) {
-            log.error("current directory is not a fibs project (no fibs.ts found)");
+            log.error('current directory is not a fibs project (no fibs.ts found)');
         }
         const rootModule = await import(`file://${rootPath}`);
         if (rootModule.projectDesc !== undefined) {
@@ -37,7 +37,7 @@ export async function main() {
                 );
             }
         } else {
-            log.error("file 'fibs.ts' in current directory has no export 'projectDesc'");
+            log.error('file \'fibs.ts\' in current directory has no export \'projectDesc\'');
         }
     } catch (err) {
         log.error(err);

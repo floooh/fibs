@@ -1,12 +1,12 @@
-import { Config, Project, Compiler } from './types.ts';
+import { Compiler, Config, Project } from './types.ts';
 import * as emsdk from './emsdk.ts';
 import * as wasisdk from './wasisdk.ts';
 import * as util from './util.ts';
 import * as log from './log.ts';
 
 export type ValidateOptions = {
-    silent?: boolean,
-    abortOnError?: boolean,
+    silent?: boolean;
+    abortOnError?: boolean;
 };
 
 export type ValidateResult = {
@@ -28,12 +28,12 @@ export async function validate(project: Project, config: Config, options: Valida
     if (config.generator === 'Ninja') {
         if (!await project.tools['ninja'].exists()) {
             res.valid = false;
-            res.hints.push("ninja build tool not found (run 'fibs diag tools')");
+            res.hints.push('ninja build tool not found (run \'fibs diag tools\')');
         }
     } else if (config.generator === 'Unix Makefiles') {
         if (!await project.tools['make'].exists()) {
             res.valid = false;
-            res.hints.push("make build tool not found (run 'fibs diag tools')");
+            res.hints.push('make build tool not found (run \'fibs diag tools\')');
         }
     }
 
@@ -42,12 +42,12 @@ export async function validate(project: Project, config: Config, options: Valida
     if (config.platform === 'emscripten') {
         if (!util.dirExists(emsdk.dir(project))) {
             res.valid = false;
-            res.hints.push("Emscripten SDK not installed (install with 'fibs emsdk install')");
+            res.hints.push('Emscripten SDK not installed (install with \'fibs emsdk install\')');
         }
     } else if (config.platform === 'wasi') {
         if (!util.dirExists(wasisdk.dir(project))) {
             res.valid = false;
-            res.hints.push("WASI SDK not installed (install with 'fibs wasisdk install')");
+            res.hints.push('WASI SDK not installed (install with \'fibs wasisdk install\')');
         }
     }
 
@@ -73,12 +73,19 @@ export async function validate(project: Project, config: Config, options: Valida
 
 export function compilers(config: Config): Compiler[] {
     switch (config.platform) {
-        case 'windows': return ['msvc', 'gcc', 'clang'];
-        case 'linux': return ['gcc', 'clang'];
-        case 'android': return ['clang'];
-        case 'emscripten': return ['clang'];
-        case 'wasi': return ['clang'];
-        case 'macos': return ['appleclang'];
-        case 'ios': return ['appleclang'];
+        case 'windows':
+            return ['msvc', 'gcc', 'clang'];
+        case 'linux':
+            return ['gcc', 'clang'];
+        case 'android':
+            return ['clang'];
+        case 'emscripten':
+            return ['clang'];
+        case 'wasi':
+            return ['clang'];
+        case 'macos':
+            return ['appleclang'];
+        case 'ios':
+            return ['appleclang'];
     }
 }

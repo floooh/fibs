@@ -1,4 +1,4 @@
-import { AdapterOptions, CommandDesc, log, proj, Project, util, conf } from '../../mod.ts';
+import { AdapterOptions, CommandDesc, conf, log, proj, Project, util } from '../../mod.ts';
 
 export const buildCmd: CommandDesc = {
     help: help,

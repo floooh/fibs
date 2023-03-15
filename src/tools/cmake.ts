@@ -1,4 +1,4 @@
-import { ToolDesc, cmake } from '../../mod.ts';
+import { cmake, ToolDesc } from '../../mod.ts';
 
 export const cmakeTool: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],

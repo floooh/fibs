@@ -1,4 +1,4 @@
-import { CommandDesc, Project, log, emsdk } from '../../mod.ts';
+import { CommandDesc, emsdk, log, Project } from '../../mod.ts';
 
 export const emsdkCmd: CommandDesc = {
     help: help,
@@ -14,11 +14,11 @@ function help() {
 }
 
 type Args = {
-    install?: boolean,
-    list?: boolean,
-    uninstall?: boolean,
-    version?: string,
-}
+    install?: boolean;
+    list?: boolean;
+    uninstall?: boolean;
+    version?: string;
+};
 
 async function run(project: Project) {
     const args = parseArgs();
@@ -34,7 +34,7 @@ async function run(project: Project) {
 function parseArgs(): Args {
     const args: Args = {};
     if (Deno.args[1] === undefined) {
-        log.error("expected a subcommand (run 'fibs help emsdk')");
+        log.error('expected a subcommand (run \'fibs help emsdk\')');
     }
     switch (Deno.args[1]) {
         case 'install':

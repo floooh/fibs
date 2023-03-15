@@ -129,7 +129,7 @@ export type TargetItemsDesc = {
     interface?: string[] | TargetItemsFunc;
     private?: string[] | TargetItemsFunc;
     public?: string[] | TargetItemsFunc;
-}
+};
 
 export type TargetItems = {
     interface: string[] | TargetItemsFunc;

@@ -1,4 +1,4 @@
-import { CommandDesc, Project, log, wasisdk } from '../../mod.ts';
+import { CommandDesc, log, Project, wasisdk } from '../../mod.ts';
 
 export const wasisdkCmd: CommandDesc = {
     help: help,
@@ -13,8 +13,8 @@ function help() {
 }
 
 type Args = {
-    install?: boolean,
-    uninstall?: boolean,
+    install?: boolean;
+    uninstall?: boolean;
 };
 
 async function run(project: Project) {
@@ -29,7 +29,7 @@ async function run(project: Project) {
 function parseArgs(): Args {
     const args: Args = {};
     if (Deno.args[1] === undefined) {
-        log.error("expected a subcommand (run 'fibs help wasisdk')");
+        log.error('expected a subcommand (run \'fibs help wasisdk\')');
     }
     switch (Deno.args[1]) {
         case 'install':

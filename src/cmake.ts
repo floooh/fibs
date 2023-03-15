@@ -1,4 +1,4 @@
-import { Project, Config, RunOptions, RunResult } from './types.ts';
+import { Config, Project, RunOptions, RunResult } from './types.ts';
 import * as util from './util.ts';
 import * as log from './log.ts';
 
@@ -39,7 +39,7 @@ export async function build(project: Project, config: Config, options: BuildOpti
         target,
         cleanFirst = false,
     } = options;
-    let args = ['--build', '--preset', 'default' ];
+    let args = ['--build', '--preset', 'default'];
     if (target !== undefined) {
         args = [...args, '--target', target];
     }

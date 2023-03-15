@@ -2,20 +2,20 @@ import {
     AdapterDesc,
     AdapterOptions,
     BuildType,
-    Config,
-    Compiler,
-    Language,
     cmake,
+    Compiler,
+    conf,
+    Config,
     host,
+    Language,
     log,
     Project,
     ProjectBuildContext,
     ProjectItemsFunc,
     Target,
-    TargetItems,
     TargetBuildContext,
+    TargetItems,
     util,
-conf,
 } from '../../mod.ts';
 
 export const cmakeAdapter: AdapterDesc = {
@@ -94,7 +94,11 @@ function genProlog(project: Project, config: Config): string {
     return str;
 }
 
-export function resolveProjectItems(items: (string|ProjectItemsFunc)[], buildContext: ProjectBuildContext, itemsAreFilePaths: boolean): string[] {
+export function resolveProjectItems(
+    items: (string | ProjectItemsFunc)[],
+    buildContext: ProjectBuildContext,
+    itemsAreFilePaths: boolean,
+): string[] {
     const aliasMap = util.buildAliasMap(buildContext.project, buildContext.config, buildContext.project.dir);
     const baseDir = buildContext.project.dir;
     const subDir = undefined;
@@ -116,17 +120,23 @@ export function resolveProjectItems(items: (string|ProjectItemsFunc)[], buildCon
 
 function compilerId(compiler: Compiler): string {
     switch (compiler) {
-        case 'msvc': return 'MSVC';
-        case 'gcc': return 'GNU';
-        case 'clang': return 'Clang';
-        case 'appleclang': return 'AppleClang';
+        case 'msvc':
+            return 'MSVC';
+        case 'gcc':
+            return 'GNU';
+        case 'clang':
+            return 'Clang';
+        case 'appleclang':
+            return 'AppleClang';
     }
 }
 
 function languageId(language: Language): string {
     switch (language) {
-        case 'c': return 'C';
-        case 'cxx': return 'CXX';
+        case 'c':
+            return 'C';
+        case 'cxx':
+            return 'CXX';
     }
 }
 
@@ -142,7 +152,13 @@ function generatorExpressionCompiler(compiler: Compiler, items: string[]): strin
     return `"$<$<C_COMPILER_ID:${compilerId(compiler)}>:${items.join(';')}>"`;
 }
 
-function genGlobalItemsLanguageCompiler(project: Project, config: Config, statement: string, items: (string | ProjectItemsFunc)[], itemsAreFilePaths: boolean): string {
+function genGlobalItemsLanguageCompiler(
+    project: Project,
+    config: Config,
+    statement: string,
+    items: (string | ProjectItemsFunc)[],
+    itemsAreFilePaths: boolean,
+): string {
     let str = '';
     languages().forEach((language) => {
         conf.compilers(config).forEach((compiler) => {
@@ -162,15 +178,21 @@ function genGlobalItemsLanguageCompiler(project: Project, config: Config, statem
 }
 
 function genIncludeDirectories(project: Project, config: Config): string {
-    let str = ''
+    let str = '';
     str += genGlobalItemsLanguageCompiler(project, config, 'include_directories', project.includeDirectories, true);
     str += genGlobalItemsLanguageCompiler(project, config, 'include_directories', config.includeDirectories, true);
     return str;
 }
 
 function genCompileDefinitions(project: Project, config: Config): string {
-    let str = ''
-    str += genGlobalItemsLanguageCompiler(project, config, 'add_compile_definitions', project.compileDefinitions, false);
+    let str = '';
+    str += genGlobalItemsLanguageCompiler(
+        project,
+        config,
+        'add_compile_definitions',
+        project.compileDefinitions,
+        false,
+    );
     str += genGlobalItemsLanguageCompiler(project, config, 'add_compile_definitions', config.compileDefinitions, false);
     return str;
 }
@@ -253,7 +275,14 @@ function genTargetDependencies(project: Project, config: Config, target: Target)
     return str;
 }
 
-function genTargetItems(project: Project, config: Config, target: Target, statement: string, items: TargetItems, itemsAreFilePaths: boolean): string {
+function genTargetItems(
+    project: Project,
+    config: Config,
+    target: Target,
+    statement: string,
+    items: TargetItems,
+    itemsAreFilePaths: boolean,
+): string {
     let str = '';
     languages().forEach((language) => {
         conf.compilers(config).forEach((compiler) => {
@@ -262,7 +291,7 @@ function genTargetItems(project: Project, config: Config, target: Target, statem
                 config,
                 compiler,
                 target,
-                language
+                language,
             };
             const resolvedItems = util.resolveTargetItems(items, ctx, itemsAreFilePaths);
             const hasInterface = Object.values(resolvedItems.interface).length > 0;
@@ -270,13 +299,19 @@ function genTargetItems(project: Project, config: Config, target: Target, statem
             const hasPublic = Object.values(resolvedItems.public).length > 0;
             if (hasInterface || hasPrivate || hasPublic) {
                 if (hasInterface) {
-                    str += `${statement}(${target.name} INTERFACE ${generatorExpressionLanguageCompiler(language, compiler, resolvedItems.interface)})\n`;
+                    str += `${statement}(${target.name} INTERFACE ${
+                        generatorExpressionLanguageCompiler(language, compiler, resolvedItems.interface)
+                    })\n`;
                 }
                 if (hasPrivate) {
-                    str += `${statement}(${target.name} PRIVATE ${generatorExpressionLanguageCompiler(language, compiler, resolvedItems.private)})\n`;
+                    str += `${statement}(${target.name} PRIVATE ${
+                        generatorExpressionLanguageCompiler(language, compiler, resolvedItems.private)
+                    })\n`;
                 }
                 if (hasPublic) {
-                    str += `${statement}(${target.name} PUBLIC ${generatorExpressionLanguageCompiler(language, compiler, resolvedItems.public)})\n`;
+                    str += `${statement}(${target.name} PUBLIC ${
+                        generatorExpressionLanguageCompiler(language, compiler, resolvedItems.public)
+                    })\n`;
                 }
             }
         });
@@ -323,7 +358,9 @@ function genConfigurePresets(project: Project, config: Config): any[] {
             displayName: config.name,
             binaryDir: util.buildDir(project, config),
             generator: config.generator,
-            toolchainFile: (config.toolchainFile !== undefined) ? util.resolveAlias(config.toolchainFile, aliasMap) : undefined,
+            toolchainFile: (config.toolchainFile !== undefined)
+                ? util.resolveAlias(config.toolchainFile, aliasMap)
+                : undefined,
             cacheVariables: genCacheVariables(project, config),
             environment: config.environment,
         });
@@ -367,7 +404,6 @@ function resolveCacheVariable(val: string | boolean, aliasMap: Record<string, st
     } else {
         return util.resolveAlias(val, aliasMap);
     }
-
 }
 
 function genCacheVariables(project: Project, config: Config): Record<string, any> {
@@ -397,6 +433,6 @@ function genBuildPresets(project: Project, config: Config): any[] {
             { name: 'release', configurePreset: config.name, configuration: asCMakeBuildType('release') },
         ];
     } else {
-        return [ { name: 'default', configurePreset: config.name } ];
+        return [{ name: 'default', configurePreset: config.name }];
     }
 }

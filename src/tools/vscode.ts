@@ -5,7 +5,7 @@ export const vscodeTool: ToolDesc = {
     optional: true,
     notFoundMsg: 'required for opening projects in VSCode',
     exists: exists,
-}
+};
 
 export async function run(options: RunOptions): Promise<RunResult> {
     const { abortOnError = true } = options;
@@ -22,7 +22,14 @@ export async function run(options: RunOptions): Promise<RunResult> {
 
 export async function exists(): Promise<boolean> {
     try {
-        const res = await run({ args: ['--version'], stdout: 'piped', stderr: 'piped', showCmd: false, abortOnError: false, winUseCmd: true });
+        const res = await run({
+            args: ['--version'],
+            stdout: 'piped',
+            stderr: 'piped',
+            showCmd: false,
+            abortOnError: false,
+            winUseCmd: true,
+        });
         return res.exitCode === 0;
     } catch (_err) {
         return false;

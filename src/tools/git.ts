@@ -1,4 +1,4 @@
-import { ToolDesc, git } from '../../mod.ts';
+import { git, ToolDesc } from '../../mod.ts';
 
 export const gitTool: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],

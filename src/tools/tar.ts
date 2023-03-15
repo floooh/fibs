@@ -5,7 +5,7 @@ export const tarTool: ToolDesc = {
     optional: true,
     notFoundMsg: 'required for unpacking downloaded sdk archives',
     exists: exists,
-}
+};
 
 export async function exists(): Promise<boolean> {
     try {

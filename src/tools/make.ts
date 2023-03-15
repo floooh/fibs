@@ -5,7 +5,7 @@ export const makeTool: ToolDesc = {
     optional: true,
     notFoundMsg: 'required for building *-make-* configs',
     exists: exists,
-}
+};
 
 export async function exists(): Promise<boolean> {
     try {

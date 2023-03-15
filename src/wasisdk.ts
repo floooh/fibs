@@ -7,10 +7,11 @@ import { colors } from '../deps.ts';
 const SDKVERSION = 19;
 const SDKNAME = `wasi-sdk-${SDKVERSION}.0`;
 const URLS = {
-    'linux':    `https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${SDKVERSION}/${SDKNAME}-linux.tar.gz`,
-    'macos':    `https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${SDKVERSION}/${SDKNAME}-macos.tar.gz`,
-    'windows':  `https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${SDKVERSION}/${SDKNAME}-mingw.tar.gz`
-}
+    'linux': `https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${SDKVERSION}/${SDKNAME}-linux.tar.gz`,
+    'macos': `https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${SDKVERSION}/${SDKNAME}-macos.tar.gz`,
+    'windows':
+        `https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${SDKVERSION}/${SDKNAME}-mingw.tar.gz`,
+};
 
 export function dir(project: Project): string {
     return `${util.sdkDir(project)}/wasisdk`;
@@ -28,7 +29,7 @@ export async function uninstall(project: Project) {
             Deno.removeSync(wasisdkDir, { recursive: true });
             log.info(colors.green('done.'));
         } else {
-            log.info('nothing to do.')
+            log.info('nothing to do.');
         }
     } else {
         log.warn('WASI SDK not installed, nothing to do.');
@@ -42,7 +43,7 @@ export async function download(project: Project) {
     const sdkDir = `${util.sdkDir(project)}`;
     const filename = SDKNAME + '.tgz';
     if (!project.tools.tar.exists()) {
-        log.error("tar command not found (run 'fibs diag tools'");
+        log.error('tar command not found (run \'fibs diag tools\'');
     }
     log.section('downloading WASI SDK');
     const url = URLS[host.platform()];

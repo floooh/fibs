@@ -21,7 +21,7 @@ type ListArgs = {
     all: boolean;
     settings: boolean;
     configs: boolean;
-    imports: boolean,
+    imports: boolean;
     targetTypes: TargetType[];
 };
 

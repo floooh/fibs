@@ -1,4 +1,4 @@
-import { CommandDesc, conf, host, log, Project } from '../../mod.ts';
+import { CommandDesc, conf, host, log, proj, Project } from '../../mod.ts';
 import { colors } from '../../deps.ts';
 
 export const diagCmd: CommandDesc = {
@@ -12,13 +12,14 @@ function help() {
         'diag fibs',
         'diag tools',
         'diag configs',
+        'diag targets',
         'diag imports',
         'diag project',
     ], 'run diagnostics and check for errors');
 }
 
 async function run(project: Project) {
-    const all: string[] = ['fibs', 'tools', 'configs', 'imports', 'project'];
+    const all: string[] = ['fibs', 'tools', 'configs', 'targets', 'imports', 'project'];
     let which: string[] = [];
     let separator = false;
     if (Deno.args.length === 1) {
@@ -31,43 +32,28 @@ async function run(project: Project) {
         }
         which = [arg];
     }
-    if (which.includes('fibs')) {
-        if (separator) {
-            log.section('fibs');
+    const diag = async (name: string, func: (project: Project) => Promise<void>) => {
+        if (which.includes(name)) {
+            if (separator) {
+                log.section(name);
+            }
+            await func(project);
+            log.print();
         }
-        log.warn('FIXME: diag fibs');
-        log.print();
-    }
-    if (which.includes('tools')) {
-        if (separator) {
-            log.section('tools');
-        }
-        await tools(project);
-        log.print();
-    }
-    if (which.includes('configs')) {
-        if (separator) {
-            log.section('configs');
-        }
-        await configs(project);
-        log.print();
-    }
-    if (which.includes('imports')) {
-        if (separator) {
-            log.section('imports');
-        }
-        log.warn('FIXME: diag imports');
-        log.print();
-    }
-    if (which.includes('project')) {
-        if (separator) {
-            log.section('project');
-        }
-        log.dir(project);
-    }
+    };
+    await diag('fibs', diagFibs);
+    await diag('tools', diagTools);
+    await diag('configs', diagConfigs);
+    await diag('targets', diagTargets);
+    await diag('imports', diagImports);
+    await diag('project', diagProject);
 }
 
-async function tools(project: Project) {
+async function diagFibs() {
+    log.warn('FIXME: diag fibs');
+}
+
+async function diagTools(project: Project) {
     const tools = project.tools!;
     for (const toolName in tools) {
         const tool = tools[toolName];
@@ -86,11 +72,11 @@ async function tools(project: Project) {
     }
 }
 
-async function configs(project: Project) {
+async function diagConfigs(project: Project) {
     const configs = project.configs;
     for (const configName in configs) {
         const config = configs[configName];
-        log.write(`${config.name}: `)
+        log.write(`${config.name}: `);
         const res = await conf.validate(project, config, { silent: true, abortOnError: false });
         if (res.valid) {
             log.write(colors.green('ok\n'));
@@ -101,4 +87,29 @@ async function configs(project: Project) {
             }
         }
     }
+}
+
+async function diagTargets(project: Project) {
+    const targets = project.targets;
+    for (const targetName in targets) {
+        const target = targets[targetName];
+        log.write(`${target.name} (${target.type}): `);
+        const res = proj.validateTarget(project, target, { silent: true, abortOnError: false });
+        if (res.valid) {
+            log.write(colors.green('ok\n'));
+        } else {
+            log.write(colors.red('FAILED\n'));
+            for (const hint of res.hints) {
+                log.info(`  ${hint}`);
+            }
+        }
+    }
+}
+
+async function diagImports() {
+    log.warn('FIXME: diag imports');
+}
+
+async function diagProject(project: Project) {
+    log.dir(project);
 }

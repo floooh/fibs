@@ -4,16 +4,16 @@ import * as git from './git.ts';
 import * as log from './log.ts';
 
 export type FetchOptions = {
-    name: string,
-    url: string,
-    ref?: string,
+    name: string;
+    url: string;
+    ref?: string;
 };
 
 export type FetchResult = {
-    valid: boolean,
-    path: string,
-    projectDesc: ProjectDesc | undefined,
-}
+    valid: boolean;
+    path: string;
+    projectDesc: ProjectDesc | undefined;
+};
 
 export async function fetch(project: Project, options: FetchOptions): Promise<FetchResult> {
     const importsDir = util.ensureImportsDir(project);
@@ -21,7 +21,6 @@ export async function fetch(project: Project, options: FetchOptions): Promise<Fe
         valid: false,
         path: `${importsDir}/${options.name}`,
         projectDesc: undefined,
-
     };
     // shortcut import directory already exists
     if (util.dirExists(res.path)) {
@@ -31,22 +30,26 @@ export async function fetch(project: Project, options: FetchOptions): Promise<Fe
         return res;
     }
     // otherwise fetch via git
-    if (!await git.clone({
-        url: options.url,
-        dir: importsDir,
-        name: options.name,
-        recursive: true,
-        // only shallow-clone if no ref is specified
-        depth: (options.ref === undefined) ? 1 : undefined,
-    })) {
-        log.warn(`Failed to clone ${options.url} into ${res.path}`)
+    if (
+        !await git.clone({
+            url: options.url,
+            dir: importsDir,
+            name: options.name,
+            recursive: true,
+            // only shallow-clone if no ref is specified
+            depth: (options.ref === undefined) ? 1 : undefined,
+        })
+    ) {
+        log.warn(`Failed to clone ${options.url} into ${res.path}`);
         return res;
     }
     if (options.ref) {
-        if (!await git.checkout({
-            dir: res.path,
-            ref: options.ref,
-        })) {
+        if (
+            !await git.checkout({
+                dir: res.path,
+                ref: options.ref,
+            })
+        ) {
             log.warn(`Failed to checkout ${options.ref} in ${res.path}`);
         }
         return res;

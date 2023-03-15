@@ -4,15 +4,20 @@ import {
     Command,
     Config,
     ConfigDescWithImportDir,
+    Language,
     Project,
     ProjectDesc,
-    Tool,
+    Target,
+    TargetBuildContext,
     TargetItems,
     TargetItemsDesc,
+    Tool,
 } from './types.ts';
 import * as settings from './settings.ts';
 import * as log from './log.ts';
 import * as imports from './imports.ts';
+import * as util from './util.ts';
+import { conf } from '../mod.ts';
 
 export async function setup(
     rootDir: string,
@@ -286,4 +291,120 @@ export async function build(
     options: AdapterOptions,
 ): Promise<void> {
     await adapter.build(project, config, options);
+}
+
+export type ValidateTargetOptions = {
+    silent?: boolean;
+    abortOnError?: boolean;
+};
+
+type ValidateTargetResult = {
+    valid: boolean;
+    hints: string[];
+};
+
+export function validateTarget(
+    project: Project,
+    target: Target,
+    options: ValidateTargetOptions,
+): ValidateTargetResult {
+    const {
+        silent = false,
+        abortOnError = false,
+    } = options;
+
+    const res: ValidateTargetResult = {
+        valid: true,
+        hints: [],
+    };
+
+    // check restrictions for interface targets
+    if (target.type === 'interface') {
+        const checkInterfaceItems = (items: TargetItems): boolean => {
+            if ((typeof items.private === 'function') || (items.private.length > 0)) {
+                return false;
+            }
+            if ((typeof items.public === 'function') || (items.public.length > 0)) {
+                return false;
+            }
+            return true;
+        };
+        if ((target.sources.length > 0)) {
+            res.valid = false;
+            res.hints.push(`target type 'interface' cannot have source files attached`);
+        }
+        if (!checkInterfaceItems(target.includeDirectories)) {
+            res.valid = false;
+            res.hints.push(`interface targets must only define interface include directories`);
+        }
+        if (!checkInterfaceItems(target.compileDefinitions)) {
+            res.valid = false;
+            res.hints.push(`interface targets must only define interface compile definitins`);
+        }
+        if (!checkInterfaceItems(target.compileOptions)) {
+            res.valid = false;
+            res.hints.push(`interface targets must only define interface compile options`);
+        }
+        if (!checkInterfaceItems(target.linkOptions)) {
+            res.valid = false;
+            res.hints.push(`interface targets must only define interface link options`);
+        }
+    }
+
+    // check source files exist
+    const config = util.activeConfig(project);
+    const srcDir = util.resolveDirPath(target.importDir, target.dir);
+    if (!util.dirExists(srcDir)) {
+        res.valid = false;
+        res.hints.push(`src dir not found: ${srcDir}`);
+    } else {
+        const aliasMap = util.buildAliasMap(project, config, target.importDir);
+        for (const src of target.sources) {
+            const srcFile = util.resolveFilePath(target.importDir, target.dir, src, aliasMap);
+            if (!util.fileExists(srcFile)) {
+                res.valid = false;
+                res.hints.push(`src file not found: ${srcFile}`);
+            }
+        }
+    }
+
+    // check that include directories exist
+    let missingIncludeDirectories: string[] = [];
+    const checkMissingDirs = (dirs: string[]): string[] => {
+        return dirs.filter((dir) => {
+            return !util.dirExists(dir);
+        });
+    };
+    ['c', 'cxx'].forEach((language) => {
+        conf.compilers(config).forEach((compiler) => {
+            const ctx: TargetBuildContext = {
+                project,
+                config,
+                compiler,
+                target,
+                language: language as Language,
+            };
+            const resolvedItems = util.resolveTargetItems(target.includeDirectories, ctx, true);
+            missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.interface));
+            missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.private));
+            missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.public));
+        });
+    });
+    if (missingIncludeDirectories.length > 0) {
+        // remove duplicates
+        missingIncludeDirectories = [...new Set(missingIncludeDirectories)];
+        res.valid = false;
+        res.hints.push(...missingIncludeDirectories.map((dir) => `include directory not found: ${dir}`));
+    }
+
+    if (!res.valid && !silent) {
+        const msg = [`target '${target.name} not valid:\n`, ...res.hints].join('\n  ') + '\n';
+        if (abortOnError) {
+            log.error(msg);
+        } else {
+            log.warn(msg);
+        }
+    }
+
+    return res;
 }

@@ -20,8 +20,8 @@ export async function exists(): Promise<boolean> {
 }
 
 export type PullOptions = {
-    dir: string,
-    force?: boolean,
+    dir: string;
+    force?: boolean;
 };
 
 export async function pull(options: PullOptions): Promise<boolean> {
@@ -34,12 +34,12 @@ export async function pull(options: PullOptions): Promise<boolean> {
 }
 
 export type CloneOptions = {
-    url: string,
-    dir: string,
-    name?: string,
-    recursive?: boolean,
-    depth?: number,
-    branch?: string,
+    url: string;
+    dir: string;
+    name?: string;
+    recursive?: boolean;
+    depth?: number;
+    branch?: string;
 };
 
 export async function clone(options: CloneOptions): Promise<boolean> {
@@ -62,12 +62,16 @@ export async function clone(options: CloneOptions): Promise<boolean> {
 }
 
 export type CheckoutOptions = {
-    dir: string,
-    ref: string,
+    dir: string;
+    ref: string;
 };
 
 export async function checkout(options: CheckoutOptions): Promise<boolean> {
-    const res = await run({ args: ['-c', 'advice.detachedHead=false', 'checkout', options.ref ], cwd: options.dir, showCmd: true });
+    const res = await run({
+        args: ['-c', 'advice.detachedHead=false', 'checkout', options.ref],
+        cwd: options.dir,
+        showCmd: true,
+    });
     if (res.exitCode !== 0) {
         return false;
     }
@@ -75,11 +79,11 @@ export async function checkout(options: CheckoutOptions): Promise<boolean> {
 }
 
 export type UpdateSubmodulesOptions = {
-    dir: string,
+    dir: string;
 };
 
 export async function updateSubmodules(options: UpdateSubmodulesOptions): Promise<boolean> {
-    let res = await run({ args: ['submodule', 'sync', '--recursive' ], cwd: options.dir, showCmd: true });
+    let res = await run({ args: ['submodule', 'sync', '--recursive'], cwd: options.dir, showCmd: true });
     if (res.exitCode !== 0) {
         return false;
     }

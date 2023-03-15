@@ -21,7 +21,7 @@ async function run(project: Project) {
         const buildExists = util.dirExists(buildPath);
         const distExists = util.dirExists(distPath);
         if (buildExists || distExists) {
-            log.info(colors.blue(`${config.name}:`))
+            log.info(colors.blue(`${config.name}:`));
             if (buildExists) {
                 log.info(`  delete ${buildPath}`);
                 Deno.removeSync(buildPath, { recursive: true });

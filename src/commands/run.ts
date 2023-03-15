@@ -1,4 +1,4 @@
-import { CommandDesc, log, Project, util, http, host } from '../../mod.ts';
+import { CommandDesc, host, http, log, Project, util } from '../../mod.ts';
 import WASI from 'https://deno.land/std@0.178.0/wasi/snapshot_preview1.ts';
 
 export const runCmd: CommandDesc = {
@@ -29,18 +29,18 @@ async function runFn(project: Project) {
     const dir = util.distDir(project, config);
     const path = `${dir}/${target.name}`;
     if ((config.platform === 'macos') && (target.type === 'windowed-exe')) {
-        util.runCmd('open', { args: [ `${path}.app` ]});
+        util.runCmd('open', { args: [`${path}.app`] });
     } else if (config.platform === 'emscripten') {
         const url = `http://localhost:8080/${target.name}.html`;
         switch (host.platform()) {
             case 'macos':
-                util.runCmd('open', { args: [ url ] });
+                util.runCmd('open', { args: [url] });
                 break;
             case 'linux':
-                util.runCmd('xdg-open', { args: [ url ] });
+                util.runCmd('xdg-open', { args: [url] });
                 break;
             case 'windows':
-                util.runCmd('cmd', { args: [ '/c', 'start', url ]});
+                util.runCmd('cmd', { args: ['/c', 'start', url] });
                 break;
         }
         await http.serve({ target: dir, port: '8080' });

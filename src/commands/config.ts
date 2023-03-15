@@ -1,4 +1,4 @@
-import { CommandDesc, log, Project, settings, proj, conf } from '../../mod.ts';
+import { CommandDesc, conf, log, proj, Project, settings } from '../../mod.ts';
 
 export const configCmd: CommandDesc = {
     help: help,
@@ -27,6 +27,6 @@ async function run(project: Project) {
             log.error(`config '${configName} not found (run 'fibs list configs)`);
         }
     } else {
-        log.error("too many args (run 'fibs help config')");
+        log.error('too many args (run \'fibs help config\')');
     }
 }

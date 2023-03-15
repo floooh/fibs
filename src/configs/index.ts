@@ -103,7 +103,7 @@ export const configs: Record<string, ConfigDesc> = {
         toolchainFile: '@sdks/wasisdk/share/cmake/wasi-sdk.cmake',
         variables: {
             WASI_SDK_PREFIX: '@sdks/wasisdk',
-        }
+        },
     },
     'wasi-make': {
         ignore: true,
