@@ -103,7 +103,7 @@ export type Import = {
     name: string;
     importDir: string;
     url: string;
-    ref: string | null;
+    ref: string | undefined;
 };
 
 export type ProjectBuildContext = {

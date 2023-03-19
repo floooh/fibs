@@ -144,7 +144,7 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
                 name,
                 importDir: res.path,
                 url: imp.url,
-                ref: imp.ref ?? null,
+                ref: imp.ref,
             };
         }
     }

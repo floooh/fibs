@@ -53,6 +53,6 @@ export function ask(msg: string, yes: boolean): boolean {
     if (yes) {
         return true;
     } else {
-        return confirm(colors.green(`> ${msg}`));
+        return confirm(`${colors.bold(colors.brightRed('??'))} ${msg}?`);
     }
 }

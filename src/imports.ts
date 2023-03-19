@@ -35,23 +35,12 @@ export async function fetch(project: Project, options: FetchOptions): Promise<Fe
             url: options.url,
             dir: importsDir,
             name: options.name,
-            recursive: true,
+            ref: options.ref,
             // only shallow-clone if no ref is specified
             depth: (options.ref === undefined) ? 1 : undefined,
         })
     ) {
         log.warn(`Failed to clone ${options.url} into ${res.path}`);
-        return res;
-    }
-    if (options.ref) {
-        if (
-            !await git.checkout({
-                dir: res.path,
-                ref: options.ref,
-            })
-        ) {
-            log.warn(`Failed to checkout ${options.ref} in ${res.path}`);
-        }
         return res;
     }
 
@@ -93,10 +82,14 @@ export async function validate(project: Project, imp: Import, options: ValidateO
         res.hints.push(`directory does not exists: ${dir}`);
     }
 
-    const outOfSyncRes = await git.checkOutOfSync(dir);
-    if (!outOfSyncRes.valid) {
+    if (await git.hasUncommittedChanges({ dir, showCmd: false })) {
         res.valid = false;
-        res.hints.push(...outOfSyncRes.hints);
+        res.hints.push(`uncommitted changes in '${dir}'`);
+    }
+
+    if (await git.hasUnpushedChanges({ dir, showCmd: false })) {
+        res.valid = false;
+        res.hints.push(`unpushed changes in '${dir}'`);
     }
 
     if (!res.valid && !silent) {

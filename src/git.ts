@@ -20,91 +20,140 @@ export async function exists(): Promise<boolean> {
 }
 
 export type PullOptions = {
-    dir: string;
-    force?: boolean;
+    dir: string,
+    force?: boolean,
+    ref?: string,
+    showCmd?: boolean,
 };
 
-export async function pull(options: PullOptions): Promise<boolean> {
-    const args: string[] = ['pull'];
-    if (options.force) {
+export async function pullOrFetch(options: PullOptions): Promise<boolean> {
+    const {
+        dir,
+        ref,
+        force = false,
+        showCmd = true
+    } = options;
+    const args: string[] = [];
+    if (ref === undefined) {
+        args.push('pull');
+    } else {
+        args.push('fetch');
+    }
+    if (force) {
         args.push('-f');
     }
-    const res = await run({ args, cwd: options.dir, showCmd: true });
-    return res.exitCode === 0;
+    if ((await run({ args, cwd: dir, showCmd })).exitCode !== 0) {
+        return false;
+    }
+    if (ref === undefined) {
+        return await updateSubmodules({ dir, showCmd });
+    } else {
+        return await checkout({ dir, ref, showCmd });
+    }
 }
 
 export type CloneOptions = {
-    url: string;
-    dir: string;
-    name?: string;
-    recursive?: boolean;
-    depth?: number;
-    branch?: string;
+    url: string,
+    dir: string,
+    name: string,
+    depth?: number,
+    branch?: string,
+    ref?: string,
+    showCmd?: boolean,
 };
 
 export async function clone(options: CloneOptions): Promise<boolean> {
-    const args: string[] = ['clone'];
-    if (options.recursive) {
-        args.push('--recursive');
+    const {
+        url,
+        dir,
+        name,
+        depth,
+        branch,
+        ref,
+        showCmd = true,
+    } = options;
+    const args: string[] = ['clone', '--recursive'];
+    if (branch !== undefined) {
+        args.push('--branch', branch, '--single-branch');
     }
-    if (options.branch !== undefined) {
-        args.push('--branch', options.branch, '--single-branch');
+    if (depth !== undefined) {
+        args.push('--depth', `${depth}`);
     }
-    if (options.depth !== undefined) {
-        args.push('--depth', `${options.depth}`);
+    args.push(url);
+    if (name !== undefined) {
+        args.push(name);
     }
-    args.push(options.url);
-    if (options.name !== undefined) {
-        args.push(options.name);
+    if ((await run({ args, cwd: dir, showCmd })).exitCode !== 0) {
+        return false;
     }
-    const res = await run({ args, cwd: options.dir, showCmd: true });
-    return res.exitCode === 0;
+    const repoDir = `${dir}/${name}`;
+    if (ref === undefined) {
+        return await updateSubmodules({ dir: repoDir, showCmd });
+    } else {
+        return await checkout({ dir: repoDir, ref, showCmd });
+    }
 }
 
 export type CheckoutOptions = {
     dir: string;
     ref: string;
+    showCmd?: boolean,
 };
 
 export async function checkout(options: CheckoutOptions): Promise<boolean> {
+    const { dir, ref, showCmd = true } = options;
     const res = await run({
-        args: ['-c', 'advice.detachedHead=false', 'checkout', options.ref],
-        cwd: options.dir,
-        showCmd: true,
+        args: ['-c', 'advice.detachedHead=false', 'checkout', ref],
+        cwd: dir,
+        showCmd,
     });
     if (res.exitCode !== 0) {
         return false;
     }
-    return await updateSubmodules(options.dir);
+    return await updateSubmodules({ dir, showCmd });
 }
 
-export async function updateSubmodules(dir: string): Promise<boolean> {
-    let res = await run({ args: ['submodule', 'sync', '--recursive'], cwd: dir, showCmd: true });
+export type UpdateSubmodulesOptions = {
+    dir: string,
+    showCmd?: boolean,
+};
+
+export async function updateSubmodules(options: UpdateSubmodulesOptions): Promise<boolean> {
+    const { dir, showCmd = true } = options;
+    let res = await run({ args: ['submodule', 'sync', '--recursive'], cwd: dir, showCmd });
     if (res.exitCode !== 0) {
         return false;
     }
-    res = await run({ args: ['submodule', 'update', '--recursive'], cwd: dir, showCmd: true });
+    res = await run({ args: ['submodule', 'update', '--recursive'], cwd: dir, showCmd });
     if (res.exitCode !== 0) {
         return false;
     }
     return true;
 }
 
-export async function hasLocalChanges(dir: string): Promise<boolean> {
-    let res = await run({ args: ['status', '-s'], cwd: dir, showCmd: false, stdout: 'piped' });
+export type HasUncommittedChangesOptions = {
+    dir: string,
+    showCmd?: boolean;
+};
+
+export async function hasUncommittedChanges(options: HasUncommittedChangesOptions): Promise<boolean> {
+    const { dir, showCmd = true } = options;
+    const res = await run({ args: ['status', '-s'], cwd: dir, showCmd, stdout: 'piped' });
     return 0 !== res.stdout.length;
 }
 
-type CheckOutOfSyncResult = {
-    valid: boolean;
-    hints: string[];
-}
+export type HasUnpushedChangesOptions = {
+    dir: string,
+    showCmd?: boolean,
+};
 
-export async function checkOutOfSync(dir: string): Promise<CheckOutOfSyncResult> {
-    const res: CheckOutOfSyncResult = { valid: true, hints: [] };
-    if (await hasLocalChanges(dir)) {
-        res.valid = false;
-        res.hints.push(`local changes detected in ${dir}`);
-    }
-    return res;
+export async function hasUnpushedChanges(options: HasUnpushedChangesOptions): Promise<boolean> {
+    const { dir, showCmd = true } = options;
+    const res = await run({
+        args: ['log', '--branches', '--not', '--remotes', '--oneline' ],
+        cwd: dir,
+        showCmd,
+        stdout: 'piped'
+    });
+    return 0 !== res.stdout.length;
 }
