@@ -1,7 +1,6 @@
 import {
     Adapter,
     AdapterOptions,
-    Command,
     Config,
     ConfigDescWithImportDir,
     Language,
@@ -11,7 +10,6 @@ import {
     TargetBuildContext,
     TargetItems,
     TargetItemsDesc,
-    Tool,
 } from './types.ts';
 import * as settings from './settings.ts';
 import * as log from './log.ts';
@@ -38,6 +36,7 @@ export async function setup(
         targets: {},
         commands: {},
         tools: {},
+        runners: {},
         configs: {},
         configDescs: {},
         adapters: {},
@@ -74,6 +73,7 @@ function resolveConfigs(project: Project) {
             name,
             importDir: desc.importDir,
             platform: desc.platform,
+            runner: desc.runner ?? 'native',
             buildType: desc.buildType,
             generator: desc.generator,
             arch: desc.arch ?? undefined,
@@ -206,19 +206,18 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
     if (other.commands) {
         for (const name in other.commands) {
             const desc = other.commands[name];
-            const command: Command = {
+            into.commands[name] = {
                 name,
                 importDir,
                 help: desc.help,
                 run: desc.run,
             };
-            into.commands[name] = command;
         }
     }
     if (other.tools) {
         for (const name in other.tools) {
             const desc = other.tools[name];
-            const tool: Tool = {
+            into.tools[name] = {
                 name,
                 importDir,
                 platforms: desc.platforms,
@@ -226,19 +225,27 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
                 notFoundMsg: desc.notFoundMsg,
                 exists: desc.exists,
             };
-            into.tools[name] = tool;
+        }
+    }
+    if (other.runners) {
+        for (const name in other.runners) {
+            const desc = other.runners[name];
+            into.runners[name] = {
+                name,
+                importDir,
+                run: desc.run,
+            };
         }
     }
     if (other.adapters) {
         for (const name in other.adapters) {
             const desc = other.adapters[name];
-            const adapter: Adapter = {
+            into.adapters[name] = {
                 name,
                 importDir,
                 configure: desc.configure,
                 build: desc.build,
             };
-            into.adapters[name] = adapter;
         }
     }
     if (other.settings) {

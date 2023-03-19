@@ -8,6 +8,7 @@ import { commands } from './commands/index.ts';
 import { tools } from './tools/index.ts';
 import { adapters } from './adapters/index.ts';
 import { configs } from './configs/index.ts';
+import { runners } from './runners/index.ts';
 
 let rootProject: Project;
 
@@ -50,6 +51,7 @@ const stdDesc: ProjectDesc = {
     tools,
     adapters,
     configs,
+    runners,
     variables: {
         CMAKE_C_STANDARD: '99',
         CMAKE_CXX_STANDARD: '11',

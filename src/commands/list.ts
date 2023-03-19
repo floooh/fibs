@@ -11,6 +11,7 @@ function help() {
         'list settings',
         'list configs',
         'list imports',
+        'list runners',
         'list targets [--all] [--exe] [--lib] [--dll]',
     ], 'list available configs, current settings, targets, ...');
 }
@@ -22,6 +23,7 @@ type ListArgs = {
     settings: boolean;
     configs: boolean;
     imports: boolean;
+    runners: boolean;
     targetTypes: TargetType[];
 };
 
@@ -57,6 +59,15 @@ async function run(project: Project) {
     }
     if (args.all) {
         log.print();
+        log.section('runners');
+    }
+    if (args.all || args.runners) {
+        for (const key in project.runners) {
+            log.print(`${project.runners[key].name}`);
+        }
+    }
+    if (args.all) {
+        log.print();
         log.section('targets');
     }
     if (args.all || (args.targetTypes.length > 0)) {
@@ -81,6 +92,7 @@ function parseArgs(): ListArgs {
         settings: false,
         configs: false,
         imports: false,
+        runners: false,
         targetTypes: [],
     };
     if (Deno.args.length === 1) {
@@ -97,6 +109,9 @@ function parseArgs(): ListArgs {
                 break;
             case 'imports':
                 args.imports = true;
+                break;
+            case 'runners':
+                args.runners = true;
                 break;
             case 'targets':
                 if (Deno.args.length === 2) {

@@ -69,6 +69,7 @@ export const configs: Record<string, ConfigDesc> = {
     'emsc': {
         ignore: true,
         platform: 'emscripten',
+        runner: 'emscripten',
         toolchainFile: '@sdks/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake',
     },
     'emsc-make': {
@@ -100,6 +101,7 @@ export const configs: Record<string, ConfigDesc> = {
     'wasi': {
         ignore: true,
         platform: 'wasi',
+        runner: 'wasi',
         toolchainFile: '@sdks/wasisdk/share/cmake/wasi-sdk.cmake',
         variables: {
             WASI_SDK_PREFIX: '@sdks/wasisdk',

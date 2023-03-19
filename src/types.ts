@@ -9,6 +9,7 @@ export type ProjectDesc = {
     targets?: Record<string, TargetDesc>;
     commands?: Record<string, CommandDesc>;
     tools?: Record<string, ToolDesc>;
+    runners?: Record<string, RunnerDesc>;
     configs?: Record<string, ConfigDesc>;
     adapters?: Record<string, AdapterDesc>;
     settings?: Record<string, SettingsItem>;
@@ -29,6 +30,7 @@ export type Project = {
     targets: Record<string, Target>;
     commands: Record<string, Command>;
     tools: Record<string, Tool>;
+    runners: Record<string, Runner>;
     configs: Record<string, Config>;
     configDescs: Record<string, ConfigDescWithImportDir>;
     adapters: Record<string, Adapter>;
@@ -65,6 +67,7 @@ export type ConfigDesc = {
     ignore?: boolean;
     inherits?: string;
     platform?: Platform;
+    runner?: string;
     buildType?: BuildType;
     generator?: string;
     arch?: Arch;
@@ -81,6 +84,7 @@ export type Config = {
     name: string;
     importDir: string;
     platform: Platform;
+    runner: string;
     buildType: BuildType;
     generator: string | undefined;
     arch: Arch | undefined;
@@ -171,6 +175,16 @@ export interface Command {
     importDir: string;
     help(project: Project): void;
     run(project: Project): Promise<void>;
+}
+
+export interface RunnerDesc {
+    run(project: Project, config: Config, target: Target, options: RunOptions): Promise<void>;
+}
+
+export interface Runner {
+    name: string;
+    importDir: string;
+    run(project: Project, config: Config, target: Target, options: RunOptions): Promise<void>;
 }
 
 export type RunOptions = {
