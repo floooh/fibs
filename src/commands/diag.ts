@@ -1,4 +1,4 @@
-import { CommandDesc, conf, host, log, proj, Project } from '../../mod.ts';
+import { CommandDesc, conf, host, imports, log, proj, Project } from '../../mod.ts';
 import { colors } from '../../deps.ts';
 
 export const diagCmd: CommandDesc = {
@@ -106,8 +106,20 @@ async function diagTargets(project: Project) {
     }
 }
 
-async function diagImports() {
-    log.warn('FIXME: diag imports');
+async function diagImports(project: Project) {
+    for (const impName in project.imports) {
+        const imp = project.imports[impName];
+        log.write(`${imp.name}: `);
+        const res = await imports.validate(project, imp, { silent: true, abortOnError: false });
+        if (res.valid) {
+            log.write(colors.green('ok\n'));
+        } else {
+            log.write(colors.red('FAILED\n'));
+            for (const hint of res.hints) {
+                log.info(`  ${hint}`);
+            }
+        }
+    }
 }
 
 async function diagProject(project: Project) {

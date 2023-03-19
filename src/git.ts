@@ -75,21 +75,36 @@ export async function checkout(options: CheckoutOptions): Promise<boolean> {
     if (res.exitCode !== 0) {
         return false;
     }
-    return await updateSubmodules({ dir: options.dir });
+    return await updateSubmodules(options.dir);
 }
 
-export type UpdateSubmodulesOptions = {
-    dir: string;
-};
-
-export async function updateSubmodules(options: UpdateSubmodulesOptions): Promise<boolean> {
-    let res = await run({ args: ['submodule', 'sync', '--recursive'], cwd: options.dir, showCmd: true });
+export async function updateSubmodules(dir: string): Promise<boolean> {
+    let res = await run({ args: ['submodule', 'sync', '--recursive'], cwd: dir, showCmd: true });
     if (res.exitCode !== 0) {
         return false;
     }
-    res = await run({ args: ['submodule', 'update', '--recursive'], cwd: options.dir, showCmd: true });
+    res = await run({ args: ['submodule', 'update', '--recursive'], cwd: dir, showCmd: true });
     if (res.exitCode !== 0) {
         return false;
     }
     return true;
+}
+
+export async function hasLocalChanges(dir: string): Promise<boolean> {
+    let res = await run({ args: ['status', '-s'], cwd: dir, showCmd: false, stdout: 'piped' });
+    return 0 !== res.stdout.length;
+}
+
+type CheckOutOfSyncResult = {
+    valid: boolean;
+    hints: string[];
+}
+
+export async function checkOutOfSync(dir: string): Promise<CheckOutOfSyncResult> {
+    const res: CheckOutOfSyncResult = { valid: true, hints: [] };
+    if (await hasLocalChanges(dir)) {
+        res.valid = false;
+        res.hints.push(`local changes detected in ${dir}`);
+    }
+    return res;
 }

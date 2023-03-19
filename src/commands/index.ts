@@ -10,6 +10,7 @@ import { getCmd } from './get.ts';
 import { unsetCmd } from './unset.ts';
 import { emsdkCmd } from './emsdk.ts';
 import { wasisdkCmd } from './wasisdk.ts';
+import { updateCmd } from './update.ts';
 
 export const commands = {
     help: helpCmd,
@@ -18,6 +19,7 @@ export const commands = {
     run: runCmd,
     clean: cleanCmd,
     list: listCmd,
+    update: updateCmd,
     diag: diagCmd,
     set: setCmd,
     get: getCmd,

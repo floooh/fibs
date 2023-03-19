@@ -1,4 +1,4 @@
-import { Project, ProjectDesc } from './types.ts';
+import { Import, Project, ProjectDesc } from './types.ts';
 import * as util from './util.ts';
 import * as git from './git.ts';
 import * as log from './log.ts';
@@ -68,4 +68,44 @@ async function importOptionalFibsModule(dir: string): Promise<ProjectDesc | unde
         return module.projectDesc;
     }
     return undefined;
+}
+
+export type ValidateOptions = {
+    silent?: boolean;
+    abortOnError?: boolean;
+};
+
+export type ValidateResult = {
+    valid: boolean;
+    hints: string[];
+};
+
+export async function validate(project: Project, imp: Import, options: ValidateOptions): Promise<ValidateResult> {
+    const {
+        silent = false,
+        abortOnError = true,
+    } = options;
+    const res: ValidateResult = { valid: true, hints: [] };
+
+    const dir = imp.importDir;
+    if (!util.dirExists(dir)) {
+        res.valid = false;
+        res.hints.push(`directory does not exists: ${dir}`);
+    }
+
+    const outOfSyncRes = await git.checkOutOfSync(dir);
+    if (!outOfSyncRes.valid) {
+        res.valid = false;
+        res.hints.push(...outOfSyncRes.hints);
+    }
+
+    if (!res.valid && !silent) {
+        const msg = [`import '${imp.name} not valid:\n`, ...res.hints].join('\n  ') + '\n';
+        if (abortOnError) {
+            log.error(msg);
+        } else {
+            log.warn(msg);
+        }
+    }
+    return res;
 }
