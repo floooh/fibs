@@ -13,9 +13,9 @@ function help() {
 }
 
 type Args = {
-    clean: boolean,
-    items: string[],
-}
+    clean: boolean;
+    items: string[];
+};
 
 async function run(project: Project) {
     const args = parseArgs(project);

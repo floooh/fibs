@@ -9,8 +9,7 @@ const SDKNAME = `wasi-sdk-${SDKVERSION}.0`;
 const URLS = {
     'linux': `https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${SDKVERSION}/${SDKNAME}-linux.tar.gz`,
     'macos': `https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${SDKVERSION}/${SDKNAME}-macos.tar.gz`,
-    'windows':
-        `https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${SDKVERSION}/${SDKNAME}-mingw.tar.gz`,
+    'windows': `https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${SDKVERSION}/${SDKNAME}-mingw.tar.gz`,
 };
 
 export function dir(project: Project): string {

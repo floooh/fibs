@@ -20,10 +20,10 @@ export async function exists(): Promise<boolean> {
 }
 
 export type PullOptions = {
-    dir: string,
-    force?: boolean,
-    ref?: string,
-    showCmd?: boolean,
+    dir: string;
+    force?: boolean;
+    ref?: string;
+    showCmd?: boolean;
 };
 
 export async function pullOrFetch(options: PullOptions): Promise<boolean> {
@@ -31,7 +31,7 @@ export async function pullOrFetch(options: PullOptions): Promise<boolean> {
         dir,
         ref,
         force = false,
-        showCmd = true
+        showCmd = true,
     } = options;
     const args: string[] = [];
     if (ref === undefined) {
@@ -53,13 +53,13 @@ export async function pullOrFetch(options: PullOptions): Promise<boolean> {
 }
 
 export type CloneOptions = {
-    url: string,
-    dir: string,
-    name: string,
-    depth?: number,
-    branch?: string,
-    ref?: string,
-    showCmd?: boolean,
+    url: string;
+    dir: string;
+    name: string;
+    depth?: number;
+    branch?: string;
+    ref?: string;
+    showCmd?: boolean;
 };
 
 export async function clone(options: CloneOptions): Promise<boolean> {
@@ -97,7 +97,7 @@ export async function clone(options: CloneOptions): Promise<boolean> {
 export type CheckoutOptions = {
     dir: string;
     ref: string;
-    showCmd?: boolean,
+    showCmd?: boolean;
 };
 
 export async function checkout(options: CheckoutOptions): Promise<boolean> {
@@ -114,8 +114,8 @@ export async function checkout(options: CheckoutOptions): Promise<boolean> {
 }
 
 export type UpdateSubmodulesOptions = {
-    dir: string,
-    showCmd?: boolean,
+    dir: string;
+    showCmd?: boolean;
 };
 
 export async function updateSubmodules(options: UpdateSubmodulesOptions): Promise<boolean> {
@@ -132,7 +132,7 @@ export async function updateSubmodules(options: UpdateSubmodulesOptions): Promis
 }
 
 export type HasUncommittedChangesOptions = {
-    dir: string,
+    dir: string;
     showCmd?: boolean;
 };
 
@@ -143,17 +143,17 @@ export async function hasUncommittedChanges(options: HasUncommittedChangesOption
 }
 
 export type HasUnpushedChangesOptions = {
-    dir: string,
-    showCmd?: boolean,
+    dir: string;
+    showCmd?: boolean;
 };
 
 export async function hasUnpushedChanges(options: HasUnpushedChangesOptions): Promise<boolean> {
     const { dir, showCmd = true } = options;
     const res = await run({
-        args: ['log', '--branches', '--not', '--remotes', '--oneline' ],
+        args: ['log', '--branches', '--not', '--remotes', '--oneline'],
         cwd: dir,
         showCmd,
-        stdout: 'piped'
+        stdout: 'piped',
     });
     return 0 !== res.stdout.length;
 }

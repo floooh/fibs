@@ -358,9 +358,7 @@ function genConfigurePresets(project: Project, config: Config): any[] {
             displayName: config.name,
             binaryDir: util.buildDir(project, config),
             generator: config.generator,
-            toolchainFile: (config.toolchainFile !== undefined)
-                ? util.resolveAlias(config.toolchainFile, aliasMap)
-                : undefined,
+            toolchainFile: (config.toolchainFile !== undefined) ? util.resolveAlias(config.toolchainFile, aliasMap) : undefined,
             cacheVariables: genCacheVariables(project, config),
             environment: config.environment,
         });

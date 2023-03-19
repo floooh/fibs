@@ -1,13 +1,4 @@
-import {
-    Config,
-    Platform,
-    Project,
-    RunOptions,
-    RunResult,
-    TargetBuildContext,
-    TargetItems,
-    TargetItemsFunc,
-} from './types.ts';
+import { Config, Platform, Project, RunOptions, RunResult, TargetBuildContext, TargetItems, TargetItemsFunc } from './types.ts';
 import * as log from './log.ts';
 import { fs } from '../deps.ts';
 
