@@ -10,6 +10,7 @@ export type ProjectDesc = {
     commands?: Record<string, CommandDesc>;
     tools?: Record<string, ToolDesc>;
     runners?: Record<string, RunnerDesc>;
+    openers?: Record<string, OpenerDesc>;
     configs?: Record<string, ConfigDesc>;
     adapters?: Record<string, AdapterDesc>;
     settings?: Record<string, SettingsItem>;
@@ -31,6 +32,7 @@ export type Project = {
     commands: Record<string, Command>;
     tools: Record<string, Tool>;
     runners: Record<string, Runner>;
+    openers: Record<string, Opener>;
     configs: Record<string, Config>;
     configDescs: Record<string, ConfigDescWithImportDir>;
     adapters: Record<string, Adapter>;
@@ -68,6 +70,7 @@ export type ConfigDesc = {
     inherits?: string;
     platform?: Platform;
     runner?: string;
+    opener?: string;
     buildType?: BuildType;
     generator?: string;
     arch?: Arch;
@@ -85,6 +88,7 @@ export type Config = {
     importDir: string;
     platform: Platform;
     runner: string;
+    opener: string | undefined;
     buildType: BuildType;
     generator: string | undefined;
     arch: Arch | undefined;
@@ -185,6 +189,16 @@ export interface Runner {
     name: string;
     importDir: string;
     run(project: Project, config: Config, target: Target, options: RunOptions): Promise<void>;
+}
+
+export interface OpenerDesc {
+    open(project: Project, config: Config): Promise<void>;
+}
+
+export interface Opener {
+    name: string;
+    importDir: string;
+    open(project: Project, config: Config): Promise<void>;
 }
 
 export type RunOptions = {

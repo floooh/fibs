@@ -37,6 +37,7 @@ export async function setup(
         commands: {},
         tools: {},
         runners: {},
+        openers: {},
         configs: {},
         configDescs: {},
         adapters: {},
@@ -74,6 +75,7 @@ function resolveConfigs(project: Project) {
             importDir: desc.importDir,
             platform: desc.platform,
             runner: desc.runner ?? 'native',
+            opener: desc.opener,
             buildType: desc.buildType,
             generator: desc.generator,
             arch: desc.arch ?? undefined,
@@ -234,6 +236,16 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
                 name,
                 importDir,
                 run: desc.run,
+            };
+        }
+    }
+    if (other.openers) {
+        for (const name in other.openers) {
+            const desc = other.openers[name];
+            into.openers[name] = {
+                name,
+                importDir,
+                open: desc.open,
             };
         }
     }

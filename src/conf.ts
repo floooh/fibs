@@ -51,6 +51,18 @@ export async function validate(project: Project, config: Config, options: Valida
         }
     }
 
+    // check if runner exists
+    if (project.runners[config.runner] === undefined) {
+        res.valid = false;
+        res.hints.push(`runner '${config.runner}' not found in project (run 'fibs list runners')`);
+    }
+
+    // check if opener exists
+    if ((config.opener !== undefined) && (project.openers[config.opener] === undefined)) {
+        res.valid = false;
+        res.hints.push(`opener '${config.opener}' not found in project (run 'fibs list openers')`);
+    }
+
     // check if toolchain file exists
     if (config.toolchainFile !== undefined) {
         const toolchainPath = util.resolveAlias(config.toolchainFile, aliasMap);

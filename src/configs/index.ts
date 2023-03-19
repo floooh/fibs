@@ -5,6 +5,7 @@ export const configs: Record<string, ConfigDesc> = {
         ignore: true,
         platform: 'windows',
         arch: 'x86_64',
+        opener: 'vstudio',
     },
     'win-vstudio-release': {
         inherits: 'win-vstudio',
@@ -24,6 +25,12 @@ export const configs: Record<string, ConfigDesc> = {
         platform: 'macos',
         generator: 'Ninja',
     },
+    'macos-xcode': {
+        ignore: true,
+        platform: 'macos',
+        generator: 'Xcode',
+        opener: 'xcode',
+    },
     'macos-make-release': {
         inherits: 'macos-make',
         buildType: 'release',
@@ -38,6 +45,14 @@ export const configs: Record<string, ConfigDesc> = {
     },
     'macos-ninja-debug': {
         inherits: 'macos-ninja',
+        buildType: 'debug',
+    },
+    'macos-xcode-release': {
+        inherits: 'macos-xcode',
+        buildType: 'release',
+    },
+    'macos-xcode-debug': {
+        inherits: 'macos-xcode',
         buildType: 'debug',
     },
     'linux-make': {

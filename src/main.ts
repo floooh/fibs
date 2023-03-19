@@ -9,6 +9,7 @@ import { tools } from './tools/index.ts';
 import { adapters } from './adapters/index.ts';
 import { configs } from './configs/index.ts';
 import { runners } from './runners/index.ts';
+import { openers } from './openers/index.ts';
 
 let rootProject: Project;
 
@@ -52,6 +53,7 @@ const stdDesc: ProjectDesc = {
     adapters,
     configs,
     runners,
+    openers,
     variables: {
         CMAKE_C_STANDARD: '99',
         CMAKE_CXX_STANDARD: '11',
