@@ -1,9 +1,6 @@
 import { CommandDesc, git, imports, log, Project } from '../../mod.ts';
 
-export const updateCmd: CommandDesc = {
-    help: help,
-    run: run,
-};
+export const updateCmd: CommandDesc = { help, run };
 
 function help() {
     log.help([

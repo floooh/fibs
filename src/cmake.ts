@@ -27,6 +27,9 @@ export async function configure(project: Project, config: Config) {
             `cmake returned with exit code ${res.exitCode}, stderr:\n\n${res.stderr}`,
         );
     }
+    if (config.opener !== undefined) {
+        await config.opener.configure(project, config);
+    }
 }
 
 export type BuildOptions = {

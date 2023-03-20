@@ -4,7 +4,7 @@ export const cmakeTool: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
     optional: false,
     notFoundMsg: 'required for building projects',
-    exists: exists,
+    exists,
 };
 
 export async function exists(): Promise<boolean> {

@@ -31,6 +31,12 @@ export const configs: Record<string, ConfigDesc> = {
         generator: 'Xcode',
         opener: 'xcode',
     },
+    'macos-vscode': {
+        ignore: true,
+        platform: 'macos',
+        generator: 'Ninja',
+        opener: 'vscode',
+    },
     'macos-make-release': {
         inherits: 'macos-make',
         buildType: 'release',
@@ -53,6 +59,14 @@ export const configs: Record<string, ConfigDesc> = {
     },
     'macos-xcode-debug': {
         inherits: 'macos-xcode',
+        buildType: 'debug',
+    },
+    'macos-vscode-release': {
+        inherits: 'macos-vscode',
+        buildType: 'release',
+    },
+    'macos-vscode-debug': {
+        inherits: 'macos-vscode',
         buildType: 'debug',
     },
     'linux-make': {

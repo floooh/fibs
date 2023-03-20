@@ -1,10 +1,7 @@
 import { CommandDesc, conf, host, imports, log, proj, Project } from '../../mod.ts';
 import { colors } from '../../deps.ts';
 
-export const diagCmd: CommandDesc = {
-    help: help,
-    run: run,
-};
+export const diagCmd: CommandDesc = { help, run };
 
 function help() {
     log.help([

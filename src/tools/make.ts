@@ -4,7 +4,7 @@ export const makeTool: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
     optional: true,
     notFoundMsg: 'required for building *-make-* configs',
-    exists: exists,
+    exists,
 };
 
 export async function exists(): Promise<boolean> {

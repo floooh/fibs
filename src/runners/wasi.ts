@@ -1,9 +1,7 @@
 import { Config, Project, RunnerDesc, RunOptions, Target, util } from '../../mod.ts';
 import WASI from 'https://deno.land/std@0.178.0/wasi/snapshot_preview1.ts';
 
-export const wasiRunner: RunnerDesc = {
-    run: run,
-};
+export const wasiRunner: RunnerDesc = { run };
 
 async function run(project: Project, config: Config, target: Target, options: RunOptions) {
     // can assume here that run() will only be called for executable targets

@@ -4,7 +4,7 @@ export const gitTool: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
     optional: false,
     notFoundMsg: 'required for fetching imports',
-    exists: exists,
+    exists,
 };
 
 export async function exists(): Promise<boolean> {

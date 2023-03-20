@@ -70,12 +70,23 @@ function resolveConfigs(project: Project) {
         if (desc.buildType === undefined) {
             log.error(`config '${name}' requires 'buildType' field`);
         }
+        let runner = (desc.runner !== undefined) ? project.runners[desc.runner] : project.runners['native'];
+        if (runner === undefined) {
+            log.error(`config '${name}' has unknown runner '${desc.runner}'`);
+        }
+        let opener = undefined;
+        if (desc.opener !== undefined) {
+            opener = project.openers[desc.opener];
+            if (opener === undefined) {
+                log.error(`config '${name}' has unknown opener '${desc.opener}'`);
+            }
+        }
         const config: Config = {
             name,
             importDir: desc.importDir,
             platform: desc.platform,
-            runner: desc.runner ?? 'native',
-            opener: desc.opener,
+            runner: runner,
+            opener: opener,
             buildType: desc.buildType,
             generator: desc.generator,
             arch: desc.arch ?? undefined,
@@ -245,6 +256,7 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
             into.openers[name] = {
                 name,
                 importDir,
+                configure: desc.configure,
                 open: desc.open,
             };
         }

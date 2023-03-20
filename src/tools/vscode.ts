@@ -4,7 +4,7 @@ export const vscodeTool: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
     optional: true,
     notFoundMsg: 'required for opening projects in VSCode',
-    exists: exists,
+    exists,
 };
 
 export async function run(options: RunOptions): Promise<RunResult> {

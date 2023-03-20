@@ -87,8 +87,8 @@ export type Config = {
     name: string;
     importDir: string;
     platform: Platform;
-    runner: string;
-    opener: string | undefined;
+    runner: Runner;
+    opener: Opener | undefined;
     buildType: BuildType;
     generator: string | undefined;
     arch: Arch | undefined;
@@ -192,12 +192,14 @@ export interface Runner {
 }
 
 export interface OpenerDesc {
+    configure(project: Project, config: Config): Promise<void>;
     open(project: Project, config: Config): Promise<void>;
 }
 
 export interface Opener {
     name: string;
     importDir: string;
+    configure(project: Project, config: Config): Promise<void>;
     open(project: Project, config: Config): Promise<void>;
 }
 

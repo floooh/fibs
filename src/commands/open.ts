@@ -1,9 +1,6 @@
 import { CommandDesc, log, proj, Project, util } from '../../mod.ts';
 
-export const openCmd: CommandDesc = {
-    help: help,
-    run: run,
-};
+export const openCmd: CommandDesc = { help, run };
 
 function help() {
     log.help([
@@ -26,13 +23,9 @@ async function run(project: Project) {
     if (config.opener === undefined) {
         log.error(`don't know how to open config '${config.name}' (config has undefined runner)`);
     }
-    const opener = project.openers[config.opener];
-    if (opener === undefined) {
-        log.error(`unknown opener '${config.opener}' on config '${config.name}' (run 'fibs list openers')`);
-    }
     if (!util.dirExists(util.buildDir(project, config))) {
         const adapter = project.adapters['cmake'];
         await proj.configure(project, config, adapter, {});
     }
-    await opener.open(project, config);
+    await config.opener.open(project, config);
 }

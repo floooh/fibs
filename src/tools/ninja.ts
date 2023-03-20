@@ -4,7 +4,7 @@ export const ninjaTool: ToolDesc = {
     platforms: ['windows', 'macos', 'linux'],
     optional: true,
     notFoundMsg: 'required for building *-ninja-* configs',
-    exists: exists,
+    exists,
 };
 
 export async function exists(): Promise<boolean> {
