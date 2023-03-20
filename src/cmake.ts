@@ -20,15 +20,15 @@ export async function exists(): Promise<boolean> {
 }
 
 export async function configure(project: Project, config: Config) {
+    if (config.opener !== undefined) {
+        await config.opener.configure(project, config);
+    }
     const args = ['--preset', config.name, '-B', util.buildDir(project, config)];
     const res = await run({ args, stderr: 'piped' });
     if (res.exitCode !== 0) {
         log.error(
             `cmake returned with exit code ${res.exitCode}, stderr:\n\n${res.stderr}`,
         );
-    }
-    if (config.opener !== undefined) {
-        await config.opener.configure(project, config);
     }
 }
 

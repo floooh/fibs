@@ -7,13 +7,13 @@ async function run(project: Project, config: Config, target: Target, options: Ru
     const url = `http://localhost:8080/${target.name}.html`;
     switch (host.platform()) {
         case 'macos':
-            util.runCmd('open', { args: [url] });
+            await util.runCmd('open', { args: [url] });
             break;
         case 'linux':
-            util.runCmd('xdg-open', { args: [url] });
+            await util.runCmd('xdg-open', { args: [url] });
             break;
         case 'windows':
-            util.runCmd('cmd', { args: ['/c', 'start', url] });
+            await util.runCmd('cmd', { args: ['/c', 'start', url] });
             break;
     }
     await http.serve({ target: util.distDir(project, config), port: '8080' });

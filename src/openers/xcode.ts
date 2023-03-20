@@ -7,5 +7,5 @@ export const xcodeOpener: OpenerDesc = {
 
 async function open(project: Project, config: Config) {
     const path = `${util.buildDir(project, config)}/${project.name}.xcodeproj`;
-    util.runCmd('xed', { args: [path], showCmd: true, abortOnError: true });
+    await util.runCmd('xed', { args: [path], showCmd: true, abortOnError: true });
 }
