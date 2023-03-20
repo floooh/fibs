@@ -83,7 +83,9 @@ function genCMakeListsTxt(project: Project, config: Config): string {
 function genProlog(project: Project, config: Config): string {
     let str = '';
     str += 'cmake_minimum_required(VERSION 3.20)\n';
-    str += `project(${project.name})\n`;
+    str += `project(${project.name} C CXX)\n`;
+    str += 'set(GLOBAL PROPERTY USE_FOLDERS ON)\n';
+    str += 'set(CMAKE_CONFIGURATION_TYPES Debug Release)\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     if (config.platform === 'emscripten') {
@@ -213,6 +215,9 @@ function genLinkOptions(project: Project, config: Config): string {
 
 function genTarget(project: Project, config: Config, target: Target): string {
     let str = '';
+    const aliasMap = util.buildAliasMap(project, config, target.importDir);
+    const sources = target.sources.map((source) => util.resolveFilePath(target.importDir, target.dir, source, aliasMap));
+    const sourcesStr = sources.join(' ');
     let subtype = '';
     switch (target.type) {
         case 'plain-exe':
@@ -224,25 +229,19 @@ function genTarget(project: Project, config: Config, target: Target): string {
                     subtype = ' MACOSX_BUNDLE';
                 }
             }
-            str += `add_executable(${target.name}${subtype}\n`;
+            str += `add_executable(${target.name}${subtype} ${sourcesStr})\n`;
             break;
         case 'lib':
-            str += `add_library(${target.name} STATIC\n`;
+            str += `add_library(${target.name} STATIC ${sourcesStr})\n`;
             break;
         case 'dll':
-            str += `add_library(${target.name} SHARED\n`;
+            str += `add_library(${target.name} SHARED ${sourcesStr})\n`;
             break;
         case 'interface':
-            str += `add_library(${target.name} INTERFACE)\n`;
+            str += `add_library(${target.name} INTERFACE ${sourcesStr})\n`;
             break;
     }
-    if (target.type !== 'interface') {
-        const aliasMap = util.buildAliasMap(project, config, target.importDir);
-        target.sources.forEach((source) => {
-            str += `    ${util.resolveFilePath(target.importDir, target.dir, source, aliasMap)}\n`;
-        });
-        str += ')\n';
-    }
+    str += `source_group(TREE ${util.resolveDirPath(target.importDir, target.dir)} FILES ${sourcesStr})\n`;
     return str;
 }
 
