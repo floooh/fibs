@@ -12,3 +12,4 @@ export * as emsdk from './src/emsdk.ts';
 export * as wasisdk from './src/wasisdk.ts';
 export * as http from './src/http.ts';
 export * as imports from './src/imports.ts';
+export * as jobs from './src/jobs/index.ts';

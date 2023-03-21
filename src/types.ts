@@ -154,6 +154,16 @@ export type TargetDesc = {
     compileDefinitions?: TargetItemsDesc;
     compileOptions?: TargetItemsDesc;
     linkOptions?: TargetItemsDesc;
+    jobs?: (JobItem | JobItemFunc)[];
+};
+
+export type JobItemFunc = (context: TargetBuildContext, args: any) => JobItem;
+
+export type JobItem = {
+    inputs: string[];
+    outputs: string[];
+    args: any;
+    func: (inputs: string[], output: string[], args: any) => boolean;
 };
 
 export type Target = {
@@ -167,6 +177,7 @@ export type Target = {
     compileDefinitions: TargetItems;
     compileOptions: TargetItems;
     linkOptions: TargetItems;
+    jobs: (JobItem | JobItemFunc)[];
 };
 
 export interface CommandDesc {

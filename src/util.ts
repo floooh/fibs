@@ -159,12 +159,8 @@ export function resolveAlias(str: string, aliasMap: Record<string, string>): str
     return str;
 }
 
-export function resolveDirPath(baseDir: string, subDir: string | undefined): string {
-    let str = baseDir + '/';
-    if (subDir !== undefined) {
-        str += subDir + '/';
-    }
-    return str;
+export function resolveDirPath(baseDir: string, ...subDirs: (string | undefined)[]): string {
+    return `${baseDir}/${subDirs.filter((dir) => dir !== undefined).join('/')}`;
 }
 
 export function resolveFilePath(
@@ -176,7 +172,7 @@ export function resolveFilePath(
     if (path.startsWith('@')) {
         return resolveAlias(path, aliasMap);
     } else {
-        return resolveDirPath(baseDir, subDir) + path;
+        return `${resolveDirPath(baseDir, subDir)}/${path}`;
     }
 }
 

@@ -213,6 +213,7 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
                 compileDefinitions: asTargetItems(desc.compileDefinitions),
                 compileOptions: asTargetItems(desc.compileOptions),
                 linkOptions: asTargetItems(desc.linkOptions),
+                jobs: desc.jobs ?? [],
             };
         }
     }
