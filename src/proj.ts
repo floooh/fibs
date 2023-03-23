@@ -385,14 +385,15 @@ export function validateTarget(
 
     // check source files exist
     const config = util.activeConfig(project);
-    const srcDir = util.resolveDirPath(target.importDir, target.dir);
+    const aliasMap = util.buildAliasMap(project, config, target.importDir);
+    const srcDir = util.resolvePath(aliasMap, target.importDir, target.dir);
     if (!util.dirExists(srcDir)) {
         res.valid = false;
         res.hints.push(`src dir not found: ${srcDir}`);
     } else {
         const aliasMap = util.buildAliasMap(project, config, target.importDir);
         for (const src of target.sources) {
-            const srcFile = util.resolveFilePath(target.importDir, target.dir, src, aliasMap);
+            const srcFile = util.resolvePath(aliasMap, target.importDir, target.dir, src);
             if (!util.fileExists(srcFile)) {
                 res.valid = false;
                 res.hints.push(`src file not found: ${srcFile}`);

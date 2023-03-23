@@ -53,7 +53,7 @@ export async function validate(project: Project, config: Config, options: Valida
 
     // check if toolchain file exists
     if (config.toolchainFile !== undefined) {
-        const toolchainPath = util.resolveAlias(config.toolchainFile, aliasMap);
+        const toolchainPath = util.resolveAlias(aliasMap, config.toolchainFile);
         if (!util.fileExists(toolchainPath)) {
             res.valid = false;
             res.hints.push(`toolchain file not found: ${toolchainPath}`);

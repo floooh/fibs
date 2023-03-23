@@ -9,7 +9,8 @@ export type EmbedFilesOptions = {
 export function embedFiles(options: EmbedFilesOptions): JobItemFunc {
     return (context: TargetBuildContext, options: EmbedFilesOptions): JobItem => {
         const target = context.target;
-        const srcDir = util.resolveDirPath(target.importDir, target.dir, options.dir);
+        const aliasMap = util.buildAliasMap(context.project, context.config, target.importDir);
+        const srcDir = util.resolvePath(aliasMap, target.importDir, target.dir, options.dir);
         return {
             inputs: options.files.map((file) => `${srcDir}/${file}`),
             outputs: [ options.outHeader ],

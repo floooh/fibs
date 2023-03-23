@@ -106,9 +106,9 @@ export function resolveProjectItems(
     const subDir = undefined;
     const resolveAliasOrPath = (items: string[]) => {
         if (itemsAreFilePaths) {
-            return items.map((item) => util.resolveFilePath(baseDir, subDir, item, aliasMap));
+            return items.map((item) => util.resolvePath(aliasMap, baseDir, subDir, item));
         } else {
-            return items.map((item) => util.resolveAlias(item, aliasMap));
+            return items.map((item) => util.resolveAlias(aliasMap, item));
         }
     };
     return items.flatMap((item) => {
@@ -216,7 +216,7 @@ function genLinkOptions(project: Project, config: Config): string {
 function genTarget(project: Project, config: Config, target: Target): string {
     let str = '';
     const aliasMap = util.buildAliasMap(project, config, target.importDir);
-    const sources = target.sources.map((source) => util.resolveFilePath(target.importDir, target.dir, source, aliasMap));
+    const sources = target.sources.map((source) => util.resolvePath(aliasMap, target.importDir, target.dir, source));
     const sourcesStr = sources.join(' ');
     let subtype = '';
     switch (target.type) {
@@ -241,7 +241,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
             str += `add_library(${target.name} INTERFACE ${sourcesStr})\n`;
             break;
     }
-    str += `source_group(TREE ${util.resolveDirPath(target.importDir, target.dir)} FILES ${sourcesStr})\n`;
+    str += `source_group(TREE ${util.resolvePath(aliasMap, target.importDir, target.dir)} FILES ${sourcesStr})\n`;
     return str;
 }
 
@@ -357,7 +357,7 @@ function genConfigurePresets(project: Project, config: Config): any[] {
             displayName: config.name,
             binaryDir: util.buildDir(project, config),
             generator: config.generator,
-            toolchainFile: (config.toolchainFile !== undefined) ? util.resolveAlias(config.toolchainFile, aliasMap) : undefined,
+            toolchainFile: (config.toolchainFile !== undefined) ? util.resolveAlias(aliasMap, config.toolchainFile) : undefined,
             cacheVariables: genCacheVariables(project, config),
             environment: config.environment,
         });
@@ -399,7 +399,7 @@ function resolveCacheVariable(val: string | boolean, aliasMap: Record<string, st
             value: val ? 'ON' : 'OFF',
         };
     } else {
-        return util.resolveAlias(val, aliasMap);
+        return util.resolveAlias(aliasMap, val);
     }
 }
 

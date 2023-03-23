@@ -148,7 +148,7 @@ export function buildAliasMap(project: Project, config: Config, importDir: strin
     };
 }
 
-export function resolveAlias(str: string, aliasMap: Record<string, string>): string {
+export function resolveAlias(aliasMap: Record<string, string>, str: string): string {
     if ((str !== undefined) && str.startsWith('@')) {
         for (const k in aliasMap) {
             if (str.startsWith(k)) {
@@ -159,21 +159,9 @@ export function resolveAlias(str: string, aliasMap: Record<string, string>): str
     return str;
 }
 
-export function resolveDirPath(baseDir: string, ...subDirs: (string | undefined)[]): string {
-    return `${baseDir}/${subDirs.filter((dir) => dir !== undefined).join('/')}`;
-}
-
-export function resolveFilePath(
-    baseDir: string,
-    subDir: string | undefined,
-    path: string,
-    aliasMap: Record<string, string>,
-): string {
-    if (path.startsWith('@')) {
-        return resolveAlias(path, aliasMap);
-    } else {
-        return `${resolveDirPath(baseDir, subDir)}/${path}`;
-    }
+export function resolvePath(aliasMap: Record<string,string>, ...items: (string|undefined)[]): string {
+    const path = `${items.filter((item) => item !== undefined).join('/')}`;
+    return resolveAlias(aliasMap, path);
 }
 
 export async function runCmd(cmd: string, options: RunOptions): Promise<RunResult> {
@@ -287,9 +275,9 @@ export function resolveTargetItems(
         let resolvedItems = (typeof items === 'function') ? items(buildContext) : items;
         if (itemsAreFilePaths) {
             const target = buildContext.target;
-            return resolvedItems.map((item) => resolveFilePath(target.importDir, target.dir, item, aliasMap));
+            return resolvedItems.map((item) => resolvePath(aliasMap, target.importDir, target.dir, item));
         } else {
-            return resolvedItems.map((item) => resolveAlias(item, aliasMap));
+            return resolvedItems.map((item) => resolveAlias(aliasMap, item));
         }
     };
     return {
