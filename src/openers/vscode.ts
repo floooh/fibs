@@ -1,4 +1,4 @@
-import { Config, log, OpenerDesc, Project, util, host } from '../../mod.ts';
+import { Config, host, log, OpenerDesc, Project, util } from '../../mod.ts';
 import { run } from '../tools/vscode.ts';
 import { fs } from '../../deps.ts';
 
@@ -15,7 +15,6 @@ async function open(project: Project, config: Config) {
     await run({
         args: [`${project.dir}/.vscode/${project.name}.code-workspace`],
         winUseCmd: true,
-
     });
 }
 
@@ -23,7 +22,9 @@ function writeWorkspaceFile(project: Project, config: Config, vscodeDir: string)
     const ws = {
         folders: [
             { path: project.dir },
-            ...Object.values(project.imports).map((imp) => { return { path: imp.importDir }; }),
+            ...Object.values(project.imports).map((imp) => {
+                return { path: imp.importDir };
+            }),
         ],
         settings: {
             'cmake.statusbar.advanced': {
@@ -35,7 +36,7 @@ function writeWorkspaceFile(project: Project, config: Config, vscodeDir: string)
             'cmake.autoSelectActiveFolder': false,
             'cmake.ignoreCMakeListsMissing': true,
             'cmake.configureOnOpen': false,
-        }
+        },
     };
     const path = `${vscodeDir}/${project.name}.code-workspace`;
     log.info(`writing ${path}`);
@@ -68,7 +69,7 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
         cwd: util.distDir(project, config),
         args: [],
         type: getType(),
-        MIMode: getMIMode()
+        MIMode: getMIMode(),
     };
     const stopAtEntryLaunchConfig = structuredClone(launchConfig);
     stopAtEntryLaunchConfig.name = 'Debug Current Target (Stop at Entry)';
@@ -80,7 +81,7 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
 
     const launch = {
         version: '0.2.0',
-        configurations: [ launchConfig, stopAtEntryLaunchConfig ],
+        configurations: [launchConfig, stopAtEntryLaunchConfig],
     };
 
     const path = `${vscodeDir}/launch.json`;
