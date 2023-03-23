@@ -12,6 +12,7 @@ import { unsetCmd } from './unset.ts';
 import { emsdkCmd } from './emsdk.ts';
 import { wasisdkCmd } from './wasisdk.ts';
 import { updateCmd } from './update.ts';
+import { runjobsCmd } from './runjobs.ts';
 
 export const commands = {
     help: helpCmd,
@@ -28,4 +29,5 @@ export const commands = {
     unset: unsetCmd,
     emsdk: emsdkCmd,
     wasisdk: wasisdkCmd,
+    runjobs: runjobsCmd,
 };

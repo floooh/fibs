@@ -117,8 +117,8 @@ export type Import = {
 export type ProjectBuildContext = {
     project: Project;
     config: Config;
-    compiler: Compiler;
-    language: Language | undefined;
+    compiler?: Compiler;
+    language?: Language;
 };
 
 export type ProjectItemsFunc = (context: ProjectBuildContext) => string[];
@@ -126,9 +126,9 @@ export type ProjectItemsFunc = (context: ProjectBuildContext) => string[];
 export type TargetBuildContext = {
     project: Project;
     config: Config;
-    compiler: Compiler;
     target: Target;
-    language: Language | undefined;
+    compiler?: Compiler;
+    language?: Language;
 };
 
 export type TargetItemsFunc = (context: TargetBuildContext) => string[];
@@ -154,16 +154,17 @@ export type TargetDesc = {
     compileDefinitions?: TargetItemsDesc;
     compileOptions?: TargetItemsDesc;
     linkOptions?: TargetItemsDesc;
-    jobs?: (JobItem | JobItemFunc)[];
+    jobs?: JobItemFunc[];
 };
 
-export type JobItemFunc = (context: TargetBuildContext, args: any) => JobItem;
+export type JobItemFunc = (context: TargetBuildContext) => JobItem;
 
 export type JobItem = {
     inputs: string[];
     outputs: string[];
+    addOutputsToTargetSources: boolean;
     args: any;
-    func: (inputs: string[], output: string[], args: any) => boolean;
+    func: (inputs: string[], output: string[], args: any) => Promise<boolean>;
 };
 
 export type Target = {
@@ -177,7 +178,7 @@ export type Target = {
     compileDefinitions: TargetItems;
     compileOptions: TargetItems;
     linkOptions: TargetItems;
-    jobs: (JobItem | JobItemFunc)[];
+    jobs: JobItemFunc[];
 };
 
 export interface CommandDesc {

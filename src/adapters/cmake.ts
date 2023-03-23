@@ -217,7 +217,24 @@ function genTarget(project: Project, config: Config, target: Target): string {
     let str = '';
     const aliasMap = util.buildAliasMap(project, config, target.importDir);
     const sources = target.sources.map((source) => util.resolvePath(aliasMap, target.importDir, target.dir, source));
-    const sourcesStr = sources.join(' ');
+
+    // get any job outputs which need to be added as target sources
+    const ctx: TargetBuildContext = { project, config, target };
+    const jobOutputs = target.jobs.flatMap((job) => {
+        const jobItem = job(ctx);
+        if (jobItem.addOutputsToTargetSources) {
+            return jobItem.outputs;
+        }
+        return [];
+    });
+
+    // need to create an empy dummy for any job output file that doesn't exist yet
+    jobOutputs.forEach((path) => {
+        util.ensureFile(path);
+    });
+
+    const targetSources = [...sources, ...jobOutputs];
+    const targetSourcesStr = targetSources.join(' ');
     let subtype = '';
     switch (target.type) {
         case 'plain-exe':
@@ -229,19 +246,22 @@ function genTarget(project: Project, config: Config, target: Target): string {
                     subtype = ' MACOSX_BUNDLE';
                 }
             }
-            str += `add_executable(${target.name}${subtype} ${sourcesStr})\n`;
+            str += `add_executable(${target.name}${subtype} ${targetSourcesStr})\n`;
             break;
         case 'lib':
-            str += `add_library(${target.name} STATIC ${sourcesStr})\n`;
+            str += `add_library(${target.name} STATIC ${targetSourcesStr})\n`;
             break;
         case 'dll':
-            str += `add_library(${target.name} SHARED ${sourcesStr})\n`;
+            str += `add_library(${target.name} SHARED ${targetSourcesStr})\n`;
             break;
         case 'interface':
-            str += `add_library(${target.name} INTERFACE ${sourcesStr})\n`;
+            str += `add_library(${target.name} INTERFACE ${targetSourcesStr})\n`;
             break;
     }
-    str += `source_group(TREE ${util.resolvePath(aliasMap, target.importDir, target.dir)} FILES ${sourcesStr})\n`;
+    str += `source_group(TREE ${util.resolvePath(aliasMap, target.importDir, target.dir)} FILES ${sources.join(' ')})\n`;
+    if (jobOutputs.length > 0) {
+        str += `source_group(gen FILES ${jobOutputs.join(' ')})\n`;
+    }
     return str;
 }
 

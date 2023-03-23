@@ -1,6 +1,6 @@
 import { Config, Platform, Project, RunOptions, RunResult, TargetBuildContext, TargetItems, TargetItemsFunc } from './types.ts';
 import * as log from './log.ts';
-import { fs } from '../deps.ts';
+import { fs, path } from '../deps.ts';
 
 export function fileExists(path: string): boolean {
     try {
@@ -17,6 +17,13 @@ export function dirExists(path: string): boolean {
         return res.isDirectory;
     } catch (err) {
         return false;
+    }
+}
+
+export function ensureFile(filePath: string) {
+    if (!fileExists(filePath)) {
+        fs.ensureDirSync(path.dirname(filePath));
+        Deno.writeTextFileSync(filePath, '');
     }
 }
 
@@ -159,7 +166,7 @@ export function resolveAlias(aliasMap: Record<string, string>, str: string): str
     return str;
 }
 
-export function resolvePath(aliasMap: Record<string,string>, ...items: (string|undefined)[]): string {
+export function resolvePath(aliasMap: Record<string, string>, ...items: (string | undefined)[]): string {
     const path = `${items.filter((item) => item !== undefined).join('/')}`;
     return resolveAlias(aliasMap, path);
 }

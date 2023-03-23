@@ -441,3 +441,12 @@ export function validateTarget(
 
     return res;
 }
+
+export async function runJobs(project: Project, config: Config, target: Target) {
+    const ctx: TargetBuildContext = { project, config, target };
+    // FIXME: run in parallel?
+    for (const job of target.jobs) {
+        const jobItem = job(ctx);
+        await jobItem.func(jobItem.inputs, jobItem.outputs, jobItem.args);
+    }
+}
