@@ -10,11 +10,11 @@ function help() {
         'list imports',
         'list runners',
         'list openers',
-        'list targets [--all] [--exe] [--lib] [--dll]',
+        'list targets [--all] [--exe] [--lib] [--dll] [--interface]',
     ], 'list available configs, current settings, targets, ...');
 }
 
-const allTargetTypes: TargetType[] = ['windowed-exe', 'plain-exe', 'lib', 'dll'];
+const allTargetTypes: TargetType[] = ['windowed-exe', 'plain-exe', 'lib', 'dll', 'interface'];
 
 type ListArgs = {
     all: boolean;
@@ -133,7 +133,7 @@ function parseArgs(): ListArgs {
                         const targetArg = Deno.args[i];
                         switch (targetArg) {
                             case '--all':
-                                args.targetTypes = ['plain-exe', 'windowed-exe', 'lib', 'dll'];
+                                args.targetTypes = ['plain-exe', 'windowed-exe', 'lib', 'dll', 'interface'];
                                 break;
                             case '--exe':
                                 args.targetTypes = ['plain-exe', 'windowed-exe'];
@@ -143,6 +143,9 @@ function parseArgs(): ListArgs {
                                 break;
                             case '--dll':
                                 args.targetTypes = ['dll'];
+                                break;
+                            case '--interface':
+                                args.targetTypes = ['interface'];
                                 break;
                             default:
                                 log.error(`unknown target type arg '${targetArg}' (run 'fibs help list')`);
