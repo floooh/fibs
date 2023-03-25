@@ -101,7 +101,11 @@ export function resolveProjectItems(
     buildContext: ProjectBuildContext,
     itemsAreFilePaths: boolean,
 ): string[] {
-    const aliasMap = util.buildAliasMap(buildContext.project, buildContext.config, buildContext.project.dir);
+    const aliasMap = util.buildAliasMap({
+        project: buildContext.project,
+        config: buildContext.config,
+        selfDir: buildContext.project.dir
+    });
     const baseDir = buildContext.project.dir;
     const subDir = undefined;
     const resolveAliasOrPath = (items: string[]) => {
@@ -215,7 +219,7 @@ function genLinkOptions(project: Project, config: Config): string {
 
 function genTarget(project: Project, config: Config, target: Target): string {
     let str = '';
-    const aliasMap = util.buildAliasMap(project, config, target.importDir);
+    const aliasMap = util.buildAliasMap({ project, config, target, selfDir: target.importDir });
     const sources = target.sources.map((source) => util.resolvePath(aliasMap, target.importDir, target.dir, source));
 
     // get any job outputs which need to be added as target sources
@@ -371,7 +375,7 @@ function genCMakePresetsJson(project: Project, config: Config): string {
 function genConfigurePresets(project: Project, config: Config): any[] {
     const res = [];
     if (util.validConfigForPlatform(config, host.platform())) {
-        const aliasMap = util.buildAliasMap(project, config, config.importDir);
+        const aliasMap = util.buildAliasMap({ project, config, selfDir: config.importDir });
         res.push({
             name: config.name,
             displayName: config.name,
@@ -431,11 +435,11 @@ function genCacheVariables(project: Project, config: Config): Record<string, any
     if (config.platform !== 'android') {
         res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = util.distDir(project, config);
     }
-    const projectAliasMap = util.buildAliasMap(project, config, project.dir);
+    const projectAliasMap = util.buildAliasMap({ project, config, selfDir: project.dir });
     for (const key in project.variables) {
         res[key] = resolveCacheVariable(project.variables[key], projectAliasMap);
     }
-    const configAliasMap = util.buildAliasMap(project, config, config.importDir);
+    const configAliasMap = util.buildAliasMap({ project, config, selfDir: config.importDir });
     for (const key in config.variables) {
         res[key] = resolveCacheVariable(config.variables[key], configAliasMap);
     }

@@ -9,15 +9,22 @@ export type EmbedFilesOptions = {
 export function embedFiles(options: EmbedFilesOptions): JobItemFunc {
     return (context: TargetBuildContext): JobItem => {
         const target = context.target;
-        const aliasMap = util.buildAliasMap(context.project, context.config, target.importDir);
-        const srcDir = util.resolvePath(aliasMap, target.importDir, target.dir, options.dir);
+        const aliasMap = util.buildAliasMap({
+            project: context.project,
+            config: context.config,
+            target: context.target,
+            selfDir: target.importDir
+        });
         return {
-            inputs: options.files.map((file) => `${srcDir}/${file}`),
-            outputs: [options.outHeader],
+            name: 'embedfile',
+            inputs: options.files.map((file) => util.resolvePath(aliasMap, options.dir, file)),
+            outputs: [util.resolvePath(aliasMap, options.outHeader)],
             addOutputsToTargetSources: false,
             args: options,
-            func: (inputs: string[], output: string[], args: EmbedFilesOptions): Promise<boolean> => {
-                log.error('FIXME: embedFiles');
+            func: async (inputs: string[], outputs: string[], args: EmbedFilesOptions): Promise<void> => {
+                if (util.dirty(inputs, outputs)) {
+                    log.error('FIXME: embedFiles');
+                }
             },
         };
     };

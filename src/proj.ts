@@ -385,15 +385,14 @@ export function validateTarget(
 
     // check source files exist
     const config = util.activeConfig(project);
-    const aliasMap = util.buildAliasMap(project, config, target.importDir);
+    const aliasMap = util.buildAliasMap({ project, config, target, selfDir: target.importDir });
     const srcDir = util.resolvePath(aliasMap, target.importDir, target.dir);
     if (!util.dirExists(srcDir)) {
         res.valid = false;
         res.hints.push(`src dir not found: ${srcDir}`);
     } else {
-        const aliasMap = util.buildAliasMap(project, config, target.importDir);
         for (const src of target.sources) {
-            const srcFile = util.resolvePath(aliasMap, target.importDir, target.dir, src);
+            const srcFile = util.resolvePath(aliasMap, srcDir, src);
             if (!util.fileExists(srcFile)) {
                 res.valid = false;
                 res.hints.push(`src file not found: ${srcFile}`);
@@ -442,11 +441,15 @@ export function validateTarget(
     return res;
 }
 
-export async function runJobs(project: Project, config: Config, target: Target) {
+export async function runJobs(project: Project, config: Config, target: Target): Promise<boolean> {
     const ctx: TargetBuildContext = { project, config, target };
-    // FIXME: run in parallel?
     for (const job of target.jobs) {
         const jobItem = job(ctx);
-        await jobItem.func(jobItem.inputs, jobItem.outputs, jobItem.args);
+        try {
+            await jobItem.func(jobItem.inputs, jobItem.outputs, jobItem.args);
+        } catch (err) {
+            log.error(`job '${jobItem.name}' in target '${target.name}' failed with ${err}`);
+        }
     }
+    return true;
 }

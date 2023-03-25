@@ -1,4 +1,4 @@
-import { Config, Platform, Project, RunOptions, RunResult, TargetBuildContext, TargetItems, TargetItemsFunc } from './types.ts';
+import { Config, Platform, Project, RunOptions, RunResult, Target, TargetBuildContext, TargetItems, TargetItemsFunc } from './types.ts';
 import * as log from './log.ts';
 import { fs, path } from '../deps.ts';
 
@@ -27,32 +27,48 @@ export function ensureFile(filePath: string) {
     }
 }
 
-export function isDirty(inputs: string[], outputs: string[]) {
+/**
+ * Checks if outputs are dirty, returns true if:
+ * - any of the input or output files don't exist
+ * - any of the output files exist but have size 0 (this is necessary because
+ *   fibs may need to create empty output files before cmake runs, if those
+ *   output files are input source files)
+ * - any of the input files has a more recent modification date than
+ *   any of the output files
+ *
+ * @param inputs an array of input file paths
+ * @param outputs an array of output file paths
+ * @returns true if outputs need to be regenerated
+ * @throws throws error when input file is missing
+ */
+export function dirty(inputs: string[], outputs: string[]) {
     let mtime: number = 0;
 
-    // first find the newest output modification time
+    // first gather input stats and throw if any of the inputs doesn't exist
+    const inputStats = inputs.map((input) => Deno.statSync(input));
+
+    // check if outputs exists, and get their most recent modification time
     for (const path of outputs) {
         try {
             const res = Deno.statSync(path);
             if (res.mtime === null) {
                 return true;
+            } else if (res.size === 0) {
+                return true;
             } else if (res.mtime.getTime() > mtime) {
                 mtime = res.mtime.getTime();
             }
         } catch (err) {
+            // output file doesn't exist
             return true;
         }
     }
-    // now check against inputs
-    for (const path of inputs) {
-        try {
-            const res = Deno.statSync(path);
-            if (res.mtime === null) {
-                return true;
-            } else if (res.mtime.getTime() > mtime) {
-                return true;
-            }
-        } catch (err) {
+
+    // check inputs
+    for (const inputStat of inputStats) {
+        if (inputStat.mtime === null) {
+            return true;
+        } else if (inputStat.mtime.getTime() > mtime) {
             return true;
         }
     }
@@ -109,6 +125,49 @@ export function ensureImportsDir(project: Project): string {
     return path;
 }
 
+export function targetBuildDir(project: Project, config: Config, target: Target): string {
+    return `${buildDir(project, config)}/${target.name}`;
+}
+
+export function ensureTargetBuildDir(project: Project, config: Config, target: Target): string {
+    const path = targetBuildDir(project, config, target);
+    fs.ensureDirSync(path);
+    return path;
+}
+
+export function targetDistDir(project: Project, config: Config, target: Target): string {
+    // FIXME: Android
+    if (config.platform === 'macos' && target.type === 'windowed-exe') {
+        return `${distDir(project, config)}/${target.name}.app/Contents/MacOS`;
+    } else if (config.platform === 'ios' && target.type === 'windowed-exe') {
+        return `${distDir(project, config)}/${target.name}.app`;
+    } else {
+        return distDir(project, config);
+    }
+}
+
+export function ensureTargetDistDir(project: Project, config: Config, target: Target): string {
+    const path = targetDistDir(project, config, target);
+    fs.ensureDirSync(path);
+    return path;
+}
+
+export function targetAssetsDir(project: Project, config: Config, target: Target): string {
+    if (config.platform === 'macos' && target.type === 'windowed-exe') {
+        return `${distDir(project, config)}/${target.name}.app/Contents/Resources`;
+    } else if (config.platform === 'ios' && target.type === 'windowed-exe') {
+        return `${distDir(project, config)}/${target.name}.app`;
+    } else {
+        return distDir(project, config);
+    }
+}
+
+export function ensureTargetAssetsDir(project: Project, config: Config, target: Target): string {
+    const path = targetAssetsDir(project, config, target);
+    fs.ensureDirSync(path);
+    return path;
+}
+
 export function defaultConfigForPlatform(platform: Platform): string {
     switch (platform) {
         case 'windows':
@@ -145,30 +204,51 @@ export function validConfigForPlatform(config: Config, platform: Platform): bool
     return config.platform === platform;
 }
 
-export function buildAliasMap(project: Project, config: Config, importDir: string | undefined): Record<string, string> {
-    return {
-        '@root': project.dir,
-        '@self': (importDir !== undefined) ? importDir : project.dir,
-        '@sdks': sdkDir(project),
-        '@build': buildDir(project, config),
-        '@dist': distDir(project, config),
+export type BuildAliasMapOptions = {
+    project: Project,
+    config: Config,
+    target?: Target,
+    selfDir?: string,
+}
+
+export function buildAliasMap(options: BuildAliasMapOptions): Record<string, string> {
+    const { project, config, target, selfDir } = options;
+    const res: Record<string, string> = {
+        '@root:': project.dir,
+        '@sdks:': sdkDir(project),
+        '@build:': buildDir(project, config),
+        '@dist:': distDir(project, config),
     };
+    if (selfDir !== undefined) {
+        res['@self:'] = selfDir;
+    }
+    if (target !== undefined) {
+        res['@targetsources:'] = resolvePathNoAlias(target.importDir, target.dir);
+        res['@targetbuild:'] = targetBuildDir(project, config, target);
+        res['@targetdist:'] = targetDistDir(project, config, target);
+        res['@targetassets:'] = targetAssetsDir(project, config, target);
+    }
+    return res;
 }
 
 export function resolveAlias(aliasMap: Record<string, string>, str: string): string {
     if ((str !== undefined) && str.startsWith('@')) {
         for (const k in aliasMap) {
             if (str.startsWith(k)) {
-                return str.replace(k, aliasMap[k]);
+                return str.replace(k, `${aliasMap[k]}/`).replace('//', '/');
             }
         }
+        log.error(`cannot resolve alias in '${str}`);
     }
     return str;
 }
 
+export function resolvePathNoAlias(...items: (string | undefined)[]): string {
+    return items.filter((item) => item !== undefined).join('/');
+}
+
 export function resolvePath(aliasMap: Record<string, string>, ...items: (string | undefined)[]): string {
-    const path = `${items.filter((item) => item !== undefined).join('/')}`;
-    return resolveAlias(aliasMap, path);
+    return resolveAlias(aliasMap, resolvePathNoAlias(...items));
 }
 
 export async function runCmd(cmd: string, options: RunOptions): Promise<RunResult> {
@@ -277,7 +357,12 @@ export function resolveTargetItems(
     buildContext: TargetBuildContext,
     itemsAreFilePaths: boolean,
 ): ResolvedTargetItems {
-    const aliasMap = buildAliasMap(buildContext.project, buildContext.config, buildContext.target.importDir);
+    const aliasMap = buildAliasMap({
+        project: buildContext.project,
+        config: buildContext.config,
+        target: buildContext.target,
+        selfDir: buildContext.target.importDir
+    });
     const resolve = (items: string[] | TargetItemsFunc): string[] => {
         let resolvedItems = (typeof items === 'function') ? items(buildContext) : items;
         if (itemsAreFilePaths) {

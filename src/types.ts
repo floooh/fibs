@@ -160,11 +160,12 @@ export type TargetDesc = {
 export type JobItemFunc = (context: TargetBuildContext) => JobItem;
 
 export type JobItem = {
+    name: string;
     inputs: string[];
     outputs: string[];
     addOutputsToTargetSources: boolean;
     args: any;
-    func: (inputs: string[], output: string[], args: any) => Promise<boolean>;
+    func: (inputs: string[], output: string[], args: any) => Promise<void>;
 };
 
 export type Target = {

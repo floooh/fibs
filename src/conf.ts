@@ -21,7 +21,7 @@ export async function validate(project: Project, config: Config, options: Valida
     } = options;
     const res: ValidateResult = { valid: true, hints: [] };
 
-    const aliasMap = util.buildAliasMap(project, config, config.importDir);
+    const aliasMap = util.buildAliasMap({ project, config, selfDir: config.importDir });
 
     // validate generators
     // TODO: more generator checks
