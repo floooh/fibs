@@ -50,8 +50,12 @@ export async function importProjects(fromDir: string, importDesc: ImportDesc): P
     }
     if (importDesc.import) {
         for (const file of importDesc.import) {
-            const module = await import(`file://${fromDir}/${file}`)
-            res.push(module.project);
+            try {
+                const module = await import(`file://${fromDir}/${file}`)
+                res.push(module.project);
+            } catch (err) {
+                log.warn(`importing module failed with: ${err}`);
+            }
         }
     }
     return res;
