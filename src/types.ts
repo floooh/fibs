@@ -104,7 +104,8 @@ export type Config = {
 export type ImportDesc = {
     url: string;
     ref?: string;
-    projects?: (string | ProjectDesc)[],
+    project?: ProjectDesc;
+    import?: string[];
 };
 
 export type Import = {

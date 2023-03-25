@@ -43,16 +43,13 @@ export async function fetch(project: Project, options: FetchOptions): Promise<Fe
 
 export async function importProjects(fromDir: string, importDesc: ImportDesc): Promise<ProjectDesc[]> {
     const res: ProjectDesc[] = [];
-    if (importDesc.projects) {
-        for (const item of importDesc.projects) {
-            if (typeof item === 'string') {
-                // import project description
-                const module = await import(`file://${fromDir}/${item}`)
-                res.push(module.project);
-            } else {
-                // inline project description provided
-                res.push(item);
-            }
+    if (importDesc.project) {
+        res.push(importDesc.project);
+    }
+    if (importDesc.import) {
+        for (const file of importDesc.import) {
+            const module = await import(`file://${fromDir}/${file}`)
+            res.push(module.project);
         }
     }
     return res;
