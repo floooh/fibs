@@ -26,9 +26,9 @@ export async function main() {
             log.error('current directory is not a fibs project (no fibs.ts found)');
         }
         const rootModule = await import(`file://${rootPath}`);
-        if (rootModule.projectDesc !== undefined) {
+        if (rootModule.project !== undefined) {
             // setup the root project tree
-            rootProject = await proj.setup(cwd, rootModule.projectDesc, stdDesc);
+            rootProject = await proj.setup(cwd, rootModule.project, stdDesc);
             // lookup and run subcommand
             const cmd = Deno.args[0];
             if (rootProject.commands[cmd] !== undefined) {
@@ -39,7 +39,7 @@ export async function main() {
                 );
             }
         } else {
-            log.error('file \'fibs.ts\' in current directory has no export \'projectDesc\'');
+            log.error('file \'fibs.ts\' in current directory has no export \'project\'');
         }
     } catch (err) {
         log.error(err);

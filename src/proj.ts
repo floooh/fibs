@@ -142,22 +142,19 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
     // important to keep imports at the top!
     if (other.imports) {
         for (const name in other.imports) {
-            const imp = other.imports[name];
-            let projDesc = imp.projectDesc;
-            const res = await imports.fetch(into, { name, url: imp.url, ref: imp.ref });
-            if (res.valid) {
-                if (projDesc === undefined) {
-                    projDesc = res.projectDesc;
+            const importDesc = other.imports[name];
+            const fetchResult = await imports.fetch(into, { name, url: importDesc.url, ref: importDesc.ref });
+            if (fetchResult.valid) {
+                const projectDescs = await imports.importProjects(fetchResult.dir, importDesc);
+                for (const projDesc of projectDescs) {
+                    await integrate(into, projDesc, fetchResult.dir);
                 }
-            }
-            if (projDesc) {
-                await integrate(into, projDesc, res.path);
             }
             into.imports[name] = {
                 name,
-                importDir: res.path,
-                url: imp.url,
-                ref: imp.ref,
+                importDir: fetchResult.dir,
+                url: importDesc.url,
+                ref: importDesc.ref,
             };
         }
     }

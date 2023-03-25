@@ -1,4 +1,4 @@
-import { Import, Project, ProjectDesc } from './types.ts';
+import { Import, ImportDesc, Project, ProjectDesc } from './types.ts';
 import * as util from './util.ts';
 import * as git from './git.ts';
 import * as log from './log.ts';
@@ -7,56 +7,56 @@ export type FetchOptions = {
     name: string;
     url: string;
     ref?: string;
-};
+}
 
 export type FetchResult = {
     valid: boolean;
-    path: string;
-    projectDesc: ProjectDesc | undefined;
+    dir: string;
 };
 
 export async function fetch(project: Project, options: FetchOptions): Promise<FetchResult> {
     const importsDir = util.ensureImportsDir(project);
     const res: FetchResult = {
         valid: false,
-        path: `${importsDir}/${options.name}`,
-        projectDesc: undefined,
+        dir: `${importsDir}/${options.name}`,
     };
-    // shortcut import directory already exists
-    if (util.dirExists(res.path)) {
-        // FIXME: handle import error via try-catch here?
+    if (util.dirExists(res.dir)) {
         res.valid = true;
-        res.projectDesc = await importOptionalFibsModule(res.path);
         return res;
     }
-    // otherwise fetch via git
-    if (
-        !await git.clone({
+    if (!util.dirExists(res.dir)) {
+        if (!await git.clone({
             url: options.url,
             dir: importsDir,
             name: options.name,
             ref: options.ref,
             // only shallow-clone if no ref is specified
             depth: (options.ref === undefined) ? 1 : undefined,
-        })
-    ) {
-        log.warn(`Failed to clone ${options.url} into ${res.path}`);
-        return res;
+        })) {
+            log.warn(`Failed to clone ${options.url} into ${res.dir}`);
+            return res;
+        }
+        res.valid = true;
     }
-
-    // FIXME: handle import error via try-catch here?
-    res.valid = true;
-    res.projectDesc = await importOptionalFibsModule(res.path);
     return res;
 }
 
-async function importOptionalFibsModule(dir: string): Promise<ProjectDesc | undefined> {
-    const fibsPath = `${dir}/fibs.ts`;
-    if (util.fileExists(fibsPath)) {
-        const module = await import(`file://${fibsPath}`);
-        return module.projectDesc;
+export async function importProjects(fromDir: string, importDesc: ImportDesc): Promise<ProjectDesc[]> {
+    const res: ProjectDesc[] = [];
+    if (importDesc.projects) {
+        for (const item of importDesc.projects) {
+            if (typeof item === 'string') {
+                // import project description
+                const module = await import(`file://${fromDir}/${item}`)
+                res.push(module.project);
+            } else {
+                // inline project description provided
+                res.push(item);
+            }
+        }
     }
-    return undefined;
+    return res;
+
 }
 
 export type ValidateOptions = {
