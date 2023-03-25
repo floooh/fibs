@@ -80,9 +80,7 @@ export async function clone(options: CloneOptions): Promise<boolean> {
         args.push('--depth', `${depth}`);
     }
     args.push(url);
-    if (name !== undefined) {
-        args.push(name);
-    }
+    args.push(name);
     if ((await run({ args, cwd: dir, showCmd })).exitCode !== 0) {
         return false;
     }

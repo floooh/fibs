@@ -2,6 +2,7 @@ import { Import, ImportDesc, Project, ProjectDesc } from './types.ts';
 import * as util from './util.ts';
 import * as git from './git.ts';
 import * as log from './log.ts';
+import { path } from '../deps.ts';
 
 export type FetchOptions = {
     name: string;
@@ -16,9 +17,10 @@ export type FetchResult = {
 
 export async function fetch(project: Project, options: FetchOptions): Promise<FetchResult> {
     const importsDir = util.ensureImportsDir(project);
+    const dirname = path.parse(new URLPattern(options.url).pathname).name;
     const res: FetchResult = {
         valid: false,
-        dir: `${importsDir}/${options.name}`,
+        dir: `${importsDir}/${dirname}`,
     };
     if (util.dirExists(res.dir)) {
         res.valid = true;
@@ -28,7 +30,7 @@ export async function fetch(project: Project, options: FetchOptions): Promise<Fe
         if (!await git.clone({
             url: options.url,
             dir: importsDir,
-            name: options.name,
+            name: dirname,
             ref: options.ref,
             // only shallow-clone if no ref is specified
             depth: (options.ref === undefined) ? 1 : undefined,

@@ -218,6 +218,7 @@ export function buildAliasMap(options: BuildAliasMapOptions): Record<string, str
         '@sdks:': sdkDir(project),
         '@build:': buildDir(project, config),
         '@dist:': distDir(project, config),
+        '@imports': importsDir(project),
     };
     if (selfDir !== undefined) {
         res['@self:'] = selfDir;
