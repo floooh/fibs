@@ -30,16 +30,10 @@ export type HelpJobArgs = {
     desc: string,
 };
 
-export function helpJob(args: HelpJobArgs[], help: string | string[]) {
+export function helpJob(name: string, args: HelpJobArgs[], help: string) {
+    print(`${colors.green(`${name}:`)} ${help}`);
     for (const arg of args) {
-        print(`${colors.green(`${arg.name}:`)} ${colors.yellow(arg.type)}\t- ${arg.desc}`);
-    }
-    if (typeof help === 'string') {
-        print('    ', help);
-    } else {
-        for (const line of help) {
-            print('    ', line);
-        }
+        print(`  ${colors.brightBlue(`${arg.name}:`)} ${colors.yellow(arg.type)} - ${arg.desc}`);
     }
     print('');
 }

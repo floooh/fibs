@@ -10,6 +10,7 @@ function help() {
         'list imports',
         'list runners',
         'list openers',
+        'list jobs',
         'list targets [--all] [--exe] [--lib] [--dll] [--interface]',
     ], 'list available configs, current settings, targets, ...');
 }
@@ -23,6 +24,7 @@ type ListArgs = {
     imports: boolean;
     runners: boolean;
     openers: boolean;
+    jobs: boolean;
     targetTypes: TargetType[];
 };
 
@@ -43,8 +45,8 @@ async function run(project: Project) {
         log.section('configs');
     }
     if (args.all || args.configs) {
-        for (const key in project.configs) {
-            log.print(`${project.configs[key].name}`);
+        for (const config of Object.values(project.configs)) {
+            log.print(config.name);
         }
     }
     if (args.all) {
@@ -52,8 +54,8 @@ async function run(project: Project) {
         log.section('imports');
     }
     if (args.all || args.imports) {
-        for (const key in project.imports) {
-            log.print(`${project.imports[key].name}: ${project.imports[key].importDir}`);
+        for (const imp of Object.values(project.imports)) {
+            log.print(`${imp.name}: ${imp.importDir}`);
         }
     }
     if (args.all) {
@@ -61,8 +63,9 @@ async function run(project: Project) {
         log.section('runners');
     }
     if (args.all || args.runners) {
-        for (const key in project.runners) {
-            log.print(`${project.runners[key].name}`);
+        for (const runner of Object.values(project.runners)) {
+            log.print(runner.name);
+
         }
     }
     if (args.all) {
@@ -70,8 +73,13 @@ async function run(project: Project) {
         log.section('openers');
     }
     if (args.all || args.openers) {
-        for (const key in project.openers) {
-            log.print(`${project.openers[key].name}`);
+        for (const opener of Object.values(project.openers)) {
+            log.print(opener.name);
+        }
+    }
+    if (args.all || args.jobs) {
+        for (const job of Object.values(project.jobs)) {
+            job.help();
         }
     }
     if (args.all) {
@@ -81,13 +89,13 @@ async function run(project: Project) {
     if (args.all || (args.targetTypes.length > 0)) {
         const types = allTargetTypes;
         const targets = Object.values(project.targets);
-        types.forEach((type) => {
-            targets.forEach((target) => {
+        for (const type of types) {
+            for (const target of targets) {
                 if ((target.type === type) && (args.targetTypes.includes(type))) {
                     log.print(`${target.name} (${target.type})`);
                 }
-            });
-        });
+            }
+        }
     }
     if (args.all) {
         log.print();
@@ -102,6 +110,7 @@ function parseArgs(): ListArgs {
         imports: false,
         runners: false,
         openers: false,
+        jobs: false,
         targetTypes: [],
     };
     if (Deno.args.length === 1) {
@@ -124,6 +133,9 @@ function parseArgs(): ListArgs {
                 break;
             case 'openers':
                 args.openers = true;
+                break;
+            case 'jobs':
+                args.jobs = true;
                 break;
             case 'targets':
                 if (Deno.args.length === 2) {

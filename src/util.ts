@@ -403,3 +403,69 @@ export function isNumberArray(val: unknown): boolean {
 export function isBooleanArray(val: unknown): boolean {
     return Array.isArray(val) && val.every((item) => isBoolean(item));
 }
+
+export type ArgDesc = {
+    type: 'string'|'number'|'boolean'|'string[]'|'number[]'|'boolean[]';
+    optional: boolean;
+}
+
+export type ValidateArgsResult = {
+    valid: boolean;
+    hints: string[];
+};
+
+export function validateArgs(args: any, expected: Record<string, ArgDesc>): ValidateArgsResult {
+    const res: ValidateArgsResult = { valid: true, hints: [] };
+    for (const [key, value] of Object.entries(expected)) {
+        if (!value.optional && (args[key] === undefined)) {
+            res.valid = false;
+            res.hints.push(`expected required arg '${key}'`);
+        }
+    }
+    for (const [key, value] of Object.entries(args)) {
+        const exp = expected[key];
+        if (exp === undefined) {
+            res.valid = false;
+            res.hints.push(`unknown arg '${key}'`);
+        } else {
+            switch (exp.type) {
+                case 'boolean':
+                    if (!isBoolean(value)) {
+                        res.valid = false;
+                        res.hints.push(`arg '${key} must be a boolean`);
+                    }
+                    break;
+                case 'boolean[]':
+                    if (!isBooleanArray(value)) {
+                        res.valid = false;
+                        res.hints.push(`arg '${key} must be a boolean array`);
+                    }
+                case 'number':
+                    if (!isNumber(value)) {
+                        res.valid = false;
+                        res.hints.push(`arg '${key} must be a number`);
+                    }
+                    break;
+                case 'number[]':
+                    if (!isNumberArray(value)) {
+                        res.valid = false;
+                        res.hints.push(`arg '${key} must be a number array`);
+                    }
+                    break;
+                case 'string':
+                    if (!isString(value)) {
+                        res.valid = false;
+                        res.hints.push(`arg '${key} must be a string`);
+                    }
+                    break;
+                case 'string[]':
+                    if (!isStringArray(value)) {
+                        res.valid = false;
+                        res.hints.push(`arg '${key} must be a string array`);
+                    }
+                    break;
+            }
+        }
+    }
+    return res;
+}

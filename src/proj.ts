@@ -3,6 +3,7 @@ import {
     AdapterOptions,
     Config,
     ConfigDescWithImportDir,
+    Job,
     Language,
     Project,
     ProjectDesc,
@@ -10,6 +11,8 @@ import {
     TargetBuildContext,
     TargetItems,
     TargetItemsDesc,
+    TargetJob,
+    TargetJobDesc,
 } from './types.ts';
 import * as settings from './settings.ts';
 import * as log from './log.ts';
@@ -139,6 +142,13 @@ export function asTargetItems(inp: TargetItemsDesc | undefined): TargetItems {
     };
 }
 
+export function asTargetJobs(project: Project, targetName: string, descs?: TargetJobDesc[]): TargetJob[] {
+    if (descs === undefined) {
+        return [];
+    }
+    return descs.map((desc) => ({job: desc.job, args: desc.args}));
+}
+
 async function integrate(into: Project, other: ProjectDesc, importDir: string) {
     // important to keep imports at the top!
     if (other.imports) {
@@ -197,24 +207,6 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
             into.configDescs[name] = { ...other.configs[name], importDir };
         }
     }
-    if (other.targets) {
-        for (const name in other.targets) {
-            const desc = other.targets[name];
-            into.targets[name] = {
-                name,
-                importDir,
-                dir: desc.dir,
-                type: desc.type,
-                sources: desc.sources ?? [],
-                libs: desc.libs ?? [],
-                includeDirectories: asTargetItems(desc.includeDirectories),
-                compileDefinitions: asTargetItems(desc.compileDefinitions),
-                compileOptions: asTargetItems(desc.compileOptions),
-                linkOptions: asTargetItems(desc.linkOptions),
-                jobs: desc.jobs ?? [],
-            };
-        }
-    }
     if (other.commands) {
         for (const name in other.commands) {
             const desc = other.commands[name];
@@ -246,7 +238,8 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
                 name,
                 importDir,
                 help: desc.help,
-                run: desc.run,
+                validate: desc.validate,
+                builder: desc.builder,
             }
         }
     }
@@ -279,6 +272,24 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
                 importDir,
                 configure: desc.configure,
                 build: desc.build,
+            };
+        }
+    }
+    if (other.targets) {
+        for (const name in other.targets) {
+            const desc = other.targets[name];
+            into.targets[name] = {
+                name,
+                importDir,
+                dir: desc.dir,
+                type: desc.type,
+                sources: desc.sources ?? [],
+                libs: desc.libs ?? [],
+                includeDirectories: asTargetItems(desc.includeDirectories),
+                compileDefinitions: asTargetItems(desc.compileDefinitions),
+                compileOptions: asTargetItems(desc.compileOptions),
+                linkOptions: asTargetItems(desc.linkOptions),
+                jobs: asTargetJobs(into, name, desc.jobs),
             };
         }
     }
@@ -392,8 +403,17 @@ export function validateTarget(
         }
     }
 
-    // check source files exist
+    // check that jobs exist and have valid arg types
     const config = util.activeConfig(project);
+    for (const targetJob of target.jobs) {
+        const targetJobRes = validateTargetJob(project, config, target, targetJob);
+        if (!targetJobRes.valid) {
+            res.valid = false;
+            res.hints.push(...targetJobRes.hints);
+        }
+    }
+
+    // check that source files exist
     const aliasMap = util.buildAliasMap({ project, config, target, selfDir: target.importDir });
     const srcDir = util.resolvePath(aliasMap, target.importDir, target.dir);
     if (!util.dirExists(srcDir)) {
@@ -446,18 +466,52 @@ export function validateTarget(
             log.warn(msg);
         }
     }
-
     return res;
+}
+
+export type ValidateTargetJobResult = {
+    valid: boolean;
+    hints: string[];
+};
+
+export function validateTargetJob(project: Project, config: Config, target: Target, targetJob: TargetJob): ValidateTargetJobResult {
+    const res: ValidateTargetJobResult = { valid: true, hints: [] };
+    const jobName = targetJob.job;
+    if (project.jobs[jobName] !== undefined) {
+        const jobTemplate = project.jobs[jobName];
+        const valRes = jobTemplate.validate(targetJob.args);
+        if (!valRes.valid) {
+            res.valid = false;
+            res.hints.push(
+                `job '${jobName}' in target '${target.name}' has invalid args:`,
+                ...valRes.hints.map((hint) => `  - ${hint}`),
+                'in:',
+                ...JSON.stringify(targetJob.args, null, 2).split('\n').map((line) => `  ${line}`)
+            );
+        }
+    } else {
+        res.valid = false;
+        res.hints.push(`unknown job '${jobName}' in target '${target.name}' (run 'fibs list jobs')`);
+    }
+    return res;
+}
+
+export function resolveJob(ctx: TargetBuildContext, targetJob: TargetJob): Job {
+    const res = validateTargetJob(ctx.project, ctx.config, ctx.target, targetJob);
+    if (!res.valid) {
+        log.error(`failed to validate job ${targetJob.job} in target ${ctx.target.name}:\n${res.hints.map((line) => `  ${line}\n`)}`);
+    }
+    return ctx.project.jobs[targetJob.job].builder(targetJob.args)(ctx);
 }
 
 export async function runJobs(project: Project, config: Config, target: Target): Promise<boolean> {
     const ctx: TargetBuildContext = { project, config, target };
-    for (const job of target.jobs) {
-        const jobItem = job(ctx);
+    for (const targetJob of target.jobs) {
+        const job = resolveJob(ctx, targetJob);
         try {
-            await jobItem.func(jobItem.inputs, jobItem.outputs, jobItem.args);
+            await job.func(job.inputs, job.outputs, job.args);
         } catch (err) {
-            log.error(`job '${jobItem.name}' in target '${target.name}' failed with ${err}`);
+            log.error(`job '${targetJob.job}' in target '${target.name}' failed with ${err}`);
         }
     }
     return true;

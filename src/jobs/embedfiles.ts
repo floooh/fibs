@@ -1,9 +1,9 @@
-import { JobTemplateDesc, Job, JobBuilder, TargetBuildContext, util, log } from '../../mod.ts';
+import { JobTemplateDesc, Job, JobBuilder, JobValidateResult, TargetBuildContext, util, log } from '../../mod.ts';
 
-export const embedfilesDesc: JobTemplateDesc = { help, run };
+export const embedfilesDesc: JobTemplateDesc = { help, validate, builder };
 
 function help() {
-    log.helpJob([
+    log.helpJob('embedfiles', [
         { name: 'dir?', type: 'string', desc: 'base directory of files to embed (default: @targetsources)' },
         { name: 'files', type: 'string[]', desc: 'list of files to embed' },
         { name: 'outHeader', type: 'string', desc: 'path of generated header file' },
@@ -16,16 +16,19 @@ type EmbedFilesArgs = {
     outHeader: string;
 };
 
-export function run(args: EmbedFilesArgs): JobBuilder {
-    if ((args.dir !== undefined) && !util.isString(args.dir)) {
-        log.error(`embedfiles: expected arg 'dir: string' in:\n${args}`);
-    }
-    if (!util.isStringArray(args.files)) {
-        log.error(`embedfiles: expected arg 'files: string[]' in:\n${args}`);
-    }
-    if (!util.isStringArray(args.outHeader)) {
-        log.error(`embedfiles: expected arg 'outHeader: string[]' in:\n${args}`);
-    }
+export function validate(args: EmbedFilesArgs): JobValidateResult {
+    const res = util.validateArgs(args, {
+        dir: { type: 'string', optional: true },
+        files: { type: 'string[]', optional: false },
+        outHeader: { type: 'string', optional: false },
+    })
+    return {
+        valid: res.valid,
+        hints: res.hints
+    };
+}
+
+export function builder(args: EmbedFilesArgs): JobBuilder {
     const { dir = '@targetsources', files, outHeader } = args;
     return (context: TargetBuildContext): Job => {
         const target = context.target;

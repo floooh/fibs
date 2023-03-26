@@ -9,6 +9,7 @@ import {
     host,
     Language,
     log,
+    proj,
     Project,
     ProjectBuildContext,
     ProjectItemsFunc,
@@ -224,10 +225,10 @@ function genTarget(project: Project, config: Config, target: Target): string {
 
     // get any job outputs which need to be added as target sources
     const ctx: TargetBuildContext = { project, config, target };
-    const jobOutputs = target.jobs.flatMap((job) => {
-        const jobItem = job(ctx);
-        if (jobItem.addOutputsToTargetSources) {
-            return jobItem.outputs;
+    const jobOutputs = target.jobs.flatMap((targetJob) => {
+        const job = proj.resolveJob(ctx, targetJob);
+        if (job.addOutputsToTargetSources) {
+            return job.outputs;
         }
         return [];
     });

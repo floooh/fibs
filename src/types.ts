@@ -148,6 +148,16 @@ export type TargetItems = {
     public: string[] | TargetItemsFunc;
 };
 
+export type TargetJobDesc = {
+    job: string;
+    args: any;
+}
+
+export type TargetJob = {
+    job: string;
+    args: any;
+}
+
 export type TargetDesc = {
     type: TargetType;
     dir?: string;
@@ -157,7 +167,7 @@ export type TargetDesc = {
     compileDefinitions?: TargetItemsDesc;
     compileOptions?: TargetItemsDesc;
     linkOptions?: TargetItemsDesc;
-    jobs?: JobBuilder[];
+    jobs?: TargetJobDesc[];
 };
 
 export type JobBuilder = (context: TargetBuildContext) => Job;
@@ -173,19 +183,26 @@ export type Target = {
     compileDefinitions: TargetItems;
     compileOptions: TargetItems;
     linkOptions: TargetItems;
-    jobs: JobBuilder[];
+    jobs: TargetJob[];
+};
+
+export type JobValidateResult = {
+    valid: boolean;
+    hints: string[];
 };
 
 export interface JobTemplateDesc {
     help(): void;
-    run(args: any): JobBuilder;
+    validate(args: any): JobValidateResult;
+    builder(args: any): JobBuilder;
 }
 
 export interface JobTemplate {
     name: string;
     importDir: string;
     help(): void;
-    run(args: any): JobBuilder;
+    validate(args: any): JobValidateResult;
+    builder(args: any): JobBuilder;
 }
 
 export type Job = {

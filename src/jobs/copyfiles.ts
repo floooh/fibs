@@ -1,12 +1,12 @@
 import { fs, path } from '../../deps.ts';
-import { JobTemplateDesc, Job, JobBuilder, TargetBuildContext, util, log } from '../../mod.ts';
+import { JobTemplateDesc, Job, JobBuilder, JobValidateResult, TargetBuildContext, util, log } from '../../mod.ts';
 
-export const copyfilesDesc: JobTemplateDesc = { help, run };
+export const copyfilesDesc: JobTemplateDesc = { help, validate, builder };
 
 function help() {
-    log.helpJob([
-        { name: 'srcDir?', type: 'string', desc: 'base dir to copy from (default: @targetsources)' },
-        { name: 'dstDir?', type: 'string', desc: 'base dir to copy to (default: @targetassets)' },
+    log.helpJob('copyfiles', [
+        { name: 'srcDir?', type: 'string', desc: 'base dir to copy from (default: @targetsources:)' },
+        { name: 'dstDir?', type: 'string', desc: 'base dir to copy to (default: @targetassets:)' },
         { name: 'files', type: 'string[]', desc: 'list of files to copy' },
     ], 'copy files from source to destination dir');
 }
@@ -17,19 +17,22 @@ type CopyFilesArgs = {
     files: string[];
 };
 
-function run(args: CopyFilesArgs): JobBuilder {
-    if ((args.srcDir !== undefined) && !util.isString(args.srcDir)) {
-        log.error(`copyfiles: expected arg 'srcDir: string' in:\n${args}`);
+function validate(args: CopyFilesArgs): JobValidateResult {
+    const res = util.validateArgs(args, {
+        srcDir: { type: 'string', optional: true },
+        dstDir: { type: 'string', optional: true },
+        files:  { type: 'string[]', optional: false },
+    });
+    return {
+        valid: res.valid,
+        hints: res.hints,
     }
-    if ((args.dstDir !== undefined) && !util.isString(args.dstDir)) {
-        log.error(`copyfiles: expected arg 'dstDir: string' in:\n${args}`);
-    }
-    if (!util.isStringArray(args.files)) {
-        log.error(`copyfiles: expected arg 'files: string[]' in:\n${args}`);
-    }
+}
+
+function builder(args: CopyFilesArgs): JobBuilder {
     const {
-        srcDir = '@targetsources',
-        dstDir = '@targetassets',
+        srcDir = '@targetsources:',
+        dstDir = '@targetassets:',
         files,
     } = args;
     return (context: TargetBuildContext): Job => {
