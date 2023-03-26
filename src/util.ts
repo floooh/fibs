@@ -379,3 +379,27 @@ export function resolveTargetItems(
         public: resolve(items.public),
     };
 }
+
+export function isString(val: unknown): boolean {
+    return typeof val === 'string';
+}
+
+export function isNumber(val: unknown): boolean {
+    return typeof val === 'number';
+}
+
+export function isBoolean(val: unknown): boolean {
+    return typeof val === 'boolean';
+}
+
+export function isStringArray(val: unknown): boolean {
+    return Array.isArray(val) && val.every((item) => isString(item));
+}
+
+export function isNumberArray(val: unknown): boolean {
+    return Array.isArray(val) && val.every((item) => isNumber(item));
+}
+
+export function isBooleanArray(val: unknown): boolean {
+    return Array.isArray(val) && val.every((item) => isBoolean(item));
+}

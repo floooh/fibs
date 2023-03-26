@@ -10,17 +10,37 @@ export function dir(item: any) {
     console.dir(item, { colors: true, depth: 8 });
 }
 
-export function help(cmds: string[], help: string | string[]) {
+export function helpCmd(cmds: string[], help: string | string[]) {
     for (const cmd of cmds) {
         print(`${colors.yellow(`fibs ${cmd}`)}`);
     }
-
     if (typeof help === 'string') {
-        help = [help];
+        print('    ', help);
+    } else {
+        for (const line of help) {
+            print('    ', line);
+        }
     }
-    help.forEach((line) => {
-        print('    ', line);
-    });
+    print('');
+}
+
+export type HelpJobArgs = {
+    name: string,
+    type: string,
+    desc: string,
+};
+
+export function helpJob(args: HelpJobArgs[], help: string | string[]) {
+    for (const arg of args) {
+        print(`${colors.green(`${arg.name}:`)} ${colors.yellow(arg.type)}\t- ${arg.desc}`);
+    }
+    if (typeof help === 'string') {
+        print('    ', help);
+    } else {
+        for (const line of help) {
+            print('    ', line);
+        }
+    }
     print('');
 }
 

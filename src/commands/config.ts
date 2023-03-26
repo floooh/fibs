@@ -3,7 +3,7 @@ import { CommandDesc, conf, log, proj, Project, settings, util } from '../../mod
 export const configCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'config [--get]',
         'config [config-name]',
     ], '(re-)configure project, or get current config');

@@ -6,6 +6,7 @@ import * as host from './host.ts';
 
 import { commands } from './commands/index.ts';
 import { tools } from './tools/index.ts';
+import { jobs } from './jobs/index.ts';
 import { adapters } from './adapters/index.ts';
 import { configs } from './configs/index.ts';
 import { runners } from './runners/index.ts';
@@ -50,6 +51,7 @@ const stdDesc: ProjectDesc = {
     name: 'std',
     commands,
     tools,
+    jobs,
     adapters,
     configs,
     runners,

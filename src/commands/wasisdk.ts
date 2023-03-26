@@ -3,7 +3,7 @@ import { CommandDesc, log, Project, wasisdk } from '../../mod.ts';
 export const wasisdkCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'wasisdk install',
         'wasisdk uninstall',
     ], 'install or uninstall the WASI SDK');

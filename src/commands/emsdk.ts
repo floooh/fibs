@@ -3,7 +3,7 @@ import { CommandDesc, emsdk, log, Project } from '../../mod.ts';
 export const emsdkCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'emsdk install [version=latest]',
         'emsdk list',
         'emsdk uninstall',

@@ -3,7 +3,7 @@ import { CommandDesc, log, Project, settings } from '../../mod.ts';
 export const unsetCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'unset [key]',
     ], [
         'unset a settings item to its default value',

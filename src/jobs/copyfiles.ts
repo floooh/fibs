@@ -1,14 +1,38 @@
 import { fs, path } from '../../deps.ts';
-import { JobItem, JobItemFunc, log, TargetBuildContext, util } from '../../mod.ts';
+import { JobTemplateDesc, Job, JobBuilder, TargetBuildContext, util, log } from '../../mod.ts';
 
-export type CopyFilesOptions = {
+export const copyfilesDesc: JobTemplateDesc = { help, run };
+
+function help() {
+    log.helpJob([
+        { name: 'srcDir?', type: 'string', desc: 'base dir to copy from (default: @targetsources)' },
+        { name: 'dstDir?', type: 'string', desc: 'base dir to copy to (default: @targetassets)' },
+        { name: 'files', type: 'string[]', desc: 'list of files to copy' },
+    ], 'copy files from source to destination dir');
+}
+
+type CopyFilesArgs = {
     srcDir?: string;
     dstDir?: string;
     files: string[];
 };
 
-export function copyFiles(options: CopyFilesOptions): JobItemFunc {
-    return (context: TargetBuildContext): JobItem => {
+function run(args: CopyFilesArgs): JobBuilder {
+    if ((args.srcDir !== undefined) && !util.isString(args.srcDir)) {
+        log.error(`copyfiles: expected arg 'srcDir: string' in:\n${args}`);
+    }
+    if ((args.dstDir !== undefined) && !util.isString(args.dstDir)) {
+        log.error(`copyfiles: expected arg 'dstDir: string' in:\n${args}`);
+    }
+    if (!util.isStringArray(args.files)) {
+        log.error(`copyfiles: expected arg 'files: string[]' in:\n${args}`);
+    }
+    const {
+        srcDir = '@targetsources',
+        dstDir = '@targetassets',
+        files,
+    } = args;
+    return (context: TargetBuildContext): Job => {
         const target = context.target;
         const aliasMap = util.buildAliasMap({
             project: context.project,
@@ -18,11 +42,11 @@ export function copyFiles(options: CopyFilesOptions): JobItemFunc {
         });
         return {
             name: 'copyfiles',
-            inputs: options.files.map((file) => util.resolvePath(aliasMap, options.srcDir, file)),
-            outputs: options.files.map((file) => util.resolvePath(aliasMap, options.dstDir, file)),
+            inputs: files.map((file) => util.resolvePath(aliasMap, srcDir, file)),
+            outputs: files.map((file) => util.resolvePath(aliasMap, dstDir, file)),
             addOutputsToTargetSources: false,
-            args: options,
-            func: async (inputs: string[], outputs: string[], options: CopyFilesOptions): Promise<void> => {
+            args: { srcDir, dstDir, files },
+            func: async (inputs: string[], outputs: string[], args: CopyFilesArgs): Promise<void> => {
                 if (util.dirty(inputs, outputs)) {
                     for (let i = 0; i < inputs.length; i++) {
                         const from = inputs[i];

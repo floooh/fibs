@@ -4,7 +4,7 @@ import { colors } from '../../deps.ts';
 export const cleanCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'clean [config... | --all]',
     ], 'delete build output for current, specific or all configs');
 }

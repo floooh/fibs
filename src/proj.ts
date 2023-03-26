@@ -36,6 +36,7 @@ export async function setup(
         targets: {},
         commands: {},
         tools: {},
+        jobs: {},
         runners: {},
         openers: {},
         configs: {},
@@ -236,6 +237,17 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
                 notFoundMsg: desc.notFoundMsg,
                 exists: desc.exists,
             };
+        }
+    }
+    if (other.jobs) {
+        for (const name in other.jobs) {
+            const desc = other.jobs[name];
+            into.jobs[name] = {
+                name,
+                importDir,
+                help: desc.help,
+                run: desc.run,
+            }
         }
     }
     if (other.runners) {

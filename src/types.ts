@@ -9,6 +9,7 @@ export type ProjectDesc = {
     targets?: Record<string, TargetDesc>;
     commands?: Record<string, CommandDesc>;
     tools?: Record<string, ToolDesc>;
+    jobs?: Record<string, JobTemplateDesc>;
     runners?: Record<string, RunnerDesc>;
     openers?: Record<string, OpenerDesc>;
     configs?: Record<string, ConfigDesc>;
@@ -31,6 +32,7 @@ export type Project = {
     targets: Record<string, Target>;
     commands: Record<string, Command>;
     tools: Record<string, Tool>;
+    jobs: Record<string, JobTemplate>;
     runners: Record<string, Runner>;
     openers: Record<string, Opener>;
     configs: Record<string, Config>;
@@ -155,19 +157,10 @@ export type TargetDesc = {
     compileDefinitions?: TargetItemsDesc;
     compileOptions?: TargetItemsDesc;
     linkOptions?: TargetItemsDesc;
-    jobs?: JobItemFunc[];
+    jobs?: JobBuilder[];
 };
 
-export type JobItemFunc = (context: TargetBuildContext) => JobItem;
-
-export type JobItem = {
-    name: string;
-    inputs: string[];
-    outputs: string[];
-    addOutputsToTargetSources: boolean;
-    args: any;
-    func: (inputs: string[], output: string[], args: any) => Promise<void>;
-};
+export type JobBuilder = (context: TargetBuildContext) => Job;
 
 export type Target = {
     name: string;
@@ -180,7 +173,28 @@ export type Target = {
     compileDefinitions: TargetItems;
     compileOptions: TargetItems;
     linkOptions: TargetItems;
-    jobs: JobItemFunc[];
+    jobs: JobBuilder[];
+};
+
+export interface JobTemplateDesc {
+    help(): void;
+    run(args: any): JobBuilder;
+}
+
+export interface JobTemplate {
+    name: string;
+    importDir: string;
+    help(): void;
+    run(args: any): JobBuilder;
+}
+
+export type Job = {
+    name: string;
+    inputs: string[];
+    outputs: string[];
+    addOutputsToTargetSources: boolean;
+    args: any;
+    func: (inputs: string[], output: string[], args: any) => Promise<void>;
 };
 
 export interface CommandDesc {
@@ -191,7 +205,7 @@ export interface CommandDesc {
 export interface Command {
     name: string;
     importDir: string;
-    help(project: Project): void;
+    help(): void;
     run(project: Project): Promise<void>;
 }
 

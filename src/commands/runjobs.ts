@@ -3,7 +3,7 @@ import { CommandDesc, log, proj, Project, util } from '../../mod.ts';
 export const runjobsCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'runjobs',
     ], [
         'runs custom build jobs for all targets (usually invoked by the build process)',

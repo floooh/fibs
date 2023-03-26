@@ -3,7 +3,7 @@ import { CommandDesc, log, proj, Project, util } from '../../mod.ts';
 export const openCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'open',
         'open [config]',
     ], 'open IDE for current or named config');

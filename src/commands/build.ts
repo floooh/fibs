@@ -3,7 +3,7 @@ import { AdapterOptions, CommandDesc, conf, log, proj, Project, util } from '../
 export const buildCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'build',
         'build [--rebuild]',
         'build [target]',

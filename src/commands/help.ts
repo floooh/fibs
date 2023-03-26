@@ -4,7 +4,7 @@ import { colors } from '../../deps.ts';
 export const helpCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'help',
         'help [cmd]',
     ], 'print help for all commands or a specific command');
@@ -17,13 +17,15 @@ async function run(project: Project) {
         log.print('https://github.com/floooh/fibs\n');
         for (const cmdName in cmds) {
             const cmd = cmds[cmdName];
-            cmd.help(project);
+            cmd.help();
         }
     } else {
         const cmdName = Deno.args[1];
         if (cmdName in cmds) {
             const cmd = cmds[cmdName];
-            cmd.help(project);
+            cmd.help();
+        } else {
+            log.error(`unknown command ${cmdName} (run 'fibs help')`);
         }
     }
 }

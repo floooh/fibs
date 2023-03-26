@@ -1,13 +1,33 @@
-import { JobItem, JobItemFunc, log, TargetBuildContext, util } from '../../mod.ts';
+import { JobTemplateDesc, Job, JobBuilder, TargetBuildContext, util, log } from '../../mod.ts';
 
-export type EmbedFilesOptions = {
+export const embedfilesDesc: JobTemplateDesc = { help, run };
+
+function help() {
+    log.helpJob([
+        { name: 'dir?', type: 'string', desc: 'base directory of files to embed (default: @targetsources)' },
+        { name: 'files', type: 'string[]', desc: 'list of files to embed' },
+        { name: 'outHeader', type: 'string', desc: 'path of generated header file' },
+    ], 'generate C header with embedded binary file data');
+}
+
+type EmbedFilesArgs = {
     dir?: string;
     files: string[];
     outHeader: string;
 };
 
-export function embedFiles(options: EmbedFilesOptions): JobItemFunc {
-    return (context: TargetBuildContext): JobItem => {
+export function run(args: EmbedFilesArgs): JobBuilder {
+    if ((args.dir !== undefined) && !util.isString(args.dir)) {
+        log.error(`embedfiles: expected arg 'dir: string' in:\n${args}`);
+    }
+    if (!util.isStringArray(args.files)) {
+        log.error(`embedfiles: expected arg 'files: string[]' in:\n${args}`);
+    }
+    if (!util.isStringArray(args.outHeader)) {
+        log.error(`embedfiles: expected arg 'outHeader: string[]' in:\n${args}`);
+    }
+    const { dir = '@targetsources', files, outHeader } = args;
+    return (context: TargetBuildContext): Job => {
         const target = context.target;
         const aliasMap = util.buildAliasMap({
             project: context.project,
@@ -17,11 +37,11 @@ export function embedFiles(options: EmbedFilesOptions): JobItemFunc {
         });
         return {
             name: 'embedfile',
-            inputs: options.files.map((file) => util.resolvePath(aliasMap, options.dir, file)),
-            outputs: [util.resolvePath(aliasMap, options.outHeader)],
-            addOutputsToTargetSources: false,
-            args: options,
-            func: async (inputs: string[], outputs: string[], args: EmbedFilesOptions): Promise<void> => {
+            inputs: files.map((file) => util.resolvePath(aliasMap, dir, file)),
+            outputs: [util.resolvePath(aliasMap, outHeader)],
+            addOutputsToTargetSources: true,
+            args: { dir, files, outHeader },
+            func: async (inputs: string[], outputs: string[], args: EmbedFilesArgs): Promise<void> => {
                 if (util.dirty(inputs, outputs)) {
                     log.error('FIXME: embedFiles');
                 }

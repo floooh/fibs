@@ -3,7 +3,7 @@ import { CommandDesc, log, Project, TargetType } from '../../mod.ts';
 export const listCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'list',
         'list settings',
         'list configs',

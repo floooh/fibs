@@ -3,7 +3,7 @@ import { CommandDesc, log, Project, util } from '../../mod.ts';
 export const runCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'run [target]',
         'run [target] [target-args]',
     ], 'run an executable build target');

@@ -4,7 +4,7 @@ import { colors } from '../../deps.ts';
 export const diagCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'diag',
         'diag fibs',
         'diag tools',

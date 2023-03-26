@@ -3,7 +3,7 @@ import { CommandDesc, git, imports, log, Project } from '../../mod.ts';
 export const updateCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'update [--clean]',
         'update [import...] [--clean]',
     ], 'update all or specific import, use --clean to delete and fetch from scratch');

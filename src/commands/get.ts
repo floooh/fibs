@@ -3,7 +3,7 @@ import { CommandDesc, log, Project, settings } from '../../mod.ts';
 export const getCmd: CommandDesc = { help, run };
 
 function help() {
-    log.help([
+    log.helpCmd([
         'get [key]',
     ], [
         'get settings value by key',
