@@ -284,25 +284,20 @@ function genTargetItems(
                 language,
             };
             const resolvedItems = proj.resolveTargetItems(items, ctx, itemsAreFilePaths);
-            const hasInterface = Object.values(resolvedItems.interface).length > 0;
-            const hasPrivate = Object.values(resolvedItems.private).length > 0;
-            const hasPublic = Object.values(resolvedItems.public).length > 0;
-            if (hasInterface || hasPrivate || hasPublic) {
-                if (hasInterface) {
-                    str += `${statement}(${target.name} INTERFACE ${
-                        generatorExpressionLanguageCompiler(language, compiler, resolvedItems.interface)
-                    })\n`;
-                }
-                if (hasPrivate) {
-                    str += `${statement}(${target.name} PRIVATE ${
-                        generatorExpressionLanguageCompiler(language, compiler, resolvedItems.private)
-                    })\n`;
-                }
-                if (hasPublic) {
-                    str += `${statement}(${target.name} PUBLIC ${
-                        generatorExpressionLanguageCompiler(language, compiler, resolvedItems.public)
-                    })\n`;
-                }
+            if (resolvedItems.interface.length > 0) {
+                str += `${statement}(${target.name} INTERFACE ${
+                    generatorExpressionLanguageCompiler(language, compiler, resolvedItems.interface)
+                })\n`;
+            }
+            if (resolvedItems.private.length > 0) {
+                str += `${statement}(${target.name} PRIVATE ${
+                    generatorExpressionLanguageCompiler(language, compiler, resolvedItems.private)
+                })\n`;
+            }
+            if (resolvedItems.public.length > 0) {
+                str += `${statement}(${target.name} PUBLIC ${
+                    generatorExpressionLanguageCompiler(language, compiler, resolvedItems.public)
+                })\n`;
             }
         });
     });
