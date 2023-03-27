@@ -402,8 +402,8 @@ function genCacheVariables(project: Project, config: Config): Record<string, any
         res[key] = resolveCacheVariable(project.variables[key], projectAliasMap);
     }
     const configAliasMap = util.buildAliasMap({ project, config, selfDir: config.importDir });
-    for (const key in config.variables) {
-        res[key] = resolveCacheVariable(config.variables[key], configAliasMap);
+    for (const key in config.cmakeVariables) {
+        res[key] = resolveCacheVariable(config.cmakeVariables[key], configAliasMap);
     }
     return res;
 }

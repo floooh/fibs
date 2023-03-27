@@ -132,7 +132,7 @@ export const configs: Record<string, ConfigDesc> = {
         platform: 'wasi',
         runner: 'wasi',
         toolchainFile: '@sdks:wasisdk/share/cmake/wasi-sdk.cmake',
-        variables: {
+        cmakeVariables: {
             WASI_SDK_PREFIX: '@sdks:wasisdk',
         },
     },

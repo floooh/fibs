@@ -98,7 +98,7 @@ function resolveConfigs(project: Project) {
             generator: desc.generator,
             arch: desc.arch ?? undefined,
             toolchainFile: desc.toolchainFile,
-            variables: desc.variables ?? {},
+            cmakeVariables: desc.cmakeVariables ?? {},
             environment: desc.environment ?? {},
             includeDirectories: [],
             compileDefinitions: [],

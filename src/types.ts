@@ -77,7 +77,7 @@ export type ConfigDesc = {
     generator?: string;
     arch?: Arch;
     toolchainFile?: string;
-    variables?: Record<string, string | boolean>;
+    cmakeVariables?: Record<string, string | boolean>;
     environment?: Record<string, string>;
     includeDirectories?: string[] | ProjectListFunc;
     compileDefinitions?: string[] | ProjectListFunc;
@@ -95,7 +95,7 @@ export type Config = {
     generator: string | undefined;
     arch: Arch | undefined;
     toolchainFile: string | undefined;
-    variables: Record<string, string | boolean>;
+    cmakeVariables: Record<string, string | boolean>;
     environment: Record<string, string>;
     includeDirectories: (string | ProjectListFunc)[];
     compileDefinitions: (string | ProjectListFunc)[];
