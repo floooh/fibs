@@ -79,10 +79,10 @@ export type ConfigDesc = {
     toolchainFile?: string;
     cmakeVariables?: Record<string, string | boolean>;
     environment?: Record<string, string>;
-    includeDirectories?: string[] | ProjectListFunc;
-    compileDefinitions?: string[] | ProjectListFunc;
-    compileOptions?: string[] | ProjectListFunc;
-    linkOptions?: string[] | ProjectListFunc;
+    includeDirectories?: (string | ProjectListFunc)[];
+    compileDefinitions?: (string | ProjectListFunc)[];
+    compileOptions?: (string | ProjectListFunc)[];
+    linkOptions?: (string | ProjectListFunc)[];
 };
 
 export type Config = {

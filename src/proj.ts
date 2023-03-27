@@ -100,39 +100,11 @@ function resolveConfigs(project: Project) {
             toolchainFile: desc.toolchainFile,
             cmakeVariables: desc.cmakeVariables ?? {},
             environment: desc.environment ?? {},
-            includeDirectories: [],
-            compileDefinitions: [],
-            compileOptions: [],
-            linkOptions: [],
+            includeDirectories: desc.includeDirectories ?? [],
+            compileDefinitions: desc.compileDefinitions ?? [],
+            compileOptions: desc.compileOptions ?? [],
+            linkOptions: desc.linkOptions ?? [],
         };
-        if (desc.includeDirectories) {
-            if (typeof desc.includeDirectories === 'function') {
-                config.includeDirectories = [desc.includeDirectories];
-            } else {
-                config.includeDirectories = desc.includeDirectories;
-            }
-        }
-        if (desc.compileDefinitions) {
-            if (typeof desc.compileDefinitions === 'function') {
-                config.compileDefinitions = [desc.compileDefinitions];
-            } else {
-                config.compileDefinitions = desc.compileDefinitions;
-            }
-        }
-        if (desc.compileOptions) {
-            if (typeof desc.compileOptions === 'function') {
-                config.compileOptions = [desc.compileOptions];
-            } else {
-                config.compileOptions = desc.compileOptions;
-            }
-        }
-        if (desc.linkOptions) {
-            if (typeof desc.linkOptions === 'function') {
-                config.linkOptions = [desc.linkOptions];
-            } else {
-                config.linkOptions = desc.linkOptions;
-            }
-        }
         project.configs[name] = config;
     }
 }
@@ -323,12 +295,25 @@ function resolveConfigDesc(configs: Record<string, ConfigDescWithImportDir>, nam
     if (inheritChain.length === maxInherits) {
         log.error(`circular dependency in config '${name}'?`);
     }
-    let res: ConfigDescWithImportDir = { importDir: configs[name].importDir };
-    // FIXME: merge cmake variables, environment variables and defines
-    inheritChain.forEach((config) => {
-        Object.assign(res, structuredClone(config));
+    let into: ConfigDescWithImportDir = { importDir: configs[name].importDir };
+    inheritChain.forEach((src) => {
+        into.ignore = util.assign(into.ignore, src.ignore);
+        into.inherits = util.assign(into.inherits, src.inherits);
+        into.platform = util.assign(into.platform, src.platform);
+        into.runner = util.assign(into.runner, src.runner);
+        into.opener = util.assign(into.opener, src.opener);
+        into.buildType = util.assign(into.buildType, src.buildType);
+        into.generator = util.assign(into.generator, src.generator);
+        into.arch = util.assign(into.arch, src.arch);
+        into.toolchainFile = util.assign(into.toolchainFile, src.toolchainFile);
+        into.cmakeVariables = util.mergeRecords(into.cmakeVariables, src.cmakeVariables);
+        into.environment = util.mergeRecords(into.environment, src.environment);
+        into.includeDirectories = util.mergeArrays(into.includeDirectories, src.includeDirectories);
+        into.compileDefinitions = util.mergeArrays(into.compileDefinitions, src.compileDefinitions);
+        into.compileOptions = util.mergeArrays(into.compileDefinitions, src.compileOptions);
+        into.linkOptions = util.mergeArrays(into.linkOptions, src.linkOptions);
     });
-    return res;
+    return into;
 }
 
 export async function configure(

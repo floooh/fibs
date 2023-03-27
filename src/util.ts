@@ -371,6 +371,36 @@ export function isBooleanArray(val: unknown): boolean {
     return Array.isArray(val) && val.every((item) => isBoolean(item));
 }
 
+export function assign<T>(into: T, src: T): T {
+    return (src === undefined) ? into : src;
+}
+
+export function mergeRecords<T>(into: Record<string, T> | undefined, src: Record<string, T> | undefined): Record<string, T> | undefined {
+    if ((into === undefined) && (src === undefined)) {
+        return undefined;
+    }
+    if (into === undefined) {
+        return structuredClone(src);
+    }
+    if (src === undefined) {
+        return into;
+    }
+    return Object.assign(into, src);
+}
+
+export function mergeArrays<T>(into: Array<T> | undefined, src: Array<T> | undefined): Array<T> | undefined {
+    if ((into === undefined) && (src === undefined)) {
+        return undefined;
+    }
+    if (into === undefined) {
+        return structuredClone(src);
+    }
+    if (src === undefined) {
+        return into;
+    }
+    return [...into, ...src];
+}
+
 export type ArgDesc = {
     type: 'string'|'number'|'boolean'|'string[]'|'number[]'|'boolean[]';
     optional: boolean;
