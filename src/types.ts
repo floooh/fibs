@@ -136,6 +136,8 @@ export type TargetBuildContext = {
 
 export type TargetItemsFunc = (context: TargetBuildContext) => string[];
 
+export type TargetEnabledFunc = (context: ProjectBuildContext) => boolean;
+
 export type TargetItemsDesc = {
     interface?: string[] | TargetItemsFunc;
     private?: string[] | TargetItemsFunc;
@@ -160,6 +162,7 @@ export type TargetJob = {
 
 export type TargetDesc = {
     type: TargetType;
+    enabled?: boolean | TargetEnabledFunc;
     dir?: string;
     sources?: string[];
     libs?: string[] | TargetItemsFunc;
@@ -177,6 +180,7 @@ export type Target = {
     importDir: string;
     dir: string | undefined;
     type: TargetType;
+    enabled: boolean | TargetEnabledFunc;
     sources: string[];
     libs: string[] | TargetItemsFunc;
     includeDirectories: TargetItems;

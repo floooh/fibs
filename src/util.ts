@@ -1,4 +1,4 @@
-import { Config, Platform, Project, RunOptions, RunResult, Target, TargetBuildContext, TargetItems, TargetItemsFunc } from './types.ts';
+import { Config, Platform, Project, RunOptions, RunResult, Target } from './types.ts';
 import * as log from './log.ts';
 import { fs, path } from '../deps.ts';
 
@@ -345,39 +345,6 @@ export async function download(options: DownloadOptions): Promise<boolean> {
         }
     }
     return true;
-}
-
-export type ResolvedTargetItems = {
-    interface: string[];
-    private: string[];
-    public: string[];
-};
-
-export function resolveTargetItems(
-    items: TargetItems,
-    buildContext: TargetBuildContext,
-    itemsAreFilePaths: boolean,
-): ResolvedTargetItems {
-    const aliasMap = buildAliasMap({
-        project: buildContext.project,
-        config: buildContext.config,
-        target: buildContext.target,
-        selfDir: buildContext.target.importDir
-    });
-    const resolve = (items: string[] | TargetItemsFunc): string[] => {
-        let resolvedItems = (typeof items === 'function') ? items(buildContext) : items;
-        if (itemsAreFilePaths) {
-            const target = buildContext.target;
-            return resolvedItems.map((item) => resolvePath(aliasMap, target.importDir, target.dir, item));
-        } else {
-            return resolvedItems.map((item) => resolveAlias(aliasMap, item));
-        }
-    };
-    return {
-        interface: resolve(items.interface),
-        private: resolve(items.private),
-        public: resolve(items.public),
-    };
 }
 
 export function isString(val: unknown): boolean {

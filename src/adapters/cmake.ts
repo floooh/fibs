@@ -69,14 +69,14 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genLinkOptions(project, config);
     const targets = Object.values(project.targets);
     targets.forEach((target) => {
-        str += genTarget(project, config, target);
-    });
-    targets.forEach((target) => {
-        str += genTargetDependencies(project, config, target);
-        str += genTargetIncludeDirectories(project, config, target);
-        str += genTargetCompileDefinitions(project, config, target);
-        str += genTargetCompileOptions(project, config, target);
-        str += genTargetLinkOptions(project, config, target);
+        if (proj.isTargetEnabled(project, config, target)) {
+            str += genTarget(project, config, target);
+            str += genTargetDependencies(project, config, target);
+            str += genTargetIncludeDirectories(project, config, target);
+            str += genTargetCompileDefinitions(project, config, target);
+            str += genTargetCompileOptions(project, config, target);
+            str += genTargetLinkOptions(project, config, target);
+        }
     });
     return str;
 }
@@ -317,7 +317,7 @@ function genTargetItems(
                 target,
                 language,
             };
-            const resolvedItems = util.resolveTargetItems(items, ctx, itemsAreFilePaths);
+            const resolvedItems = proj.resolveTargetItems(items, ctx, itemsAreFilePaths);
             const hasInterface = Object.values(resolvedItems.interface).length > 0;
             const hasPrivate = Object.values(resolvedItems.private).length > 0;
             const hasPublic = Object.values(resolvedItems.public).length > 0;

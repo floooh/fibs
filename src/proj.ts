@@ -13,6 +13,7 @@ import {
     TargetItemsDesc,
     TargetJob,
     TargetJobDesc,
+    TargetItemsFunc,
 } from './types.ts';
 import * as settings from './settings.ts';
 import * as log from './log.ts';
@@ -283,6 +284,7 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
                 importDir,
                 dir: desc.dir,
                 type: desc.type,
+                enabled: desc.enabled ?? true,
                 sources: desc.sources ?? [],
                 libs: desc.libs ?? [],
                 includeDirectories: asTargetItems(desc.includeDirectories),
@@ -445,7 +447,7 @@ export function validateTarget(
                 target,
                 language: language as Language,
             };
-            const resolvedItems = util.resolveTargetItems(target.includeDirectories, ctx, true);
+            const resolvedItems = resolveTargetItems(target.includeDirectories, ctx, true);
             missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.interface));
             missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.private));
             missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.public));
@@ -515,4 +517,45 @@ export async function runJobs(project: Project, config: Config, target: Target):
         }
     }
     return true;
+}
+
+export type ResolvedTargetItems = {
+    interface: string[];
+    private: string[];
+    public: string[];
+};
+
+export function resolveTargetItems(
+    items: TargetItems,
+    buildContext: TargetBuildContext,
+    itemsAreFilePaths: boolean,
+): ResolvedTargetItems {
+    const aliasMap = util.buildAliasMap({
+        project: buildContext.project,
+        config: buildContext.config,
+        target: buildContext.target,
+        selfDir: buildContext.target.importDir
+    });
+    const resolve = (items: string[] | TargetItemsFunc): string[] => {
+        let resolvedItems = (typeof items === 'function') ? items(buildContext) : items;
+        if (itemsAreFilePaths) {
+            const target = buildContext.target;
+            return resolvedItems.map((item) => util.resolvePath(aliasMap, target.importDir, target.dir, item));
+        } else {
+            return resolvedItems.map((item) => util.resolveAlias(aliasMap, item));
+        }
+    };
+    return {
+        interface: resolve(items.interface),
+        private: resolve(items.private),
+        public: resolve(items.public),
+    };
+}
+
+export function isTargetEnabled(project: Project, config: Config, target: Target): boolean {
+    if (typeof target.enabled === 'function') {
+        return target.enabled({ project, config });
+    } else {
+        return target.enabled;
+    }
 }
