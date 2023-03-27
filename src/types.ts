@@ -1,10 +1,10 @@
 export type ProjectDesc = {
     name?: string;
     variables?: Record<string, string | boolean>;
-    includeDirectories?: string[] | ProjectItemsFunc;
-    compileDefinitions?: string[] | ProjectItemsFunc;
-    compileOptions?: string[] | ProjectItemsFunc;
-    linkOptions?: string[] | ProjectItemsFunc;
+    includeDirectories?: string[] | ProjectListFunc;
+    compileDefinitions?: string[] | ProjectListFunc;
+    compileOptions?: string[] | ProjectListFunc;
+    linkOptions?: string[] | ProjectListFunc;
     imports?: Record<string, ImportDesc>;
     targets?: Record<string, TargetDesc>;
     commands?: Record<string, CommandDesc>;
@@ -24,10 +24,10 @@ export type Project = {
     dir: string;
     settings: Settings;
     variables: Record<string, string | boolean>;
-    includeDirectories: (string | ProjectItemsFunc)[];
-    compileDefinitions: (string | ProjectItemsFunc)[];
-    compileOptions: (string | ProjectItemsFunc)[];
-    linkOptions: (string | ProjectItemsFunc)[];
+    includeDirectories: (string | ProjectListFunc)[];
+    compileDefinitions: (string | ProjectListFunc)[];
+    compileOptions: (string | ProjectListFunc)[];
+    linkOptions: (string | ProjectListFunc)[];
     imports: Record<string, Import>;
     targets: Record<string, Target>;
     commands: Record<string, Command>;
@@ -79,10 +79,10 @@ export type ConfigDesc = {
     toolchainFile?: string;
     variables?: Record<string, string | boolean>;
     environment?: Record<string, string>;
-    includeDirectories?: string[] | ProjectItemsFunc;
-    compileDefinitions?: string[] | ProjectItemsFunc;
-    compileOptions?: string[] | ProjectItemsFunc;
-    linkOptions?: string[] | ProjectItemsFunc;
+    includeDirectories?: string[] | ProjectListFunc;
+    compileDefinitions?: string[] | ProjectListFunc;
+    compileOptions?: string[] | ProjectListFunc;
+    linkOptions?: string[] | ProjectListFunc;
 };
 
 export type Config = {
@@ -97,10 +97,10 @@ export type Config = {
     toolchainFile: string | undefined;
     variables: Record<string, string | boolean>;
     environment: Record<string, string>;
-    includeDirectories: (string | ProjectItemsFunc)[];
-    compileDefinitions: (string | ProjectItemsFunc)[];
-    compileOptions: (string | ProjectItemsFunc)[];
-    linkOptions: (string | ProjectItemsFunc)[];
+    includeDirectories: (string | ProjectListFunc)[];
+    compileDefinitions: (string | ProjectListFunc)[];
+    compileOptions: (string | ProjectListFunc)[];
+    linkOptions: (string | ProjectListFunc)[];
 };
 
 export type ImportDesc = {
@@ -124,7 +124,7 @@ export type ProjectBuildContext = {
     language?: Language;
 };
 
-export type ProjectItemsFunc = (context: ProjectBuildContext) => string[];
+export type ProjectListFunc = (context: ProjectBuildContext) => string[];
 
 export type TargetBuildContext = {
     project: Project;
@@ -135,8 +135,6 @@ export type TargetBuildContext = {
 };
 
 export type TargetListFunc = (context: TargetBuildContext) => string[];
-
-export type TargetEnabledFunc = (context: ProjectBuildContext) => boolean;
 
 export type TargetItemsDesc = {
     interface?: string[] | TargetListFunc;
@@ -159,6 +157,8 @@ export type TargetJob = {
     job: string;
     args: any;
 }
+
+export type TargetEnabledFunc = (context: ProjectBuildContext) => boolean;
 
 export type TargetDesc = {
     type: TargetType;

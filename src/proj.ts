@@ -7,6 +7,8 @@ import {
     Language,
     Project,
     ProjectDesc,
+    ProjectListFunc,
+    ProjectBuildContext,
     Target,
     TargetBuildContext,
     TargetItems,
@@ -518,6 +520,30 @@ export async function runJobs(project: Project, config: Config, target: Target):
         }
     }
     return true;
+}
+
+export function resolveProjectItems(itemsArray: (string | ProjectListFunc)[], ctx: ProjectBuildContext, itemsAreFilePaths: boolean): string[] {
+    const aliasMap = util.buildAliasMap({
+        project: ctx.project,
+        config: ctx.config,
+        selfDir: ctx.project.dir
+    });
+    const baseDir = ctx.project.dir;
+    const subDir = undefined;
+    const resolveAliasOrPath = (items: string[]) => {
+        if (itemsAreFilePaths) {
+            return items.map((item) => util.resolvePath(aliasMap, baseDir, subDir, item));
+        } else {
+            return items.map((item) => util.resolveAlias(aliasMap, item));
+        }
+    };
+    return itemsArray.flatMap((item) => {
+        if (typeof item === 'function') {
+            return resolveAliasOrPath(item(ctx));
+        } else {
+            return resolveAliasOrPath([item]);
+        }
+    });
 }
 
 export function resolveTargetStringList(items: string[] | TargetListFunc, ctx: TargetBuildContext, itemsAreFilePaths: boolean): string[] {
