@@ -134,20 +134,20 @@ export type TargetBuildContext = {
     language?: Language;
 };
 
-export type TargetItemsFunc = (context: TargetBuildContext) => string[];
+export type TargetListFunc = (context: TargetBuildContext) => string[];
 
 export type TargetEnabledFunc = (context: ProjectBuildContext) => boolean;
 
 export type TargetItemsDesc = {
-    interface?: string[] | TargetItemsFunc;
-    private?: string[] | TargetItemsFunc;
-    public?: string[] | TargetItemsFunc;
+    interface?: string[] | TargetListFunc;
+    private?: string[] | TargetListFunc;
+    public?: string[] | TargetListFunc;
 };
 
 export type TargetItems = {
-    interface: string[] | TargetItemsFunc;
-    private: string[] | TargetItemsFunc;
-    public: string[] | TargetItemsFunc;
+    interface: string[] | TargetListFunc;
+    private: string[] | TargetListFunc;
+    public: string[] | TargetListFunc;
 };
 
 export type TargetJobDesc = {
@@ -164,8 +164,8 @@ export type TargetDesc = {
     type: TargetType;
     enabled?: boolean | TargetEnabledFunc;
     dir?: string;
-    sources?: string[];
-    libs?: string[] | TargetItemsFunc;
+    sources?: string[] | TargetListFunc;
+    libs?: string[] | TargetListFunc;
     includeDirectories?: TargetItemsDesc;
     compileDefinitions?: TargetItemsDesc;
     compileOptions?: TargetItemsDesc;
@@ -181,8 +181,8 @@ export type Target = {
     dir: string | undefined;
     type: TargetType;
     enabled: boolean | TargetEnabledFunc;
-    sources: string[];
-    libs: string[] | TargetItemsFunc;
+    sources: string[] | TargetListFunc;
+    libs: string[] | TargetListFunc;
     includeDirectories: TargetItems;
     compileDefinitions: TargetItems;
     compileOptions: TargetItems;

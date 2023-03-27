@@ -220,11 +220,10 @@ function genLinkOptions(project: Project, config: Config): string {
 
 function genTarget(project: Project, config: Config, target: Target): string {
     let str = '';
-    const aliasMap = util.buildAliasMap({ project, config, target, selfDir: target.importDir });
-    const sources = target.sources.map((source) => util.resolvePath(aliasMap, target.importDir, target.dir, source));
+    const ctx: TargetBuildContext = { project, config, target };
+    const sources = proj.resolveTargetStringList(target.sources, ctx, true);
 
     // get any job outputs which need to be added as target sources
-    const ctx: TargetBuildContext = { project, config, target };
     const jobOutputs = target.jobs.flatMap((targetJob) => {
         const job = proj.resolveJob(ctx, targetJob);
         if (job.addOutputsToTargetSources) {
@@ -263,6 +262,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
             str += `add_library(${target.name} INTERFACE ${targetSourcesStr})\n`;
             break;
     }
+    const aliasMap = util.buildAliasMap({ project, config, target, selfDir: target.importDir });
     str += `source_group(TREE ${util.resolvePath(aliasMap, target.importDir, target.dir)} FILES ${sources.join(' ')})\n`;
     if (jobOutputs.length > 0) {
         str += `source_group(gen FILES ${jobOutputs.join(' ')})\n`;
