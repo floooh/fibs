@@ -78,6 +78,10 @@ async function run(project: Project) {
             log.print(opener.name);
         }
     }
+    if (args.all) {
+        log.print();
+        log.section('jobs');
+    }
     if (args.all || args.jobs) {
         for (const job of Object.values(project.jobs)) {
             job.help();
