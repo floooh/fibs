@@ -14,7 +14,6 @@ async function run(project: Project) {
     const config = util.activeConfig(project);
     Object.values(project.targets).forEach(async (target) => {
         if (target.jobs.length > 0) {
-            log.section(target.name);
             await proj.runJobs(project, config, target);
         }
     });

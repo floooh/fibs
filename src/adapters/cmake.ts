@@ -67,6 +67,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genCompileDefinitions(project, config);
     str += genCompileOptions(project, config);
     str += genLinkOptions(project, config);
+    str += genAllJobsTarget(project, config);
     const targets = Object.values(project.targets);
     targets.forEach((target) => {
         if (proj.isTargetEnabled(project, config, target)) {
@@ -76,6 +77,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
             str += genTargetCompileDefinitions(project, config, target);
             str += genTargetCompileOptions(project, config, target);
             str += genTargetLinkOptions(project, config, target);
+            str += genTargetJobDependencies(project, config, target);
         }
     });
     return str;
@@ -318,6 +320,31 @@ function genTargetCompileOptions(project: Project, config: Config, target: Targe
 
 function genTargetLinkOptions(project: Project, config: Config, target: Target): string {
     return genTargetItems(project, config, target, 'target_link_options', target.linkOptions, false);
+}
+
+function genAllJobsTarget(project: Project, config: Config): string {
+    let str = '';
+    // first check if there are any jobs
+    let hasJobs: boolean = false;
+    for (const target of Object.values(project.targets)) {
+        if (target.jobs.length > 0) {
+            hasJobs = true;
+            break;
+        }
+    }
+    if (hasJobs) {
+        str += `find_program(DENO deno REQUIRED)\n`;
+        str += `add_custom_target(ALL_JOBS COMMAND \${DENO} run --allow-all --no-config 'https://raw.githubusercontent.com/floooh/fibs/main/fibs.ts' runjobs WORKING_DIRECTORY ${project.dir})\n`;
+    }
+    return str;
+}
+
+function genTargetJobDependencies(project: Project, config: Config, target: Target) {
+    let str = '';
+    if (target.jobs.length > 0) {
+        str += `add_dependencies(${target.name} ALL_JOBS)\n`
+    }
+    return str;
 }
 
 function genCMakePresetsJson(project: Project, config: Config): string {
