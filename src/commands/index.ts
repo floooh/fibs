@@ -6,6 +6,8 @@ import { openCmd } from './open.ts';
 import { cleanCmd } from './clean.ts';
 import { listCmd } from './list.ts';
 import { diagCmd } from './diag.ts';
+import { linkCmd } from './link.ts';
+import { unlinkCmd } from './unlink.ts';
 import { setCmd } from './set.ts';
 import { getCmd } from './get.ts';
 import { unsetCmd } from './unset.ts';
@@ -24,6 +26,8 @@ export const commands = {
     list: listCmd,
     update: updateCmd,
     diag: diagCmd,
+    link: linkCmd,
+    unlink: unlinkCmd,
     set: setCmd,
     get: getCmd,
     unset: unsetCmd,
