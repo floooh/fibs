@@ -106,6 +106,16 @@ export const configs: Record<string, ConfigDesc> = {
         inherits: 'emsc',
         generator: 'Unix Makefiles',
     },
+    'emsc-ninja': {
+        ignore: true,
+        inherits: 'emsc',
+        generator: 'Ninja',
+    },
+    'emsc-vscode': {
+        ignore: true,
+        inherits: 'emsc-ninja',
+        opener: 'vscode',
+    },
     'emsc-make-debug': {
         inherits: 'emsc-make',
         buildType: 'debug',
@@ -114,17 +124,20 @@ export const configs: Record<string, ConfigDesc> = {
         inherits: 'emsc-make',
         buildType: 'release',
     },
-    'emsc-ninja': {
-        ignore: true,
-        inherits: 'emsc',
-        generator: 'Ninja',
-    },
     'emsc-ninja-debug': {
         inherits: 'emsc-ninja',
         buildType: 'debug',
     },
     'emsc-ninja-release': {
         inherits: 'emsc-ninja',
+        buildType: 'release',
+    },
+    'emsc-vscode-debug': {
+        inherits: 'emsc-vscode',
+        buildType: 'debug',
+    },
+    'emsc-vscode-release': {
+        inherits: 'emsc-vscode',
         buildType: 'release',
     },
     'wasi': {
