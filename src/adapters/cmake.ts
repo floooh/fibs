@@ -257,7 +257,7 @@ function genTargetDependencies(project: Project, config: Config, target: Target)
             }
             if (libs.length > 0) {
                 let type = '';
-                if ((target.type === 'lib') || (target.type === 'interface')) {
+                if (target.type === 'interface') {
                     type = ' INTERFACE';
                 }
                 str += `target_link_libraries(${target.name}${type} ${generatorExpressionCompiler(compiler, libs)})\n`;
