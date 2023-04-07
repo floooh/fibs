@@ -100,6 +100,7 @@ function resolveConfigs(project: Project) {
             toolchainFile: desc.toolchainFile,
             cmakeVariables: desc.cmakeVariables ?? {},
             environment: desc.environment ?? {},
+            options: desc.options ?? {},
             includeDirectories: desc.includeDirectories ?? [],
             compileDefinitions: desc.compileDefinitions ?? [],
             compileOptions: desc.compileOptions ?? [],
@@ -311,6 +312,7 @@ function resolveConfigDesc(configs: Record<string, ConfigDescWithImportDir>, nam
         into.toolchainFile = util.assign(into.toolchainFile, src.toolchainFile);
         into.cmakeVariables = util.mergeRecords(into.cmakeVariables, src.cmakeVariables);
         into.environment = util.mergeRecords(into.environment, src.environment);
+        into.options = util.mergeRecords(into.options, src.options);
         into.includeDirectories = util.mergeArrays(into.includeDirectories, src.includeDirectories);
         into.compileDefinitions = util.mergeArrays(into.compileDefinitions, src.compileDefinitions);
         into.compileOptions = util.mergeArrays(into.compileDefinitions, src.compileOptions);
