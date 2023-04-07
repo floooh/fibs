@@ -1,4 +1,4 @@
-import { CommandDesc, conf, log, proj, Project, settings, util } from '../../mod.ts';
+import { CommandDesc, conf, imports, log, proj, Project, settings, util } from '../../mod.ts';
 
 export const configCmd: CommandDesc = { help, run };
 
@@ -10,6 +10,9 @@ function help() {
 }
 
 async function run(project: Project) {
+    if (imports.hasImportErrors(project)) {
+        log.error('import errors detected');
+    }
     let config = util.activeConfig(project);
     const args = Deno.args.slice(1).filter((arg) => {
         if (arg.startsWith('--')) {

@@ -1,4 +1,4 @@
-import { AdapterOptions, CommandDesc, conf, log, proj, Project, util } from '../../mod.ts';
+import { AdapterOptions, CommandDesc, conf, imports, log, proj, Project, util } from '../../mod.ts';
 
 export const buildCmd: CommandDesc = { help, run };
 
@@ -12,6 +12,9 @@ function help() {
 }
 
 async function run(project: Project) {
+    if (imports.hasImportErrors(project)) {
+        log.error('import errors detected');
+    }
     const adapter = project.adapters['cmake'];
     const config = util.activeConfig(project);
     const options: AdapterOptions = {};

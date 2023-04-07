@@ -130,14 +130,17 @@ async function integrate(into: Project, other: ProjectDesc, importDir: string) {
         for (const name in other.imports) {
             const importDesc = other.imports[name];
             const fetchResult = await imports.fetch(into, { name, url: importDesc.url, ref: importDesc.ref });
+            let importErrors: Error[] = [];
             if (fetchResult.valid) {
-                const projectDescs = await imports.importProjects(fetchResult.dir, importDesc);
-                for (const projDesc of projectDescs) {
+                const importResult = await imports.importProjects(fetchResult.dir, importDesc);
+                importErrors = importResult.importErrors;
+                for (const projDesc of importResult.projectDescs) {
                     await integrate(into, projDesc, fetchResult.dir);
                 }
             }
             into.imports[name] = {
                 name,
+                importErrors,
                 importDir: fetchResult.dir,
                 url: importDesc.url,
                 ref: importDesc.ref,

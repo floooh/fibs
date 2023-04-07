@@ -58,23 +58,35 @@ export async function fetch(project: Project, options: FetchOptions): Promise<Fe
     }
 }
 
-export async function importProjects(fromDir: string, importDesc: ImportDesc): Promise<ProjectDesc[]> {
-    const res: ProjectDesc[] = [];
+export type ImportProjectsResult = {
+    importErrors: Error[];
+    projectDescs: ProjectDesc[];
+}
+
+export async function importProjects(fromDir: string, importDesc: ImportDesc): Promise<ImportProjectsResult> {
+    const res: ImportProjectsResult = {
+        importErrors: [],
+        projectDescs: [],
+    }
     if (importDesc.project) {
-        res.push(importDesc.project);
+        res.projectDescs.push(importDesc.project);
     }
     if (importDesc.import) {
         for (const file of importDesc.import) {
             try {
                 const module = await import(`file://${fromDir}/${file}`)
-                res.push(module.project);
+                res.projectDescs.push(module.project);
             } catch (err) {
-                log.error(`importing module failed with: ${err}`);
+                log.warn('importing module failed with:', err);
+                res.importErrors.push(err);
             }
         }
     }
     return res;
+}
 
+export function hasImportErrors(project: Project): boolean {
+    return Object.values(project.imports).some(imp => (imp.importErrors.length > 0));
 }
 
 export type ValidateOptions = {

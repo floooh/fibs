@@ -113,6 +113,7 @@ export type ImportDesc = {
 export type Import = {
     name: string;
     importDir: string;
+    importErrors: Error[];
     url: string;
     ref: string | undefined;
 };
