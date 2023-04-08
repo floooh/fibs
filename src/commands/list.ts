@@ -12,7 +12,7 @@ function help() {
         'list runners',
         'list openers',
         'list jobs',
-        'list targets [--all] [--exe] [--lib] [--dll] [--interface]',
+        'list targets [--all] [--exe] [--lib] [--dll] [--interface] [--disabled]',
     ], 'list available configs, current settings, targets, ...');
 }
 
@@ -26,6 +26,7 @@ type ListArgs = {
     runners: boolean;
     openers: boolean;
     jobs: boolean;
+    disabled: boolean;
     targetTypes: TargetType[];
 };
 
@@ -102,7 +103,9 @@ async function run(project: Project) {
                     if (proj.isTargetEnabled(project, config, target)) {
                         log.print(str);
                     } else {
-                        log.print(colors.strikethrough(str));
+                        if (args.disabled) {
+                            log.print(colors.gray(colors.strikethrough(str)));
+                        }
                     }
                 }
             }
@@ -122,6 +125,7 @@ function parseArgs(): ListArgs {
         runners: false,
         openers: false,
         jobs: false,
+        disabled: false,
         targetTypes: [],
     };
     if (Deno.args.length === 1) {
@@ -154,21 +158,28 @@ function parseArgs(): ListArgs {
                 } else if (Deno.args.length >= 3) {
                     for (let i = 2; i < Deno.args.length; i++) {
                         const targetArg = Deno.args[i];
+                        const allTargetTypes: TargetType[] = ['plain-exe', 'windowed-exe', 'lib', 'dll', 'interface'];
                         switch (targetArg) {
                             case '--all':
-                                args.targetTypes = ['plain-exe', 'windowed-exe', 'lib', 'dll', 'interface'];
+                                args.targetTypes = allTargetTypes;
                                 break;
                             case '--exe':
-                                args.targetTypes = ['plain-exe', 'windowed-exe'];
+                                args.targetTypes.push('plain-exe', 'windowed-exe');
                                 break;
                             case '--lib':
-                                args.targetTypes = ['lib'];
+                                args.targetTypes.push('lib');
                                 break;
                             case '--dll':
-                                args.targetTypes = ['dll'];
+                                args.targetTypes.push('dll');
                                 break;
                             case '--interface':
-                                args.targetTypes = ['interface'];
+                                args.targetTypes.push('interface');
+                                break;
+                            case '--disabled':
+                                args.disabled = true;
+                                if (args.targetTypes.length === 0) {
+                                    args.targetTypes = allTargetTypes;
+                                }
                                 break;
                             default:
                                 log.error(`unknown target type arg '${targetArg}' (run 'fibs help list')`);
