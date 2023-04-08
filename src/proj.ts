@@ -3,6 +3,7 @@ import {
     AdapterDesc,
     AdapterOptions,
     Config,
+    ConfigDesc,
     ConfigDescWithImportDir,
     Job,
     Language,
@@ -146,7 +147,11 @@ function asTargetJobs(targetName: string, descs?: TargetJobDesc[]): TargetJob[] 
     return descs.map((desc) => ({job: desc.job, args: desc.args}));
 }
 
-function assign<T>(into: T, src: T): T {
+function assignMaybeUndefined<T>(into: T | undefined, src: T | undefined): T | undefined {
+    return (src === undefined) ? into : src;
+}
+
+function assign<T>(into: T, src: T | undefined): T {
     return (src === undefined) ? into : src;
 }
 
@@ -174,6 +179,25 @@ function mergeArraysMaybeUndefined<T>(into: Array<T> | undefined, src: Array<T> 
         return into;
     }
     return [...into, ...src];
+}
+
+function mergeConfigDescWithImportDir(into: ConfigDescWithImportDir, from: ConfigDescWithImportDir) {
+    into.ignore = assignMaybeUndefined(into.ignore, from.ignore);
+    into.inherits = assignMaybeUndefined(into.inherits, from.inherits);
+    into.platform = assignMaybeUndefined(into.platform, from.platform);
+    into.runner = assignMaybeUndefined(into.runner, from.runner);
+    into.opener = assignMaybeUndefined(into.opener, from.opener);
+    into.buildType = assignMaybeUndefined(into.buildType, from.buildType);
+    into.generator = assignMaybeUndefined(into.generator, from.generator);
+    into.arch = assignMaybeUndefined(into.arch, from.arch);
+    into.toolchainFile = assignMaybeUndefined(into.toolchainFile, from.toolchainFile);
+    into.cmakeVariables = mergeRecordsMaybeUndefined(into.cmakeVariables, from.cmakeVariables);
+    into.environment = mergeRecordsMaybeUndefined(into.environment, from.environment);
+    into.options = mergeRecordsMaybeUndefined(into.options, from.options);
+    into.includeDirectories = mergeArraysMaybeUndefined(into.includeDirectories, from.includeDirectories);
+    into.compileDefinitions = mergeArraysMaybeUndefined(into.compileDefinitions, from.compileDefinitions);
+    into.compileOptions = mergeArraysMaybeUndefined(into.compileDefinitions, from.compileOptions);
+    into.linkOptions = mergeArraysMaybeUndefined(into.linkOptions, from.linkOptions);
 }
 
 function integrateCommand(intoRecord: Record<string, Command>, name: string, importDir: string, desc: CommandDesc) {
@@ -295,15 +319,9 @@ function integrateTarget(intoRecord: Record<string, Target>, name: string, impor
     if (into === undefined) {
         intoRecord[name] = from;
     } else {
-        if (desc.type !== undefined) {
-            into.type = desc.type;
-        }
-        if (desc.dir !== undefined) {
-            into.dir = from.dir;
-        }
-        if (desc.enabled !== undefined) {
-            into.enabled = from.enabled;
-        }
+        into.type = assign(into.type, desc.type);
+        into.dir = assign(into.dir, desc.dir);
+        into.enabled = assign(into.enabled, desc.enabled);
         into.sources.push(...from.sources);
         into.libs.push(...from.libs);
         integrateTargetItems(into.includeDirectories, from.includeDirectories);
@@ -311,6 +329,16 @@ function integrateTarget(intoRecord: Record<string, Target>, name: string, impor
         integrateTargetItems(into.compileOptions, from.compileOptions);
         integrateTargetItems(into.linkOptions, from.linkOptions);
         into.jobs.push(...from.jobs);
+    }
+}
+
+function integrateConfigDesc(intoRecord: Record<string, ConfigDescWithImportDir>, name: string, importDir: string, desc: ConfigDesc) {
+    const into = intoRecord[name];
+    const from: ConfigDescWithImportDir = { ...desc, importDir };
+    if (into === undefined) {
+        intoRecord[name] = from;
+    } else {
+        mergeConfigDescWithImportDir(into, from);
     }
 }
 
@@ -367,11 +395,7 @@ async function integrateProjectDesc(into: Project, other: ProjectDesc, importDir
             };
         }
     }
-    if (other.configs !== undefined) {
-        for (const [name,val] of Object.entries(other.configs)) {
-            into.configDescs[name] = { ...val, importDir };
-        }
-    }
+    integrateObjectRecord(into.configDescs, other.configs, importDir, integrateConfigDesc);
     integrateRecord(into.variables, other.variables);
     integrateProjectItems(into.includeDirectories, other.includeDirectories);
     integrateProjectItems(into.compileDefinitions, other.compileDefinitions);
@@ -408,22 +432,7 @@ function resolveConfigDesc(configs: Record<string, ConfigDescWithImportDir>, nam
     }
     let into: ConfigDescWithImportDir = { importDir: configs[name].importDir };
     inheritChain.forEach((src) => {
-        into.ignore = assign(into.ignore, src.ignore);
-        into.inherits = assign(into.inherits, src.inherits);
-        into.platform = assign(into.platform, src.platform);
-        into.runner = assign(into.runner, src.runner);
-        into.opener = assign(into.opener, src.opener);
-        into.buildType = assign(into.buildType, src.buildType);
-        into.generator = assign(into.generator, src.generator);
-        into.arch = assign(into.arch, src.arch);
-        into.toolchainFile = assign(into.toolchainFile, src.toolchainFile);
-        into.cmakeVariables = mergeRecordsMaybeUndefined(into.cmakeVariables, src.cmakeVariables);
-        into.environment = mergeRecordsMaybeUndefined(into.environment, src.environment);
-        into.options = mergeRecordsMaybeUndefined(into.options, src.options);
-        into.includeDirectories = mergeArraysMaybeUndefined(into.includeDirectories, src.includeDirectories);
-        into.compileDefinitions = mergeArraysMaybeUndefined(into.compileDefinitions, src.compileDefinitions);
-        into.compileOptions = mergeArraysMaybeUndefined(into.compileDefinitions, src.compileOptions);
-        into.linkOptions = mergeArraysMaybeUndefined(into.linkOptions, src.linkOptions);
+        mergeConfigDescWithImportDir(into, src);
     });
     return into;
 }
