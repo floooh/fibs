@@ -181,6 +181,15 @@ function mergeArraysMaybeUndefined<T>(into: Array<T> | undefined, src: Array<T> 
     return [...into, ...src];
 }
 
+function cleanupUndefinedProperties<T>(obj: T) {
+    let key: keyof typeof obj;
+    for (key in obj) {
+        if (obj[key] === undefined) {
+            delete obj[key]
+        }
+    }
+}
+
 function mergeConfigDescWithImportDir(into: ConfigDescWithImportDir, from: ConfigDescWithImportDir) {
     into.ignore = assignMaybeUndefined(into.ignore, from.ignore);
     into.inherits = assignMaybeUndefined(into.inherits, from.inherits);
@@ -198,6 +207,7 @@ function mergeConfigDescWithImportDir(into: ConfigDescWithImportDir, from: Confi
     into.compileDefinitions = mergeArraysMaybeUndefined(into.compileDefinitions, from.compileDefinitions);
     into.compileOptions = mergeArraysMaybeUndefined(into.compileDefinitions, from.compileOptions);
     into.linkOptions = mergeArraysMaybeUndefined(into.linkOptions, from.linkOptions);
+    cleanupUndefinedProperties(into);
 }
 
 function integrateCommand(intoRecord: Record<string, Command>, name: string, importDir: string, desc: CommandDesc) {
