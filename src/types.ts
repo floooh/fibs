@@ -164,7 +164,7 @@ export type TargetJob = {
 export type TargetEnabledFunc = (context: ProjectBuildContext) => boolean;
 
 export type TargetDesc = {
-    type: TargetType;
+    type?: TargetType;
     enabled?: boolean | TargetEnabledFunc;
     dir?: string;
     sources?: string[] | TargetListFunc;

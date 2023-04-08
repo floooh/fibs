@@ -278,11 +278,11 @@ function integrateTargetItems(into: TargetItems, from: TargetItems) {
 
 function integrateTarget(intoRecord: Record<string, Target>, name: string, importDir: string, desc: TargetDesc) {
     const into = intoRecord[name];
-    const from = {
+    const from: Target = {
         name,
         importDir,
         dir: desc.dir,
-        type: desc.type,
+        type: desc.type ?? 'plain-exe',
         enabled: desc.enabled ?? true,
         sources: asMixedArray(desc.sources),
         libs: asMixedArray(desc.libs),
@@ -295,10 +295,10 @@ function integrateTarget(intoRecord: Record<string, Target>, name: string, impor
     if (into === undefined) {
         intoRecord[name] = from;
     } else {
-        if (into.type !== from.type) {
-            throw new Error(`Cannot merge targets of different types (${from.type} vs ${into.type})`);
+        if (desc.type !== undefined) {
+            into.type = desc.type;
         }
-        if (from.dir !== undefined) {
+        if (desc.dir !== undefined) {
             into.dir = from.dir;
         }
         if (desc.enabled !== undefined) {
