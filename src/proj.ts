@@ -1,5 +1,6 @@
 import {
     Adapter,
+    AdapterDesc,
     AdapterOptions,
     Config,
     ConfigDescWithImportDir,
@@ -10,12 +11,23 @@ import {
     ProjectListFunc,
     ProjectBuildContext,
     Target,
+    TargetDesc,
     TargetBuildContext,
     TargetItems,
     TargetItemsDesc,
     TargetJob,
     TargetJobDesc,
     TargetListFunc,
+    Opener,
+    OpenerDesc,
+    Runner,
+    RunnerDesc,
+    JobTemplate,
+    JobTemplateDesc,
+    Tool,
+    ToolDesc,
+    Command,
+    CommandDesc,
 } from './types.ts';
 import * as settings from './settings.ts';
 import * as log from './log.ts';
@@ -28,7 +40,6 @@ export async function setup(
     rootDesc: ProjectDesc,
     stdDesc: ProjectDesc,
 ): Promise<Project> {
-    // start populating project with std properties
     const project: Project = {
         name: rootDesc.name ?? 'project',
         dir: rootDir,
@@ -51,9 +62,9 @@ export async function setup(
     };
 
     // first integrate std project properties (tools, commands, ...)
-    await integrate(project, stdDesc, rootDir);
+    await integrateProjectDesc(project, stdDesc, rootDir);
     // followed by the root project properties
-    await integrate(project, rootDesc, rootDir);
+    await integrateProjectDesc(project, rootDesc, rootDir);
     // build resulting config list (happens as a post-step because configs can be inherited)
     resolveConfigs(project);
 
@@ -110,174 +121,205 @@ function resolveConfigs(project: Project) {
     }
 }
 
-export function asTargetItems(inp: TargetItemsDesc | undefined): TargetItems {
+function asMixedArray<S, T extends Function>(inp: S[] | T | undefined): (S | T)[] {
+    if (inp === undefined) {
+        return [];
+    } else if (Array.isArray(inp)) {
+        return inp;
+    } else {
+        return [ inp ];
+    }
+}
+
+function asTargetItems(desc: TargetItemsDesc | undefined): TargetItems {
     return {
-        interface: (inp && inp.interface) ?? [],
-        private: (inp && inp.private) ?? [],
-        public: (inp && inp.public) ?? [],
+        interface: asMixedArray(desc?.interface),
+        private: asMixedArray(desc?.private),
+        public: asMixedArray(desc?.public),
     };
 }
 
-export function asTargetJobs(project: Project, targetName: string, descs?: TargetJobDesc[]): TargetJob[] {
+function asTargetJobs(targetName: string, descs?: TargetJobDesc[]): TargetJob[] {
     if (descs === undefined) {
         return [];
     }
     return descs.map((desc) => ({job: desc.job, args: desc.args}));
 }
 
-async function integrate(into: Project, other: ProjectDesc, importDir: string) {
+function assign<T>(into: T, src: T): T {
+    return (src === undefined) ? into : src;
+}
+
+function mergeRecords<T>(into: Record<string, T> | undefined, src: Record<string, T> | undefined): Record<string, T> | undefined {
+    if ((into === undefined) && (src === undefined)) {
+        return undefined;
+    }
+    if (into === undefined) {
+        return structuredClone(src);
+    }
+    if (src === undefined) {
+        return into;
+    }
+    return Object.assign(into, src);
+}
+
+function mergeArrays<T>(into: Array<T> | undefined, src: Array<T> | undefined): Array<T> | undefined {
+    if ((into === undefined) && (src === undefined)) {
+        return undefined;
+    }
+    if (into === undefined) {
+        return structuredClone(src);
+    }
+    if (src === undefined) {
+        return into;
+    }
+    return [...into, ...src];
+}
+
+function makeCommand(name: string, importDir: string, desc: CommandDesc): Command {
+    return {
+        name,
+        importDir,
+        help: desc.help,
+        run: desc.run,
+    };
+}
+
+function makeTool(name: string, importDir: string, desc: ToolDesc): Tool {
+    return {
+        name,
+        importDir,
+        platforms: desc.platforms,
+        optional: desc.optional,
+        notFoundMsg: desc.notFoundMsg,
+        exists: desc.exists,
+    };
+}
+
+function makeJobTemplate(name: string, importDir: string, desc: JobTemplateDesc): JobTemplate {
+    return {
+        name,
+        importDir,
+        help: desc.help,
+        validate: desc.validate,
+        builder: desc.builder,
+    };
+}
+
+function makeRunner(name: string, importDir: string, desc: RunnerDesc): Runner {
+    return {
+        name,
+        importDir,
+        run: desc.run,
+    };
+}
+
+function makeOpener(name: string, importDir: string, desc: OpenerDesc): Opener {
+    return {
+        name,
+        importDir,
+        configure: desc.configure,
+        open: desc.open,
+    };
+}
+
+function makeAdapter(name: string, importDir: string, desc: AdapterDesc): Adapter {
+    return {
+        name,
+        importDir,
+        configure: desc.configure,
+        build: desc.build,
+    };
+}
+
+function makeTarget(name: string, importDir: string, desc: TargetDesc): Target {
+    return {
+        name,
+        importDir,
+        dir: desc.dir,
+        type: desc.type,
+        enabled: desc.enabled ?? true,
+        sources: asMixedArray(desc.sources),
+        libs: asMixedArray(desc.libs),
+        includeDirectories: asTargetItems(desc.includeDirectories),
+        compileDefinitions: asTargetItems(desc.compileDefinitions),
+        compileOptions: asTargetItems(desc.compileOptions),
+        linkOptions: asTargetItems(desc.linkOptions),
+        jobs: asTargetJobs(name, desc.jobs),
+    };
+}
+
+function integrateObjectRecord<TYPE, DESC>(
+    into: Record<string, TYPE>,
+    from: Record<string, DESC> | undefined,
+    importDir: string,
+    makeFunc: (name: string, importDir: string, desc: DESC) => TYPE)
+{
+    if (from !== undefined) {
+        for (const [name, desc] of Object.entries(from)) {
+            into[name] = makeFunc(name, importDir, desc);
+        }
+    }
+}
+
+function integrateRecord<TYPE>(into: Record<string, TYPE>, from: Record<string, TYPE> | undefined) {
+    if (from !== undefined) {
+        for (const [key, val] of Object.entries(from)) {
+            into[key] = val;
+        }
+    }
+}
+
+function integrateProjectItems(into: (string | ProjectListFunc)[], from: ProjectListFunc | string[] | undefined) {
+    if (from !== undefined) {
+        if (typeof from === 'function') {
+            into.push(from);
+        } else {
+            into.push(...from);
+        }
+    }
+}
+
+async function integrateProjectDesc(into: Project, other: ProjectDesc, importDir: string) {
     // important to keep imports at the top!
-    if (other.imports) {
-        for (const name in other.imports) {
-            const importDesc = other.imports[name];
-            const fetchResult = await imports.fetch(into, { name, url: importDesc.url, ref: importDesc.ref });
+    if (other.imports !== undefined) {
+        for (const [name,desc] of Object.entries(other.imports)) {
+            const fetchResult = await imports.fetch(into, { name, url: desc.url, ref: desc.ref });
             let importErrors: Error[] = [];
             if (fetchResult.valid) {
-                const importResult = await imports.importProjects(fetchResult.dir, importDesc);
+                const importResult = await imports.importProjects(fetchResult.dir, desc);
                 importErrors = importResult.importErrors;
                 for (const projDesc of importResult.projectDescs) {
-                    await integrate(into, projDesc, fetchResult.dir);
+                    await integrateProjectDesc(into, projDesc, fetchResult.dir);
                 }
             }
             into.imports[name] = {
                 name,
                 importErrors,
                 importDir: fetchResult.dir,
-                url: importDesc.url,
-                ref: importDesc.ref,
+                url: desc.url,
+                ref: desc.ref,
             };
         }
     }
-    if (other.variables) {
-        for (const name in other.variables) {
-            into.variables[name] = other.variables[name];
+    if (other.configs !== undefined) {
+        for (const [name,val] of Object.entries(other.configs)) {
+            into.configDescs[name] = { ...val, importDir };
         }
     }
-    if (other.includeDirectories) {
-        if (typeof other.includeDirectories === 'function') {
-            into.includeDirectories.push(other.includeDirectories);
-        } else {
-            into.includeDirectories.push(...other.includeDirectories);
-        }
-    }
-    if (other.compileDefinitions) {
-        if (typeof other.compileDefinitions === 'function') {
-            into.compileDefinitions.push(other.compileDefinitions);
-        } else {
-            into.compileDefinitions.push(...other.compileDefinitions);
-        }
-    }
-    if (other.compileOptions) {
-        if (typeof other.compileOptions === 'function') {
-            into.compileOptions.push(other.compileOptions);
-        } else {
-            into.compileOptions.push(...other.compileOptions);
-        }
-    }
-    if (other.linkOptions) {
-        if (typeof other.linkOptions === 'function') {
-            into.linkOptions.push(other.linkOptions);
-        } else {
-            into.linkOptions.push(...other.linkOptions);
-        }
-    }
-    if (other.configs) {
-        for (const name in other.configs) {
-            into.configDescs[name] = { ...other.configs[name], importDir };
-        }
-    }
-    if (other.commands) {
-        for (const name in other.commands) {
-            const desc = other.commands[name];
-            into.commands[name] = {
-                name,
-                importDir,
-                help: desc.help,
-                run: desc.run,
-            };
-        }
-    }
-    if (other.tools) {
-        for (const name in other.tools) {
-            const desc = other.tools[name];
-            into.tools[name] = {
-                name,
-                importDir,
-                platforms: desc.platforms,
-                optional: desc.optional,
-                notFoundMsg: desc.notFoundMsg,
-                exists: desc.exists,
-            };
-        }
-    }
-    if (other.jobs) {
-        for (const name in other.jobs) {
-            const desc = other.jobs[name];
-            into.jobs[name] = {
-                name,
-                importDir,
-                help: desc.help,
-                validate: desc.validate,
-                builder: desc.builder,
-            }
-        }
-    }
-    if (other.runners) {
-        for (const name in other.runners) {
-            const desc = other.runners[name];
-            into.runners[name] = {
-                name,
-                importDir,
-                run: desc.run,
-            };
-        }
-    }
-    if (other.openers) {
-        for (const name in other.openers) {
-            const desc = other.openers[name];
-            into.openers[name] = {
-                name,
-                importDir,
-                configure: desc.configure,
-                open: desc.open,
-            };
-        }
-    }
-    if (other.adapters) {
-        for (const name in other.adapters) {
-            const desc = other.adapters[name];
-            into.adapters[name] = {
-                name,
-                importDir,
-                configure: desc.configure,
-                build: desc.build,
-            };
-        }
-    }
-    if (other.targets) {
-        for (const name in other.targets) {
-            const desc = other.targets[name];
-            into.targets[name] = {
-                name,
-                importDir,
-                dir: desc.dir,
-                type: desc.type,
-                enabled: desc.enabled ?? true,
-                sources: desc.sources ?? [],
-                libs: desc.libs ?? [],
-                includeDirectories: asTargetItems(desc.includeDirectories),
-                compileDefinitions: asTargetItems(desc.compileDefinitions),
-                compileOptions: asTargetItems(desc.compileOptions),
-                linkOptions: asTargetItems(desc.linkOptions),
-                jobs: asTargetJobs(into, name, desc.jobs),
-            };
-        }
-    }
-    if (other.settings) {
-        for (const key in other.settings) {
-            into.settings[key] = other.settings[key];
-        }
-    }
+    integrateRecord(into.variables, other.variables);
+    integrateProjectItems(into.includeDirectories, other.includeDirectories);
+    integrateProjectItems(into.compileDefinitions, other.compileDefinitions);
+    integrateProjectItems(into.compileOptions, other.compileOptions);
+    integrateProjectItems(into.linkOptions, other.linkOptions);
+    integrateObjectRecord(into.commands, other.commands, importDir, makeCommand);
+    integrateObjectRecord(into.tools, other.tools, importDir, makeTool);
+    integrateObjectRecord(into.jobs, other.jobs, importDir, makeJobTemplate)
+    integrateObjectRecord(into.runners, other.runners, importDir, makeRunner);
+    integrateObjectRecord(into.openers, other.openers, importDir, makeOpener);
+    integrateObjectRecord(into.adapters, other.adapters, importDir, makeAdapter);
+    integrateObjectRecord(into.targets, other.targets, importDir, makeTarget);
+    integrateRecord(into.settings, other.settings);
 }
 
 function resolveConfigDesc(configs: Record<string, ConfigDescWithImportDir>, name: string): ConfigDescWithImportDir {
@@ -301,22 +343,22 @@ function resolveConfigDesc(configs: Record<string, ConfigDescWithImportDir>, nam
     }
     let into: ConfigDescWithImportDir = { importDir: configs[name].importDir };
     inheritChain.forEach((src) => {
-        into.ignore = util.assign(into.ignore, src.ignore);
-        into.inherits = util.assign(into.inherits, src.inherits);
-        into.platform = util.assign(into.platform, src.platform);
-        into.runner = util.assign(into.runner, src.runner);
-        into.opener = util.assign(into.opener, src.opener);
-        into.buildType = util.assign(into.buildType, src.buildType);
-        into.generator = util.assign(into.generator, src.generator);
-        into.arch = util.assign(into.arch, src.arch);
-        into.toolchainFile = util.assign(into.toolchainFile, src.toolchainFile);
-        into.cmakeVariables = util.mergeRecords(into.cmakeVariables, src.cmakeVariables);
-        into.environment = util.mergeRecords(into.environment, src.environment);
-        into.options = util.mergeRecords(into.options, src.options);
-        into.includeDirectories = util.mergeArrays(into.includeDirectories, src.includeDirectories);
-        into.compileDefinitions = util.mergeArrays(into.compileDefinitions, src.compileDefinitions);
-        into.compileOptions = util.mergeArrays(into.compileDefinitions, src.compileOptions);
-        into.linkOptions = util.mergeArrays(into.linkOptions, src.linkOptions);
+        into.ignore = assign(into.ignore, src.ignore);
+        into.inherits = assign(into.inherits, src.inherits);
+        into.platform = assign(into.platform, src.platform);
+        into.runner = assign(into.runner, src.runner);
+        into.opener = assign(into.opener, src.opener);
+        into.buildType = assign(into.buildType, src.buildType);
+        into.generator = assign(into.generator, src.generator);
+        into.arch = assign(into.arch, src.arch);
+        into.toolchainFile = assign(into.toolchainFile, src.toolchainFile);
+        into.cmakeVariables = mergeRecords(into.cmakeVariables, src.cmakeVariables);
+        into.environment = mergeRecords(into.environment, src.environment);
+        into.options = mergeRecords(into.options, src.options);
+        into.includeDirectories = mergeArrays(into.includeDirectories, src.includeDirectories);
+        into.compileDefinitions = mergeArrays(into.compileDefinitions, src.compileDefinitions);
+        into.compileOptions = mergeArrays(into.compileDefinitions, src.compileOptions);
+        into.linkOptions = mergeArrays(into.linkOptions, src.linkOptions);
     });
     return into;
 }
@@ -512,6 +554,14 @@ export async function runJobs(project: Project, config: Config, target: Target):
     return true;
 }
 
+function resolveAliasOrPath(items: string[], baseDir: string, subDir: string | undefined, aliasMap: Record<string, string>, itemsAreFilePaths: boolean): string[] {
+    if (itemsAreFilePaths) {
+        return items.map((item) => util.resolvePath(aliasMap, baseDir, subDir, item));
+    } else {
+        return items.map((item) => util.resolveAlias(aliasMap, item));
+    }
+}
+
 export function resolveProjectItems(itemsArray: (string | ProjectListFunc)[], ctx: ProjectBuildContext, itemsAreFilePaths: boolean): string[] {
     const aliasMap = util.buildAliasMap({
         project: ctx.project,
@@ -520,36 +570,31 @@ export function resolveProjectItems(itemsArray: (string | ProjectListFunc)[], ct
     });
     const baseDir = ctx.project.dir;
     const subDir = undefined;
-    const resolveAliasOrPath = (items: string[]) => {
-        if (itemsAreFilePaths) {
-            return items.map((item) => util.resolvePath(aliasMap, baseDir, subDir, item));
-        } else {
-            return items.map((item) => util.resolveAlias(aliasMap, item));
-        }
-    };
     return itemsArray.flatMap((item) => {
         if (typeof item === 'function') {
-            return resolveAliasOrPath(item(ctx));
+            return resolveAliasOrPath(item(ctx), baseDir, subDir, aliasMap, itemsAreFilePaths);
         } else {
-            return resolveAliasOrPath([item]);
+            return resolveAliasOrPath([item], baseDir, subDir, aliasMap, itemsAreFilePaths);
         }
     });
 }
 
-export function resolveTargetStringList(items: string[] | TargetListFunc, ctx: TargetBuildContext, itemsAreFilePaths: boolean): string[] {
+export function resolveTargetStringList(itemsArray: (string | TargetListFunc)[], ctx: TargetBuildContext, itemsAreFilePaths: boolean): string[] {
     const aliasMap = util.buildAliasMap({
         project: ctx.project,
         config: ctx.config,
         target: ctx.target,
         selfDir: ctx.target.importDir
     });
-    let resolvedItems = (typeof items === 'function') ? items(ctx) : items;
-    if (itemsAreFilePaths) {
-        const target = ctx.target;
-        return resolvedItems.map((item) => util.resolvePath(aliasMap, target.importDir, target.dir, item));
-    } else {
-        return resolvedItems.map((item) => util.resolveAlias(aliasMap, item));
-    }
+    const baseDir = ctx.target.importDir;
+    const subDir = ctx.target.dir;
+    return itemsArray.flatMap((item) => {
+        if (typeof item === 'function') {
+            return resolveAliasOrPath(item(ctx), baseDir, subDir, aliasMap, itemsAreFilePaths);
+        } else {
+            return resolveAliasOrPath([item], baseDir, subDir, aliasMap, itemsAreFilePaths);
+        }
+    });
 }
 
 export type ResolvedTargetItems = {

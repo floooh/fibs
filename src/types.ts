@@ -146,9 +146,9 @@ export type TargetItemsDesc = {
 };
 
 export type TargetItems = {
-    interface: string[] | TargetListFunc;
-    private: string[] | TargetListFunc;
-    public: string[] | TargetListFunc;
+    interface: (string | TargetListFunc)[];
+    private: (string | TargetListFunc)[];
+    public: (string | TargetListFunc)[];
 };
 
 export type TargetJobDesc = {
@@ -184,8 +184,8 @@ export type Target = {
     dir: string | undefined;
     type: TargetType;
     enabled: boolean | TargetEnabledFunc;
-    sources: string[] | TargetListFunc;
-    libs: string[] | TargetListFunc;
+    sources: (string | TargetListFunc)[];
+    libs: (string | TargetListFunc)[];
     includeDirectories: TargetItems;
     compileDefinitions: TargetItems;
     compileOptions: TargetItems;

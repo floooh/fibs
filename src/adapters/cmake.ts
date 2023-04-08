@@ -242,19 +242,14 @@ function genTargetDependencies(project: Project, config: Config, target: Target)
     let str = '';
     languages().forEach((language) => {
         conf.compilers(config).forEach((compiler) => {
-            let libs: string[];
-            if (typeof target.libs === 'function') {
-                const ctx: TargetBuildContext = {
-                    project,
-                    config,
-                    compiler,
-                    target,
-                    language,
-                };
-                libs = target.libs(ctx);
-            } else {
-                libs = target.libs;
-            }
+            const ctx: TargetBuildContext = {
+                project,
+                config,
+                compiler,
+                target,
+                language,
+            };
+            const libs = proj.resolveTargetStringList(target.libs, ctx, false);
             if (libs.length > 0) {
                 let type = '';
                 if (target.type === 'interface') {
