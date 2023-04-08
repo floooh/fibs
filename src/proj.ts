@@ -177,59 +177,97 @@ function mergeArraysMaybeUndefined<T>(into: Array<T> | undefined, src: Array<T> 
 }
 
 function integrateCommand(intoRecord: Record<string, Command>, name: string, importDir: string, desc: CommandDesc) {
-    intoRecord[name] = {
-        name,
-        importDir,
-        help: desc.help,
-        run: desc.run,
+    const into = intoRecord[name];
+    if (into === undefined) {
+        intoRecord[name] = {
+            name,
+            importDir,
+            help: desc.help,
+            run: desc.run,
+        }
+    } else {
+        into.help = desc.help;
+        into.run = desc.run;
     }
 }
 
 function integrateTool(intoRecord: Record<string, Tool>, name: string, importDir: string, desc: ToolDesc) {
-    intoRecord[name] = {
-        name,
-        importDir,
-        platforms: desc.platforms,
-        optional: desc.optional,
-        notFoundMsg: desc.notFoundMsg,
-        exists: desc.exists,
+    const into = intoRecord[name];
+    if (into === undefined) {
+        intoRecord[name] = {
+            name,
+            importDir,
+            platforms: desc.platforms,
+            optional: desc.optional,
+            notFoundMsg: desc.notFoundMsg,
+            exists: desc.exists,
+        };
+    } else {
+        into.platforms = desc.platforms;
+        into.optional = desc.optional;
+        into.notFoundMsg = desc.notFoundMsg;
+        into.exists = desc.exists;
     }
 }
 
 function integrateJobTemplate(intoRecord: Record<string, JobTemplate>, name: string, importDir: string, desc: JobTemplateDesc) {
-    intoRecord[name] = {
-        name,
-        importDir,
-        help: desc.help,
-        validate: desc.validate,
-        builder: desc.builder,
-    };
+    const into = intoRecord[name];
+    if (into === undefined) {
+        intoRecord[name] = {
+            name,
+            importDir,
+            help: desc.help,
+            validate: desc.validate,
+            builder: desc.builder,
+        };
+    } else {
+        into.help = desc.help;
+        into.validate = desc.validate;
+        into.builder = desc.builder;
+    }
 }
 
 function integrateRunner(intoRecord: Record<string, Runner>, name: string, importDir: string, desc: RunnerDesc) {
-    intoRecord[name] = {
-        name,
-        importDir,
-        run: desc.run,
-    };
+    const into = intoRecord[name];
+    if (into === undefined) {
+        intoRecord[name] = {
+            name,
+            importDir,
+            run: desc.run,
+        };
+    } else {
+        into.run = desc.run;
+    }
 }
 
 function integrateOpener(intoRecord: Record<string, Opener>, name: string, importDir: string, desc: OpenerDesc) {
-    intoRecord[name] = {
-        name,
-        importDir,
-        configure: desc.configure,
-        open: desc.open,
-    };
+    const into = intoRecord[name];
+    if (into === undefined) {
+        intoRecord[name] = {
+            name,
+            importDir,
+            configure: desc.configure,
+            open: desc.open,
+        };
+    } else {
+        into.configure = desc.configure;
+        into.open = desc.open;
+    }
 }
 
 function integrateAdapter(intoRecord: Record<string, Adapter>, name: string, importDir: string, desc: AdapterDesc) {
-    intoRecord[name] = {
-        name,
-        importDir,
-        configure: desc.configure,
-        build: desc.build,
-    };
+    const into = intoRecord[name];
+    if (into === undefined) {
+        intoRecord[name] = {
+            name,
+            importDir,
+            configure: desc.configure,
+            build: desc.build,
+        };
+    } else {
+        into.configure = desc.configure;
+        into.build = desc.build;
+    }
 }
 
 function integrateTargetItems(into: TargetItems, from: TargetItems) {
@@ -260,7 +298,6 @@ function integrateTarget(intoRecord: Record<string, Target>, name: string, impor
         if (into.type !== from.type) {
             throw new Error(`Cannot merge targets of different types (${from.type} vs ${into.type})`);
         }
-        into.importDir = importDir;
         if (from.dir !== undefined) {
             into.dir = from.dir;
         }
