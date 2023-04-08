@@ -150,7 +150,7 @@ function assign<T>(into: T, src: T): T {
     return (src === undefined) ? into : src;
 }
 
-function mergeRecords<T>(into: Record<string, T> | undefined, src: Record<string, T> | undefined): Record<string, T> | undefined {
+function mergeRecordsMaybeUndefined<T>(into: Record<string, T> | undefined, src: Record<string, T> | undefined): Record<string, T> | undefined {
     if ((into === undefined) && (src === undefined)) {
         return undefined;
     }
@@ -163,7 +163,7 @@ function mergeRecords<T>(into: Record<string, T> | undefined, src: Record<string
     return Object.assign(into, src);
 }
 
-function mergeArrays<T>(into: Array<T> | undefined, src: Array<T> | undefined): Array<T> | undefined {
+function mergeArraysMaybeUndefined<T>(into: Array<T> | undefined, src: Array<T> | undefined): Array<T> | undefined {
     if ((into === undefined) && (src === undefined)) {
         return undefined;
     }
@@ -176,28 +176,28 @@ function mergeArrays<T>(into: Array<T> | undefined, src: Array<T> | undefined): 
     return [...into, ...src];
 }
 
-function makeCommand(name: string, importDir: string, desc: CommandDesc): Command {
-    return {
+function integrateCommand(intoRecord: Record<string, Command>, name: string, importDir: string, desc: CommandDesc) {
+    intoRecord[name] = {
         name,
         importDir,
         help: desc.help,
         run: desc.run,
-    };
+    }
 }
 
-function makeTool(name: string, importDir: string, desc: ToolDesc): Tool {
-    return {
+function integrateTool(intoRecord: Record<string, Tool>, name: string, importDir: string, desc: ToolDesc) {
+    intoRecord[name] = {
         name,
         importDir,
         platforms: desc.platforms,
         optional: desc.optional,
         notFoundMsg: desc.notFoundMsg,
         exists: desc.exists,
-    };
+    }
 }
 
-function makeJobTemplate(name: string, importDir: string, desc: JobTemplateDesc): JobTemplate {
-    return {
+function integrateJobTemplate(intoRecord: Record<string, JobTemplate>, name: string, importDir: string, desc: JobTemplateDesc) {
+    intoRecord[name] = {
         name,
         importDir,
         help: desc.help,
@@ -206,16 +206,16 @@ function makeJobTemplate(name: string, importDir: string, desc: JobTemplateDesc)
     };
 }
 
-function makeRunner(name: string, importDir: string, desc: RunnerDesc): Runner {
-    return {
+function integrateRunner(intoRecord: Record<string, Runner>, name: string, importDir: string, desc: RunnerDesc) {
+    intoRecord[name] = {
         name,
         importDir,
         run: desc.run,
     };
 }
 
-function makeOpener(name: string, importDir: string, desc: OpenerDesc): Opener {
-    return {
+function integrateOpener(intoRecord: Record<string, Opener>, name: string, importDir: string, desc: OpenerDesc) {
+    intoRecord[name] = {
         name,
         importDir,
         configure: desc.configure,
@@ -223,8 +223,8 @@ function makeOpener(name: string, importDir: string, desc: OpenerDesc): Opener {
     };
 }
 
-function makeAdapter(name: string, importDir: string, desc: AdapterDesc): Adapter {
-    return {
+function integrateAdapter(intoRecord: Record<string, Adapter>, name: string, importDir: string, desc: AdapterDesc) {
+    intoRecord[name] = {
         name,
         importDir,
         configure: desc.configure,
@@ -232,8 +232,15 @@ function makeAdapter(name: string, importDir: string, desc: AdapterDesc): Adapte
     };
 }
 
-function makeTarget(name: string, importDir: string, desc: TargetDesc): Target {
-    return {
+function integrateTargetItems(into: TargetItems, from: TargetItems) {
+    into.interface.push(...from.interface);
+    into.private.push(...from.private);
+    into.public.push(...from.public);
+}
+
+function integrateTarget(intoRecord: Record<string, Target>, name: string, importDir: string, desc: TargetDesc) {
+    const into = intoRecord[name];
+    const from = {
         name,
         importDir,
         dir: desc.dir,
@@ -246,18 +253,39 @@ function makeTarget(name: string, importDir: string, desc: TargetDesc): Target {
         compileOptions: asTargetItems(desc.compileOptions),
         linkOptions: asTargetItems(desc.linkOptions),
         jobs: asTargetJobs(name, desc.jobs),
-    };
+    }
+    if (into === undefined) {
+        intoRecord[name] = from;
+    } else {
+        if (into.type !== from.type) {
+            throw new Error(`Cannot merge targets of different types (${from.type} vs ${into.type})`);
+        }
+        into.importDir = importDir;
+        if (from.dir !== undefined) {
+            into.dir = from.dir;
+        }
+        if (desc.enabled !== undefined) {
+            into.enabled = from.enabled;
+        }
+        into.sources.push(...from.sources);
+        into.libs.push(...from.libs);
+        integrateTargetItems(into.includeDirectories, from.includeDirectories);
+        integrateTargetItems(into.compileDefinitions, from.compileDefinitions);
+        integrateTargetItems(into.compileOptions, from.compileOptions);
+        integrateTargetItems(into.linkOptions, from.linkOptions);
+        into.jobs.push(...from.jobs);
+    }
 }
 
 function integrateObjectRecord<TYPE, DESC>(
     into: Record<string, TYPE>,
     from: Record<string, DESC> | undefined,
     importDir: string,
-    makeFunc: (name: string, importDir: string, desc: DESC) => TYPE)
+    objectIntegrateFunc: (into: Record<string, TYPE>, name: string, importDir: string, desc: DESC) => void)
 {
     if (from !== undefined) {
         for (const [name, desc] of Object.entries(from)) {
-            into[name] = makeFunc(name, importDir, desc);
+            objectIntegrateFunc(into, name, importDir, desc);
         }
     }
 }
@@ -312,13 +340,13 @@ async function integrateProjectDesc(into: Project, other: ProjectDesc, importDir
     integrateProjectItems(into.compileDefinitions, other.compileDefinitions);
     integrateProjectItems(into.compileOptions, other.compileOptions);
     integrateProjectItems(into.linkOptions, other.linkOptions);
-    integrateObjectRecord(into.commands, other.commands, importDir, makeCommand);
-    integrateObjectRecord(into.tools, other.tools, importDir, makeTool);
-    integrateObjectRecord(into.jobs, other.jobs, importDir, makeJobTemplate)
-    integrateObjectRecord(into.runners, other.runners, importDir, makeRunner);
-    integrateObjectRecord(into.openers, other.openers, importDir, makeOpener);
-    integrateObjectRecord(into.adapters, other.adapters, importDir, makeAdapter);
-    integrateObjectRecord(into.targets, other.targets, importDir, makeTarget);
+    integrateObjectRecord(into.commands, other.commands, importDir, integrateCommand);
+    integrateObjectRecord(into.tools, other.tools, importDir, integrateTool);
+    integrateObjectRecord(into.jobs, other.jobs, importDir, integrateJobTemplate)
+    integrateObjectRecord(into.runners, other.runners, importDir, integrateRunner);
+    integrateObjectRecord(into.openers, other.openers, importDir, integrateOpener);
+    integrateObjectRecord(into.adapters, other.adapters, importDir, integrateAdapter);
+    integrateObjectRecord(into.targets, other.targets, importDir, integrateTarget);
     integrateRecord(into.settings, other.settings);
 }
 
@@ -352,13 +380,13 @@ function resolveConfigDesc(configs: Record<string, ConfigDescWithImportDir>, nam
         into.generator = assign(into.generator, src.generator);
         into.arch = assign(into.arch, src.arch);
         into.toolchainFile = assign(into.toolchainFile, src.toolchainFile);
-        into.cmakeVariables = mergeRecords(into.cmakeVariables, src.cmakeVariables);
-        into.environment = mergeRecords(into.environment, src.environment);
-        into.options = mergeRecords(into.options, src.options);
-        into.includeDirectories = mergeArrays(into.includeDirectories, src.includeDirectories);
-        into.compileDefinitions = mergeArrays(into.compileDefinitions, src.compileDefinitions);
-        into.compileOptions = mergeArrays(into.compileDefinitions, src.compileOptions);
-        into.linkOptions = mergeArrays(into.linkOptions, src.linkOptions);
+        into.cmakeVariables = mergeRecordsMaybeUndefined(into.cmakeVariables, src.cmakeVariables);
+        into.environment = mergeRecordsMaybeUndefined(into.environment, src.environment);
+        into.options = mergeRecordsMaybeUndefined(into.options, src.options);
+        into.includeDirectories = mergeArraysMaybeUndefined(into.includeDirectories, src.includeDirectories);
+        into.compileDefinitions = mergeArraysMaybeUndefined(into.compileDefinitions, src.compileDefinitions);
+        into.compileOptions = mergeArraysMaybeUndefined(into.compileDefinitions, src.compileOptions);
+        into.linkOptions = mergeArraysMaybeUndefined(into.linkOptions, src.linkOptions);
     });
     return into;
 }
