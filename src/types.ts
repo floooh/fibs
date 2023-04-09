@@ -80,10 +80,10 @@ export type ConfigDesc = {
     cmakeVariables?: Record<string, string | boolean>;
     environment?: Record<string, string>;
     options?: Record<string, any>;
-    includeDirectories?: (string | ProjectListFunc)[];
-    compileDefinitions?: (string | ProjectListFunc)[];
-    compileOptions?: (string | ProjectListFunc)[];
-    linkOptions?: (string | ProjectListFunc)[];
+    includeDirectories?: string[];
+    compileDefinitions?: string[];
+    compileOptions?: string[];
+    linkOptions?: string[];
 };
 
 export type Config = {
@@ -99,10 +99,10 @@ export type Config = {
     cmakeVariables: Record<string, string | boolean>;
     environment: Record<string, string>;
     options: Record<string, any>;
-    includeDirectories: (string | ProjectListFunc)[];
-    compileDefinitions: (string | ProjectListFunc)[];
-    compileOptions: (string | ProjectListFunc)[];
-    linkOptions: (string | ProjectListFunc)[];
+    includeDirectories: string[];
+    compileDefinitions: string[];
+    compileOptions: string[];
+    linkOptions: string[];
 };
 
 export type ImportDesc = {
