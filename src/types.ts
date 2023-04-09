@@ -1,6 +1,6 @@
 export type ProjectDesc = {
     name?: string;
-    variables?: Record<string, string | boolean>;
+    cmakeVariables?: Record<string, string | boolean>;
     includeDirectories?: string[] | ProjectListFunc;
     compileDefinitions?: string[] | ProjectListFunc;
     compileOptions?: string[] | ProjectListFunc;
@@ -23,7 +23,7 @@ export type Project = {
     name: string;
     dir: string;
     settings: Settings;
-    variables: Record<string, string | boolean>;
+    cmakeVariables: Record<string, string | boolean>;
     includeDirectories: (string | ProjectListFunc)[];
     compileDefinitions: (string | ProjectListFunc)[];
     compileOptions: (string | ProjectListFunc)[];

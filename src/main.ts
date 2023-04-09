@@ -54,7 +54,7 @@ const stdDesc: ProjectDesc = {
     configs,
     runners,
     openers,
-    variables: {
+    cmakeVariables: {
         CMAKE_C_STANDARD: '99',
         CMAKE_CXX_STANDARD: '11',
     },

@@ -420,8 +420,8 @@ function genCacheVariables(project: Project, config: Config): Record<string, any
         res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = util.distDir(project, config);
     }
     const projectAliasMap = util.buildAliasMap({ project, config, selfDir: project.dir });
-    for (const key in project.variables) {
-        res[key] = resolveCacheVariable(project.variables[key], projectAliasMap);
+    for (const key in project.cmakeVariables) {
+        res[key] = resolveCacheVariable(project.cmakeVariables[key], projectAliasMap);
     }
     const configAliasMap = util.buildAliasMap({ project, config, selfDir: config.importDir });
     for (const key in config.cmakeVariables) {

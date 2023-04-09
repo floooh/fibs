@@ -45,7 +45,7 @@ export async function setup(
         name: rootDesc.name ?? 'project',
         dir: rootDir,
         settings: {},
-        variables: {},
+        cmakeVariables: {},
         includeDirectories: [],
         compileDefinitions: [],
         compileOptions: [],
@@ -406,7 +406,7 @@ async function integrateProjectDesc(into: Project, other: ProjectDesc, importDir
         }
     }
     integrateObjectRecord(into.configDescs, other.configs, importDir, integrateConfigDesc);
-    integrateRecord(into.variables, other.variables);
+    integrateRecord(into.cmakeVariables, other.cmakeVariables);
     integrateProjectItems(into.includeDirectories, other.includeDirectories);
     integrateProjectItems(into.compileDefinitions, other.compileDefinitions);
     integrateProjectItems(into.compileOptions, other.compileOptions);
