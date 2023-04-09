@@ -10,10 +10,10 @@ import {
     Project,
     ProjectDesc,
     ProjectListFunc,
-    ProjectBuildContext,
+    ProjectContext,
     Target,
     TargetDesc,
-    TargetBuildContext,
+    TargetContext,
     TargetItems,
     TargetItemsDesc,
     TargetJob,
@@ -540,7 +540,7 @@ export function validateTarget(
         res.valid = false;
         res.hints.push(`src dir not found: ${srcDir}`);
     } else {
-        const ctx: TargetBuildContext = { project, config, target };
+        const ctx: TargetContext = { project, config, target };
         const sources = resolveTargetStringList(target.sources, ctx, true);
         for (const src of sources) {
             if (!util.fileExists(src)) {
@@ -559,7 +559,7 @@ export function validateTarget(
     };
     ['c', 'cxx'].forEach((language) => {
         conf.compilers(config).forEach((compiler) => {
-            const ctx: TargetBuildContext = {
+            const ctx: TargetContext = {
                 project,
                 config,
                 compiler,
@@ -617,7 +617,7 @@ export function validateTargetJob(project: Project, config: Config, target: Targ
     return res;
 }
 
-export function resolveJob(ctx: TargetBuildContext, targetJob: TargetJob): Job {
+export function resolveJob(ctx: TargetContext, targetJob: TargetJob): Job {
     const res = validateTargetJob(ctx.project, ctx.config, ctx.target, targetJob);
     if (!res.valid) {
         log.error(`failed to validate job ${targetJob.job} in target ${ctx.target.name}:\n${res.hints.map((line) => `  ${line}\n`)}`);
@@ -626,7 +626,7 @@ export function resolveJob(ctx: TargetBuildContext, targetJob: TargetJob): Job {
 }
 
 export async function runJobs(project: Project, config: Config, target: Target): Promise<boolean> {
-    const ctx: TargetBuildContext = { project, config, target };
+    const ctx: TargetContext = { project, config, target };
     for (const targetJob of target.jobs) {
         const job = resolveJob(ctx, targetJob);
         try {
@@ -646,7 +646,7 @@ function resolveAliasOrPath(items: string[], baseDir: string, subDir: string | u
     }
 }
 
-export function resolveProjectItems(itemsArray: (string | ProjectListFunc)[], ctx: ProjectBuildContext, itemsAreFilePaths: boolean): string[] {
+export function resolveProjectItems(itemsArray: (string | ProjectListFunc)[], ctx: ProjectContext, itemsAreFilePaths: boolean): string[] {
     const aliasMap = util.buildAliasMap({
         project: ctx.project,
         config: ctx.config,
@@ -663,7 +663,7 @@ export function resolveProjectItems(itemsArray: (string | ProjectListFunc)[], ct
     });
 }
 
-export function resolveTargetStringList(itemsArray: (string | TargetListFunc)[], ctx: TargetBuildContext, itemsAreFilePaths: boolean): string[] {
+export function resolveTargetStringList(itemsArray: (string | TargetListFunc)[], ctx: TargetContext, itemsAreFilePaths: boolean): string[] {
     const aliasMap = util.buildAliasMap({
         project: ctx.project,
         config: ctx.config,
@@ -687,7 +687,7 @@ export type ResolvedTargetItems = {
     public: string[];
 }
 
-export function resolveTargetItems(items: TargetItems, ctx: TargetBuildContext, itemsAreFilePaths: boolean): ResolvedTargetItems {
+export function resolveTargetItems(items: TargetItems, ctx: TargetContext, itemsAreFilePaths: boolean): ResolvedTargetItems {
     return {
         interface: resolveTargetStringList(items.interface, ctx, itemsAreFilePaths),
         private: resolveTargetStringList(items.private, ctx, itemsAreFilePaths),

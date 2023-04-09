@@ -12,9 +12,9 @@ import {
     proj,
     Project,
     ProjectListFunc,
-    ProjectBuildContext,
+    ProjectContext,
     Target,
-    TargetBuildContext,
+    TargetContext,
     TargetItems,
     util,
 } from '../../mod.ts';
@@ -143,7 +143,7 @@ function genGlobalItemsLanguageCompiler(
     let str = '';
     languages().forEach((language) => {
         conf.compilers(config).forEach((compiler) => {
-            const ctx: ProjectBuildContext = {
+            const ctx: ProjectContext = {
                 project,
                 config,
                 compiler,
@@ -188,7 +188,7 @@ function genLinkOptions(project: Project, config: Config): string {
 
 function genTarget(project: Project, config: Config, target: Target): string {
     let str = '';
-    const ctx: TargetBuildContext = { project, config, target };
+    const ctx: TargetContext = { project, config, target };
     const sources = proj.resolveTargetStringList(target.sources, ctx, true);
 
     // get any job outputs which need to be added as target sources
@@ -242,7 +242,7 @@ function genTargetDependencies(project: Project, config: Config, target: Target)
     let str = '';
     languages().forEach((language) => {
         conf.compilers(config).forEach((compiler) => {
-            const ctx: TargetBuildContext = {
+            const ctx: TargetContext = {
                 project,
                 config,
                 compiler,
@@ -273,7 +273,7 @@ function genTargetItems(
     let str = '';
     languages().forEach((language) => {
         conf.compilers(config).forEach((compiler) => {
-            const ctx: TargetBuildContext = {
+            const ctx: TargetContext = {
                 project,
                 config,
                 compiler,

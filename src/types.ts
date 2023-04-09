@@ -120,16 +120,16 @@ export type Import = {
     ref: string | undefined;
 };
 
-export type ProjectBuildContext = {
+export type ProjectContext = {
     project: Project;
     config: Config;
     compiler?: Compiler;
     language?: Language;
 };
 
-export type ProjectListFunc = (context: ProjectBuildContext) => string[];
+export type ProjectListFunc = (context: ProjectContext) => string[];
 
-export type TargetBuildContext = {
+export type TargetContext = {
     project: Project;
     config: Config;
     target: Target;
@@ -137,7 +137,7 @@ export type TargetBuildContext = {
     language?: Language;
 };
 
-export type TargetListFunc = (context: TargetBuildContext) => string[];
+export type TargetListFunc = (context: TargetContext) => string[];
 
 export type TargetItemsDesc = {
     interface?: string[] | TargetListFunc;
@@ -161,7 +161,7 @@ export type TargetJob = {
     args: any;
 }
 
-export type TargetEnabledFunc = (context: ProjectBuildContext) => boolean;
+export type TargetEnabledFunc = (context: ProjectContext) => boolean;
 
 export type TargetDesc = {
     type?: TargetType;
@@ -176,7 +176,7 @@ export type TargetDesc = {
     jobs?: TargetJobDesc[];
 };
 
-export type JobBuilder = (context: TargetBuildContext) => Job;
+export type JobBuilder = (context: TargetContext) => Job;
 
 export type Target = {
     name: string;
