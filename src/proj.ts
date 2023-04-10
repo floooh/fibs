@@ -521,13 +521,14 @@ export function validateTarget(
     }
 
     // check that source files exist
-    const aliasMap = util.buildAliasMap({ project, config, target, selfDir: target.importDir });
+    const aliasMap = util.buildTargetAliasMap(project, config, target);
     const srcDir = util.resolvePath(aliasMap, target.importDir, target.dir);
     if (!util.dirExists(srcDir)) {
         res.valid = false;
         res.hints.push(`src dir not found: ${srcDir}`);
     } else {
-        const sources = resolveTargetStringArray(target.sources, { project, config, target }, true);
+        const ctx: Context = { project, config, target, aliasMap };
+        const sources = resolveTargetStringArray(target.sources, ctx, true);
         for (const src of sources) {
             if (!util.fileExists(src)) {
                 res.valid = false;
@@ -551,6 +552,7 @@ export function validateTarget(
                 target,
                 compiler,
                 language: language as Language,
+                aliasMap,
             };
             const resolvedItems = resolveTargetItems(target.includeDirectories, ctx, true);
             missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.interface));
@@ -603,18 +605,23 @@ export function validateTargetJob(project: Project, config: Config, target: Targ
     return res;
 }
 
-export function resolveJob(ctx: Context, target: Target, targetJob: TargetJob): Job {
-    const res = validateTargetJob(ctx.project, ctx.config, target, targetJob);
+export function resolveJob(ctx: Context, targetJob: TargetJob): Job {
+    const res = validateTargetJob(ctx.project, ctx.config, ctx.target!, targetJob);
     if (!res.valid) {
-        log.error(`failed to validate job ${targetJob.job} in target ${target.name}:\n${res.hints.map((line) => `  ${line}\n`)}`);
+        log.error(`failed to validate job ${targetJob.job} in target ${ctx.target!.name}:\n${res.hints.map((line) => `  ${line}\n`)}`);
     }
     return ctx.project.jobs[targetJob.job].builder(targetJob.args)(ctx);
 }
 
 export async function runJobs(project: Project, config: Config, target: Target): Promise<boolean> {
-    const ctx: Context = { project, config };
+    const ctx: Context = {
+        project,
+        config,
+        target,
+        aliasMap: util.buildTargetAliasMap(project, config, target),
+    };
     for (const targetJob of target.jobs) {
-        const job = resolveJob(ctx, target, targetJob);
+        const job = resolveJob(ctx, targetJob);
         try {
             await job.func(job.inputs, job.outputs, job.args);
         } catch (err) {
@@ -633,34 +640,22 @@ function resolveAliasOrPath(item: string, baseDir: string, subDir: string | unde
 }
 
 export function resolveProjectStringArray(array: StringArrayFunc[] | string[], ctx: Context, itemsAreFilePaths: boolean): string[] {
-    const aliasMap = util.buildAliasMap({
-        project: ctx.project,
-        config: ctx.config,
-        selfDir: ctx.project.dir
-    });
     const baseDir = ctx.project.dir;
     const subDir = undefined;
     return array.flatMap((funcOrString) => {
         if (typeof funcOrString === 'function') {
-            return funcOrString(ctx).map((item) => resolveAliasOrPath(item, baseDir, subDir, aliasMap, itemsAreFilePaths));
+            return funcOrString(ctx).map((item) => resolveAliasOrPath(item, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths));
         } else {
-            return [ resolveAliasOrPath(funcOrString, baseDir, subDir, aliasMap, itemsAreFilePaths) ];
+            return [ resolveAliasOrPath(funcOrString, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths) ];
         }
     });
 }
 
 export function resolveTargetStringArray(itemsArray: StringArrayFunc[], ctx: Context, itemsAreFilePaths: boolean): string[] {
-    const target = ctx.target!;
-    const aliasMap = util.buildAliasMap({
-        project: ctx.project,
-        config: ctx.config,
-        target: target,
-        selfDir: target!.importDir
-    });
-    const baseDir = target.importDir;
-    const subDir = target.dir;
+    const baseDir = ctx.target!.importDir;
+    const subDir = ctx.target!.dir;
     return itemsArray.flatMap((funcOrString) => {
-        return funcOrString(ctx).map((item) => resolveAliasOrPath(item, baseDir, subDir, aliasMap, itemsAreFilePaths));
+        return funcOrString(ctx).map((item) => resolveAliasOrPath(item, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths));
     });
 }
 
@@ -676,4 +671,13 @@ export function resolveTargetItems(items: TargetItems, ctx: Context, itemsAreFil
         private: resolveTargetStringArray(items.private, ctx, itemsAreFilePaths),
         public: resolveTargetStringArray(items.public, ctx, itemsAreFilePaths),
     }
+}
+
+export function isTargetEnabled(project: Project, config: Config, target: Target): boolean {
+    return target.enabled({
+        project,
+        config,
+        target,
+        aliasMap: util.buildTargetAliasMap(project, config, target)
+    });
 }

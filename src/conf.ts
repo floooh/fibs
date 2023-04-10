@@ -21,7 +21,7 @@ export async function validate(project: Project, config: Config, options: Valida
     } = options;
     const res: ValidateResult = { valid: true, hints: [] };
 
-    const aliasMap = util.buildAliasMap({ project, config, selfDir: config.importDir });
+    const configAliasMap = util.buildConfigAliasMap(project, config);
 
     // validate generators
     // TODO: more generator checks
@@ -53,7 +53,7 @@ export async function validate(project: Project, config: Config, options: Valida
 
     // check if toolchain file exists
     if (config.toolchainFile !== undefined) {
-        const toolchainPath = util.resolveAlias(aliasMap, config.toolchainFile);
+        const toolchainPath = util.resolveAlias(configAliasMap, config.toolchainFile);
         if (!util.fileExists(toolchainPath)) {
             res.valid = false;
             res.hints.push(`toolchain file not found: ${toolchainPath}`);

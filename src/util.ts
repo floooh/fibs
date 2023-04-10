@@ -1,4 +1,4 @@
-import { Config, Platform, Project, RunOptions, RunResult, Target } from './types.ts';
+import { AliasMap, Config, Platform, Project, RunOptions, RunResult, Target } from './types.ts';
 import * as log from './log.ts';
 import { fs, path } from '../deps.ts';
 
@@ -211,9 +211,9 @@ export type BuildAliasMapOptions = {
     selfDir?: string,
 }
 
-export function buildAliasMap(options: BuildAliasMapOptions): Record<string, string> {
+function buildAliasMap(options: BuildAliasMapOptions): AliasMap {
     const { project, config, target, selfDir } = options;
-    const res: Record<string, string> = {
+    const res: AliasMap = {
         '@root:': project.dir,
         '@sdks:': sdkDir(project),
         '@build:': buildDir(project, config),
@@ -230,6 +230,18 @@ export function buildAliasMap(options: BuildAliasMapOptions): Record<string, str
         res['@targetassets:'] = targetAssetsDir(project, config, target);
     }
     return res;
+}
+
+export function buildProjectAliasMap(project: Project, config: Config): AliasMap {
+    return buildAliasMap({project, config, selfDir: project.dir });
+}
+
+export function buildConfigAliasMap(project: Project, config: Config): AliasMap {
+    return buildAliasMap({ project, config, selfDir: config.importDir });
+}
+
+export function buildTargetAliasMap(project: Project, config: Config, target: Target): AliasMap {
+    return buildAliasMap({ project, config, target, selfDir: target.importDir });
 }
 
 export function resolveAlias(aliasMap: Record<string, string>, str: string): string {

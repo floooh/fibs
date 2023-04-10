@@ -4,6 +4,7 @@ export type Context = {
     target?: Target;
     compiler?: Compiler;
     language?: Language;
+    aliasMap: AliasMap;
 };
 
 export type Func<T> = (ctx: Context) => T;
@@ -12,6 +13,8 @@ export type JobFunc = Func<Job>;
 export type ArrayFunc<T> = Func<T[]>;
 export type StringArrayFunc = ArrayFunc<string>;
 export type RecordFunc<T> = (ctx: Context) => Record<string, T>;
+
+export type AliasMap = Record<string, string>;
 
 export type ProjectDesc = {
     name?: string;

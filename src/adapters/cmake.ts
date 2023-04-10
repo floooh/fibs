@@ -69,7 +69,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genAllJobsTarget(project, config);
     const targets = Object.values(project.targets);
     targets.forEach((target) => {
-        if (target.enabled({ project, config})) {
+        if (proj.isTargetEnabled(project, config, target)) {
             str += genTarget(project, config, target);
             str += genTargetDependencies(project, config, target);
             str += genTargetIncludeDirectories(project, config, target);
@@ -140,6 +140,7 @@ function genGlobalItemsLanguageCompiler(
     itemsAreFilePaths: boolean,
 ): string {
     let str = '';
+    const aliasMap = util.buildProjectAliasMap(project, config);
     languages().forEach((language) => {
         conf.compilers(config).forEach((compiler) => {
             const ctx: Context = {
@@ -147,6 +148,7 @@ function genGlobalItemsLanguageCompiler(
                 config,
                 compiler,
                 language,
+                aliasMap,
             };
             const resolvedItems = proj.resolveProjectStringArray(items, ctx, itemsAreFilePaths);
             if (resolvedItems.length > 0) {
@@ -187,12 +189,17 @@ function genLinkOptions(project: Project, config: Config): string {
 
 function genTarget(project: Project, config: Config, target: Target): string {
     let str = '';
-    const ctx: Context = { project, config, target };
+    const ctx: Context = {
+        project,
+        config,
+        target,
+        aliasMap: util.buildTargetAliasMap(project, config, target),
+    };
     const sources = proj.resolveTargetStringArray(target.sources, ctx, true);
 
     // get any job outputs which need to be added as target sources
     const jobOutputs = target.jobs.flatMap((targetJob) => {
-        const job = proj.resolveJob(ctx, target, targetJob);
+        const job = proj.resolveJob(ctx, targetJob);
         if (job.addOutputsToTargetSources) {
             return job.outputs;
         }
@@ -229,7 +236,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
             str += `add_library(${target.name} INTERFACE ${targetSourcesStr})\n`;
             break;
     }
-    const aliasMap = util.buildAliasMap({ project, config, target, selfDir: target.importDir });
+    const aliasMap = util.buildTargetAliasMap(project, config, target);
     str += `source_group(TREE ${util.resolvePath(aliasMap, target.importDir, target.dir)} FILES ${sources.join(' ')})\n`;
     if (jobOutputs.length > 0) {
         str += `source_group(gen FILES ${jobOutputs.join(' ')})\n`;
@@ -239,6 +246,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
 
 function genTargetDependencies(project: Project, config: Config, target: Target): string {
     let str = '';
+    const aliasMap = util.buildTargetAliasMap(project, config, target);
     languages().forEach((language) => {
         conf.compilers(config).forEach((compiler) => {
             const ctx: Context = {
@@ -247,6 +255,7 @@ function genTargetDependencies(project: Project, config: Config, target: Target)
                 target,
                 compiler,
                 language,
+                aliasMap,
             };
             const libs = proj.resolveTargetStringArray(target.libs, ctx, false);
             if (libs.length > 0) {
@@ -270,6 +279,7 @@ function genTargetItems(
     itemsAreFilePaths: boolean,
 ): string {
     let str = '';
+    const aliasMap = util.buildTargetAliasMap(project, config, target);
     languages().forEach((language) => {
         conf.compilers(config).forEach((compiler) => {
             const ctx: Context = {
@@ -278,6 +288,7 @@ function genTargetItems(
                 target,
                 compiler,
                 language,
+                aliasMap,
             };
             const resolvedItems = proj.resolveTargetItems(items, ctx, itemsAreFilePaths);
             if (resolvedItems.interface.length > 0) {
@@ -358,7 +369,7 @@ function genCMakePresetsJson(project: Project, config: Config): string {
 function genConfigurePresets(project: Project, config: Config): any[] {
     const res = [];
     if (util.validConfigForPlatform(config, host.platform())) {
-        const aliasMap = util.buildAliasMap({ project, config, selfDir: config.importDir });
+        const aliasMap = util.buildConfigAliasMap(project, config);
         res.push({
             name: config.name,
             displayName: config.name,
@@ -418,11 +429,11 @@ function genCacheVariables(project: Project, config: Config): Record<string, any
     if (config.platform !== 'android') {
         res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = util.distDir(project, config);
     }
-    const projectAliasMap = util.buildAliasMap({ project, config, selfDir: project.dir });
+    const projectAliasMap = util.buildProjectAliasMap(project, config);
     for (const key in project.cmakeVariables) {
         res[key] = resolveCacheVariable(project.cmakeVariables[key], projectAliasMap);
     }
-    const configAliasMap = util.buildAliasMap({ project, config, selfDir: config.importDir });
+    const configAliasMap = util.buildConfigAliasMap(project, config);
     for (const key in config.cmakeVariables) {
         res[key] = resolveCacheVariable(config.cmakeVariables[key], configAliasMap);
     }
