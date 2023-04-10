@@ -4,6 +4,7 @@ import {
     BuildType,
     cmake,
     Compiler,
+    Context,
     conf,
     Config,
     host,
@@ -11,10 +12,8 @@ import {
     log,
     proj,
     Project,
-    ProjectListFunc,
-    ProjectContext,
+    StringArrayFunc,
     Target,
-    TargetContext,
     TargetItems,
     util,
 } from '../../mod.ts';
@@ -70,7 +69,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genAllJobsTarget(project, config);
     const targets = Object.values(project.targets);
     targets.forEach((target) => {
-        if (proj.isTargetEnabled(project, config, target)) {
+        if (target.enabled({ project, config})) {
             str += genTarget(project, config, target);
             str += genTargetDependencies(project, config, target);
             str += genTargetIncludeDirectories(project, config, target);
@@ -137,19 +136,19 @@ function genGlobalItemsLanguageCompiler(
     project: Project,
     config: Config,
     statement: string,
-    items: (string | ProjectListFunc)[],
+    items: StringArrayFunc[] | string[],
     itemsAreFilePaths: boolean,
 ): string {
     let str = '';
     languages().forEach((language) => {
         conf.compilers(config).forEach((compiler) => {
-            const ctx: ProjectContext = {
+            const ctx: Context = {
                 project,
                 config,
                 compiler,
                 language,
             };
-            const resolvedItems = proj.resolveProjectItems(items, ctx, itemsAreFilePaths);
+            const resolvedItems = proj.resolveProjectStringArray(items, ctx, itemsAreFilePaths);
             if (resolvedItems.length > 0) {
                 str += `${statement}(${generatorExpressionLanguageCompiler(language, compiler, resolvedItems)})\n`;
             }
@@ -188,12 +187,12 @@ function genLinkOptions(project: Project, config: Config): string {
 
 function genTarget(project: Project, config: Config, target: Target): string {
     let str = '';
-    const ctx: TargetContext = { project, config, target };
-    const sources = proj.resolveTargetStringList(target.sources, ctx, true);
+    const ctx: Context = { project, config };
+    const sources = proj.resolveTargetStringArray(target.sources, ctx, target, true);
 
     // get any job outputs which need to be added as target sources
     const jobOutputs = target.jobs.flatMap((targetJob) => {
-        const job = proj.resolveJob(ctx, targetJob);
+        const job = proj.resolveJob(ctx, target, targetJob);
         if (job.addOutputsToTargetSources) {
             return job.outputs;
         }
@@ -242,14 +241,13 @@ function genTargetDependencies(project: Project, config: Config, target: Target)
     let str = '';
     languages().forEach((language) => {
         conf.compilers(config).forEach((compiler) => {
-            const ctx: TargetContext = {
+            const ctx: Context = {
                 project,
                 config,
                 compiler,
-                target,
                 language,
             };
-            const libs = proj.resolveTargetStringList(target.libs, ctx, false);
+            const libs = proj.resolveTargetStringArray(target.libs, ctx, target, false);
             if (libs.length > 0) {
                 let type = '';
                 if (target.type === 'interface') {
@@ -273,14 +271,13 @@ function genTargetItems(
     let str = '';
     languages().forEach((language) => {
         conf.compilers(config).forEach((compiler) => {
-            const ctx: TargetContext = {
+            const ctx: Context = {
                 project,
                 config,
                 compiler,
-                target,
                 language,
             };
-            const resolvedItems = proj.resolveTargetItems(items, ctx, itemsAreFilePaths);
+            const resolvedItems = proj.resolveTargetItems(items, ctx, target, itemsAreFilePaths);
             if (resolvedItems.interface.length > 0) {
                 str += `${statement}(${target.name} INTERFACE ${
                     generatorExpressionLanguageCompiler(language, compiler, resolvedItems.interface)

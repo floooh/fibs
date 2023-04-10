@@ -1,10 +1,24 @@
+export type Context = {
+    project: Project;
+    config: Config;
+    compiler?: Compiler;
+    language?: Language;
+};
+
+export type Func<T> = (ctx: Context) => T;
+export type BooleanFunc = Func<boolean>;
+export type JobFunc = Func<Job>;
+export type ArrayFunc<T> = Func<T[]>;
+export type StringArrayFunc = ArrayFunc<string>;
+export type RecordFunc<T> = (ctx: Context) => Record<string, T>;
+
 export type ProjectDesc = {
     name?: string;
     cmakeVariables?: Record<string, string | boolean>;
-    includeDirectories?: string[] | ProjectListFunc;
-    compileDefinitions?: string[] | ProjectListFunc;
-    compileOptions?: string[] | ProjectListFunc;
-    linkOptions?: string[] | ProjectListFunc;
+    includeDirectories?: StringArrayFunc;
+    compileDefinitions?: StringArrayFunc;
+    compileOptions?: StringArrayFunc;
+    linkOptions?: StringArrayFunc;
     imports?: Record<string, ImportDesc>;
     targets?: Record<string, TargetDesc>;
     commands?: Record<string, CommandDesc>;
@@ -24,10 +38,10 @@ export type Project = {
     dir: string;
     settings: Settings;
     cmakeVariables: Record<string, string | boolean>;
-    includeDirectories: (string | ProjectListFunc)[];
-    compileDefinitions: (string | ProjectListFunc)[];
-    compileOptions: (string | ProjectListFunc)[];
-    linkOptions: (string | ProjectListFunc)[];
+    includeDirectories: StringArrayFunc[];
+    compileDefinitions: StringArrayFunc[];
+    compileOptions: StringArrayFunc[];
+    linkOptions: StringArrayFunc[];
     imports: Record<string, Import>;
     targets: Record<string, Target>;
     commands: Record<string, Command>;
@@ -120,35 +134,16 @@ export type Import = {
     ref: string | undefined;
 };
 
-export type ProjectContext = {
-    project: Project;
-    config: Config;
-    compiler?: Compiler;
-    language?: Language;
-};
-
-export type ProjectListFunc = (context: ProjectContext) => string[];
-
-export type TargetContext = {
-    project: Project;
-    config: Config;
-    target: Target;
-    compiler?: Compiler;
-    language?: Language;
-};
-
-export type TargetListFunc = (context: TargetContext) => string[];
-
 export type TargetItemsDesc = {
-    interface?: string[] | TargetListFunc;
-    private?: string[] | TargetListFunc;
-    public?: string[] | TargetListFunc;
+    interface?: StringArrayFunc;
+    private?: StringArrayFunc;
+    public?: StringArrayFunc;
 };
 
 export type TargetItems = {
-    interface: (string | TargetListFunc)[];
-    private: (string | TargetListFunc)[];
-    public: (string | TargetListFunc)[];
+    interface: StringArrayFunc[];
+    private: StringArrayFunc[];
+    public: StringArrayFunc[];
 };
 
 export type TargetJobDesc = {
@@ -161,14 +156,12 @@ export type TargetJob = {
     args: any;
 }
 
-export type TargetEnabledFunc = (context: ProjectContext) => boolean;
-
 export type TargetDesc = {
     type?: TargetType;
-    enabled?: boolean | TargetEnabledFunc;
+    enabled?: BooleanFunc;
     dir?: string;
-    sources?: string[] | TargetListFunc;
-    libs?: string[] | TargetListFunc;
+    sources?: StringArrayFunc;
+    libs?: StringArrayFunc;
     includeDirectories?: TargetItemsDesc;
     compileDefinitions?: TargetItemsDesc;
     compileOptions?: TargetItemsDesc;
@@ -176,16 +169,14 @@ export type TargetDesc = {
     jobs?: TargetJobDesc[];
 };
 
-export type JobBuilder = (context: TargetContext) => Job;
-
 export type Target = {
     name: string;
     importDir: string;
     dir: string | undefined;
     type: TargetType;
-    enabled: boolean | TargetEnabledFunc;
-    sources: (string | TargetListFunc)[];
-    libs: (string | TargetListFunc)[];
+    enabled: BooleanFunc;
+    sources: StringArrayFunc[];
+    libs: StringArrayFunc[];
     includeDirectories: TargetItems;
     compileDefinitions: TargetItems;
     compileOptions: TargetItems;
@@ -201,7 +192,7 @@ export type JobValidateResult = {
 export interface JobTemplateDesc {
     help(): void;
     validate(args: any): JobValidateResult;
-    builder(args: any): JobBuilder;
+    builder(args: any): JobFunc;
 }
 
 export interface JobTemplate {
@@ -209,7 +200,7 @@ export interface JobTemplate {
     importDir: string;
     help(): void;
     validate(args: any): JobValidateResult;
-    builder(args: any): JobBuilder;
+    builder(args: any): JobFunc;
 }
 
 export type Job = {
