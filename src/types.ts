@@ -1,6 +1,7 @@
 export type Context = {
     project: Project;
     config: Config;
+    target?: Target;
     compiler?: Compiler;
     language?: Language;
 };

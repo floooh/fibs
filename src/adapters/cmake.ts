@@ -187,8 +187,8 @@ function genLinkOptions(project: Project, config: Config): string {
 
 function genTarget(project: Project, config: Config, target: Target): string {
     let str = '';
-    const ctx: Context = { project, config };
-    const sources = proj.resolveTargetStringArray(target.sources, ctx, target, true);
+    const ctx: Context = { project, config, target };
+    const sources = proj.resolveTargetStringArray(target.sources, ctx, true);
 
     // get any job outputs which need to be added as target sources
     const jobOutputs = target.jobs.flatMap((targetJob) => {
@@ -244,10 +244,11 @@ function genTargetDependencies(project: Project, config: Config, target: Target)
             const ctx: Context = {
                 project,
                 config,
+                target,
                 compiler,
                 language,
             };
-            const libs = proj.resolveTargetStringArray(target.libs, ctx, target, false);
+            const libs = proj.resolveTargetStringArray(target.libs, ctx, false);
             if (libs.length > 0) {
                 let type = '';
                 if (target.type === 'interface') {
@@ -274,10 +275,11 @@ function genTargetItems(
             const ctx: Context = {
                 project,
                 config,
+                target,
                 compiler,
                 language,
             };
-            const resolvedItems = proj.resolveTargetItems(items, ctx, target, itemsAreFilePaths);
+            const resolvedItems = proj.resolveTargetItems(items, ctx, itemsAreFilePaths);
             if (resolvedItems.interface.length > 0) {
                 str += `${statement}(${target.name} INTERFACE ${
                     generatorExpressionLanguageCompiler(language, compiler, resolvedItems.interface)

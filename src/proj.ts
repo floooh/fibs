@@ -527,7 +527,7 @@ export function validateTarget(
         res.valid = false;
         res.hints.push(`src dir not found: ${srcDir}`);
     } else {
-        const sources = resolveTargetStringArray(target.sources, { project, config }, target, true);
+        const sources = resolveTargetStringArray(target.sources, { project, config, target }, true);
         for (const src of sources) {
             if (!util.fileExists(src)) {
                 res.valid = false;
@@ -548,10 +548,11 @@ export function validateTarget(
             const ctx: Context = {
                 project,
                 config,
+                target,
                 compiler,
                 language: language as Language,
             };
-            const resolvedItems = resolveTargetItems(target.includeDirectories, ctx, target, true);
+            const resolvedItems = resolveTargetItems(target.includeDirectories, ctx, true);
             missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.interface));
             missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.private));
             missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.public));
@@ -648,12 +649,13 @@ export function resolveProjectStringArray(array: StringArrayFunc[] | string[], c
     });
 }
 
-export function resolveTargetStringArray(itemsArray: StringArrayFunc[], ctx: Context, target: Target, itemsAreFilePaths: boolean): string[] {
+export function resolveTargetStringArray(itemsArray: StringArrayFunc[], ctx: Context, itemsAreFilePaths: boolean): string[] {
+    const target = ctx.target!;
     const aliasMap = util.buildAliasMap({
         project: ctx.project,
         config: ctx.config,
         target: target,
-        selfDir: target.importDir
+        selfDir: target!.importDir
     });
     const baseDir = target.importDir;
     const subDir = target.dir;
@@ -668,10 +670,10 @@ export type ResolvedTargetItems = {
     public: string[];
 }
 
-export function resolveTargetItems(items: TargetItems, ctx: Context, target: Target, itemsAreFilePaths: boolean): ResolvedTargetItems {
+export function resolveTargetItems(items: TargetItems, ctx: Context, itemsAreFilePaths: boolean): ResolvedTargetItems {
     return {
-        interface: resolveTargetStringArray(items.interface, ctx, target, itemsAreFilePaths),
-        private: resolveTargetStringArray(items.private, ctx, target, itemsAreFilePaths),
-        public: resolveTargetStringArray(items.public, ctx, target, itemsAreFilePaths),
+        interface: resolveTargetStringArray(items.interface, ctx, itemsAreFilePaths),
+        private: resolveTargetStringArray(items.private, ctx, itemsAreFilePaths),
+        public: resolveTargetStringArray(items.public, ctx, itemsAreFilePaths),
     }
 }
