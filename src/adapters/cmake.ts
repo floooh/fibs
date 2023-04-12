@@ -14,7 +14,7 @@ import {
     Project,
     StringArrayFunc,
     Target,
-    TargetItems,
+    TargetArrayItems,
     util,
 } from '../../mod.ts';
 import { StringRecordFunc } from '../types.ts';
@@ -299,12 +299,12 @@ function genTargetDependencies(project: Project, config: Config, target: Target)
     return str;
 }
 
-function genTargetItems(
+function genTargetArrayItems(
     project: Project,
     config: Config,
     target: Target,
     statement: string,
-    items: TargetItems,
+    items: TargetArrayItems,
     itemsAreFilePaths: boolean,
 ): string {
     let str = '';
@@ -319,7 +319,7 @@ function genTargetItems(
                 language,
                 aliasMap,
             };
-            const resolvedItems = proj.resolveTargetItems(items, ctx, itemsAreFilePaths);
+            const resolvedItems = proj.resolveTargetArrayItems(items, ctx, itemsAreFilePaths);
             if (resolvedItems.interface.length > 0) {
                 str += `${statement}(${target.name} INTERFACE ${
                     generatorExpressionLanguageCompiler(language, compiler, resolvedItems.interface)
@@ -341,19 +341,19 @@ function genTargetItems(
 }
 
 function genTargetIncludeDirectories(project: Project, config: Config, target: Target): string {
-    return genTargetItems(project, config, target, 'target_include_directories', target.includeDirectories, true);
+    return genTargetArrayItems(project, config, target, 'target_include_directories', target.includeDirectories, true);
 }
 
 function genTargetCompileDefinitions(project: Project, config: Config, target: Target): string {
-    return genTargetItems(project, config, target, 'target_compile_definitions', target.compileDefinitions, false);
+    return genTargetArrayItems(project, config, target, 'target_compile_definitions', target.compileDefinitions, false);
 }
 
 function genTargetCompileOptions(project: Project, config: Config, target: Target): string {
-    return genTargetItems(project, config, target, 'target_compile_options', target.compileOptions, false);
+    return genTargetArrayItems(project, config, target, 'target_compile_options', target.compileOptions, false);
 }
 
 function genTargetLinkOptions(project: Project, config: Config, target: Target): string {
-    return genTargetItems(project, config, target, 'target_link_options', target.linkOptions, false);
+    return genTargetArrayItems(project, config, target, 'target_link_options', target.linkOptions, false);
 }
 
 function genAllJobsTarget(project: Project, config: Config): string {

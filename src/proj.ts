@@ -14,8 +14,8 @@ import {
     Context,
     Target,
     TargetDesc,
-    TargetItems,
-    TargetItemsDesc,
+    TargetArrayItems,
+    TargetArrayItemsDesc,
     TargetJob,
     TargetJobDesc,
     Opener,
@@ -173,7 +173,7 @@ function mergeArrays<T>(into: T[], src: T[]): T[] {
     return [...into, ...src];
 }
 
-function mergeTargetItems(into: TargetItems, src: TargetItems): TargetItems {
+function mergeTargetArrayItems(into: TargetArrayItems, src: TargetArrayItems): TargetArrayItems {
     return {
         interface: mergeArrays(into.interface, src.interface),
         private: mergeArrays(into.private, src.private),
@@ -320,7 +320,7 @@ function integrateAdapter(intoRecord: Record<string, Adapter>, name: string, imp
 }
 
 function integrateTarget(intoRecord: Record<string, Target>, name: string, importDir: string, desc: TargetDesc) {
-    const toTargetItems = (desc: TargetItemsDesc | undefined): TargetItems => ({
+    const toTargetArrayItems = (desc: TargetArrayItemsDesc | undefined): TargetArrayItems => ({
         interface: optionalToArray(desc?.interface),
         private: optionalToArray(desc?.private),
         public: optionalToArray(desc?.public),
@@ -340,10 +340,10 @@ function integrateTarget(intoRecord: Record<string, Target>, name: string, impor
         enabled: desc.enabled ?? (() => true),
         sources: optionalToArray(desc.sources),
         libs: optionalToArray(desc.libs),
-        includeDirectories: toTargetItems(desc.includeDirectories),
-        compileDefinitions: toTargetItems(desc.compileDefinitions),
-        compileOptions: toTargetItems(desc.compileOptions),
-        linkOptions: toTargetItems(desc.linkOptions),
+        includeDirectories: toTargetArrayItems(desc.includeDirectories),
+        compileDefinitions: toTargetArrayItems(desc.compileDefinitions),
+        compileOptions: toTargetArrayItems(desc.compileOptions),
+        linkOptions: toTargetArrayItems(desc.linkOptions),
         jobs: toTargetJobs(desc.jobs),
     }
     if (into === undefined) {
@@ -354,9 +354,10 @@ function integrateTarget(intoRecord: Record<string, Target>, name: string, impor
         into.enabled = assign(into.enabled, desc.enabled);
         into.sources = mergeArrays(into.sources, from.sources);
         into.libs = mergeArrays(into.libs, from.libs);
-        into.includeDirectories = mergeTargetItems(into.includeDirectories, from.includeDirectories);
-        into.compileDefinitions = mergeTargetItems(into.compileDefinitions, from.compileDefinitions);
-        into.compileOptions = mergeTargetItems(into.compileOptions, from.compileOptions);
+        into.includeDirectories = mergeTargetArrayItems(into.includeDirectories, from.includeDirectories);
+        into.compileDefinitions = mergeTargetArrayItems(into.compileDefinitions, from.compileDefinitions);
+        into.compileOptions = mergeTargetArrayItems(into.compileOptions, from.compileOptions);
+        into.linkOptions = mergeTargetArrayItems(into.linkOptions, from.linkOptions);
         into.jobs = mergeArrays(into.jobs, from.jobs);
     }
 }
@@ -480,7 +481,7 @@ export function validateTarget(
 
     // check restrictions for interface targets
     if (target.type === 'interface') {
-        const checkInterfaceItems = (items: TargetItems): boolean => {
+        const checkInterfaceArrayItems = (items: TargetArrayItems): boolean => {
             if ((typeof items.private === 'function') || (items.private.length > 0)) {
                 return false;
             }
@@ -493,19 +494,19 @@ export function validateTarget(
             res.valid = false;
             res.hints.push(`target type 'interface' cannot have source files attached`);
         }
-        if (!checkInterfaceItems(target.includeDirectories)) {
+        if (!checkInterfaceArrayItems(target.includeDirectories)) {
             res.valid = false;
             res.hints.push(`interface targets must only define interface include directories`);
         }
-        if (!checkInterfaceItems(target.compileDefinitions)) {
+        if (!checkInterfaceArrayItems(target.compileDefinitions)) {
             res.valid = false;
             res.hints.push(`interface targets must only define interface compile definitins`);
         }
-        if (!checkInterfaceItems(target.compileOptions)) {
+        if (!checkInterfaceArrayItems(target.compileOptions)) {
             res.valid = false;
             res.hints.push(`interface targets must only define interface compile options`);
         }
-        if (!checkInterfaceItems(target.linkOptions)) {
+        if (!checkInterfaceArrayItems(target.linkOptions)) {
             res.valid = false;
             res.hints.push(`interface targets must only define interface link options`);
         }
@@ -555,7 +556,7 @@ export function validateTarget(
                 language: language as Language,
                 aliasMap,
             };
-            const resolvedItems = resolveTargetItems(target.includeDirectories, ctx, true);
+            const resolvedItems = resolveTargetArrayItems(target.includeDirectories, ctx, true);
             missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.interface));
             missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.private));
             missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.public));
@@ -677,13 +678,13 @@ export function resolveTargetStringArray(itemsArray: StringArrayFunc[], ctx: Con
     });
 }
 
-export type ResolvedTargetItems = {
+export type ResolvedTargetArrayItems = {
     interface: string[];
     private: string[];
     public: string[];
 }
 
-export function resolveTargetItems(items: TargetItems, ctx: Context, itemsAreFilePaths: boolean): ResolvedTargetItems {
+export function resolveTargetArrayItems(items: TargetArrayItems, ctx: Context, itemsAreFilePaths: boolean): ResolvedTargetArrayItems {
     return {
         interface: resolveTargetStringArray(items.interface, ctx, itemsAreFilePaths),
         private: resolveTargetStringArray(items.private, ctx, itemsAreFilePaths),

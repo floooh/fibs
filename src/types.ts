@@ -139,13 +139,13 @@ export type Import = {
     ref: string | undefined;
 };
 
-export type TargetItemsDesc = {
+export type TargetArrayItemsDesc = {
     interface?: StringArrayFunc;
     private?: StringArrayFunc;
     public?: StringArrayFunc;
 };
 
-export type TargetItems = {
+export type TargetArrayItems = {
     interface: StringArrayFunc[];
     private: StringArrayFunc[];
     public: StringArrayFunc[];
@@ -167,10 +167,10 @@ export type TargetDesc = {
     dir?: string;
     sources?: StringArrayFunc;
     libs?: StringArrayFunc;
-    includeDirectories?: TargetItemsDesc;
-    compileDefinitions?: TargetItemsDesc;
-    compileOptions?: TargetItemsDesc;
-    linkOptions?: TargetItemsDesc;
+    includeDirectories?: TargetArrayItemsDesc;
+    compileDefinitions?: TargetArrayItemsDesc;
+    compileOptions?: TargetArrayItemsDesc;
+    linkOptions?: TargetArrayItemsDesc;
     jobs?: TargetJobDesc[];
 };
 
@@ -182,10 +182,10 @@ export type Target = {
     enabled: BooleanFunc;
     sources: StringArrayFunc[];
     libs: StringArrayFunc[];
-    includeDirectories: TargetItems;
-    compileDefinitions: TargetItems;
-    compileOptions: TargetItems;
-    linkOptions: TargetItems;
+    includeDirectories: TargetArrayItems;
+    compileDefinitions: TargetArrayItems;
+    compileOptions: TargetArrayItems;
+    linkOptions: TargetArrayItems;
     jobs: TargetJob[];
 };
 
