@@ -11,8 +11,9 @@ export type Func<T> = (ctx: Context) => T;
 export type BooleanFunc = Func<boolean>;
 export type JobFunc = Func<Job>;
 export type ArrayFunc<T> = Func<T[]>;
+export type RecordFunc<T> = Func<Record<string,T>>;
 export type StringArrayFunc = ArrayFunc<string>;
-export type RecordFunc<T> = (ctx: Context) => Record<string, T>;
+export type StringRecordFunc = RecordFunc<string>;
 
 export type AliasMap = Record<string, string>;
 
@@ -20,7 +21,7 @@ export type ProjectDesc = {
     name?: string;
     cmakeVariables?: Record<string, string | boolean>;
     includeDirectories?: StringArrayFunc;
-    compileDefinitions?: StringArrayFunc;
+    compileDefinitions?: StringRecordFunc;
     compileOptions?: StringArrayFunc;
     linkOptions?: StringArrayFunc;
     imports?: Record<string, ImportDesc>;
@@ -43,7 +44,7 @@ export type Project = {
     settings: Settings;
     cmakeVariables: Record<string, string | boolean>;
     includeDirectories: StringArrayFunc[];
-    compileDefinitions: StringArrayFunc[];
+    compileDefinitions: StringRecordFunc[];
     compileOptions: StringArrayFunc[];
     linkOptions: StringArrayFunc[];
     imports: Record<string, Import>;
@@ -99,7 +100,7 @@ export type ConfigDesc = {
     environment?: Record<string, string>;
     options?: Record<string, any>;
     includeDirectories?: string[];
-    compileDefinitions?: string[];
+    compileDefinitions?: Record<string,string>;
     compileOptions?: string[];
     linkOptions?: string[];
 };
@@ -118,7 +119,7 @@ export type Config = {
     environment: Record<string, string>;
     options: Record<string, any>;
     includeDirectories: string[];
-    compileDefinitions: string[];
+    compileDefinitions: Record<string,string>;
     compileOptions: string[];
     linkOptions: string[];
 };

@@ -10,6 +10,7 @@ import {
     Project,
     ProjectDesc,
     StringArrayFunc,
+    StringRecordFunc,
     Context,
     Target,
     TargetDesc,
@@ -112,7 +113,7 @@ function resolveConfigs(project: Project) {
             environment: desc.environment ?? {},
             options: desc.options ?? {},
             includeDirectories: desc.includeDirectories ?? [],
-            compileDefinitions: desc.compileDefinitions ?? [],
+            compileDefinitions: desc.compileDefinitions ?? {},
             compileOptions: desc.compileOptions ?? [],
             linkOptions: desc.linkOptions ?? [],
         };
@@ -203,8 +204,8 @@ function mergeConfigDescWithImportDir(into: ConfigDescWithImportDir, from: Confi
     into.environment = mergeRecordsMaybeUndefined(into.environment, from.environment);
     into.options = mergeRecordsMaybeUndefined(into.options, from.options);
     into.includeDirectories = mergeArraysMaybeUndefined(into.includeDirectories, from.includeDirectories);
-    into.compileDefinitions = mergeArraysMaybeUndefined(into.compileDefinitions, from.compileDefinitions);
-    into.compileOptions = mergeArraysMaybeUndefined(into.compileDefinitions, from.compileOptions);
+    into.compileDefinitions = mergeRecordsMaybeUndefined(into.compileDefinitions, from.compileDefinitions);
+    into.compileOptions = mergeArraysMaybeUndefined(into.compileOptions, from.compileOptions);
     into.linkOptions = mergeArraysMaybeUndefined(into.linkOptions, from.linkOptions);
     cleanupUndefinedProperties(into);
 }
@@ -649,6 +650,23 @@ export function resolveProjectStringArray(array: StringArrayFunc[] | string[], c
             return [ resolveAliasOrPath(funcOrString, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths) ];
         }
     });
+}
+
+export function resolveProjectStringRecord(record: StringRecordFunc[] | Record<string,string>, ctx: Context, itemsAreFilePaths: boolean): Record<string, string> {
+    const baseDir = ctx.project.dir;
+    const subDir = undefined;
+    const result: Record<string, string> = {};
+    const resolve = (record: Record<string,string>) => {
+        for (const [key,val] of Object.entries(record)) {
+            result[key] = resolveAliasOrPath(val, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths);
+        }
+    }
+    if (Array.isArray(record)) {
+        record.forEach((func) => resolve(func(ctx)));
+    } else {
+        resolve(record);
+    }
+    return result;
 }
 
 export function resolveTargetStringArray(itemsArray: StringArrayFunc[], ctx: Context, itemsAreFilePaths: boolean): string[] {

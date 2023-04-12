@@ -17,6 +17,7 @@ import {
     TargetItems,
     util,
 } from '../../mod.ts';
+import { StringRecordFunc } from '../types.ts';
 
 export const cmakeAdapter: AdapterDesc = {
     configure: configure,
@@ -132,7 +133,7 @@ function generatorExpressionCompiler(compiler: Compiler, items: string[]): strin
     return `"$<$<C_COMPILER_ID:${compilerId(compiler)}>:${items.join(';')}>"`;
 }
 
-function genGlobalItemsLanguageCompiler(
+function genGlobalArrayItemsLanguageCompiler(
     project: Project,
     config: Config,
     statement: string,
@@ -159,31 +160,59 @@ function genGlobalItemsLanguageCompiler(
     return str;
 }
 
+function genGlobalRecordItemsLanguageCompiler(
+    project: Project,
+    config: Config,
+    statement: string,
+    items: StringRecordFunc[] | Record<string,string>,
+    itemsAreFilePaths: boolean
+): string {
+    let str = '';
+    const aliasMap = util.buildProjectAliasMap(project, config);
+    languages().forEach((language) => {
+        conf.compilers(config).forEach((compiler) => {
+            const ctx: Context = {
+                project,
+                config,
+                compiler,
+                language,
+                aliasMap,
+            };
+            const resolvedItems = proj.resolveProjectStringRecord(items, ctx, itemsAreFilePaths);
+            if (Object.keys(resolvedItems).length > 0) {
+                const resolvedItemsString = Object.entries(resolvedItems).map(([key,val]) => `${key}=${val}`);
+                str += `${statement}(${generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)})\n`;
+            }
+        });
+    });
+    return str;
+}
+
 function genIncludeDirectories(project: Project, config: Config): string {
     let str = '';
-    str += genGlobalItemsLanguageCompiler(project, config, 'include_directories', project.includeDirectories, true);
-    str += genGlobalItemsLanguageCompiler(project, config, 'include_directories', config.includeDirectories, true);
+    str += genGlobalArrayItemsLanguageCompiler(project, config, 'include_directories', project.includeDirectories, true);
+    str += genGlobalArrayItemsLanguageCompiler(project, config, 'include_directories', config.includeDirectories, true);
     return str;
 }
 
 function genCompileDefinitions(project: Project, config: Config): string {
     let str = '';
-    str += genGlobalItemsLanguageCompiler(project, config, 'add_compile_definitions', project.compileDefinitions, false);
-    str += genGlobalItemsLanguageCompiler(project, config, 'add_compile_definitions', config.compileDefinitions, false);
+    str += genGlobalRecordItemsLanguageCompiler(project, config, 'add_compile_definitions', project.compileDefinitions, false);
+    str += genGlobalRecordItemsLanguageCompiler(project, config, 'add_compile_definitions', config.compileDefinitions, false);
     return str;
 }
 
 function genCompileOptions(project: Project, config: Config): string {
     let str = '';
-    str += genGlobalItemsLanguageCompiler(project, config, 'add_compile_options', project.compileOptions, false);
-    str += genGlobalItemsLanguageCompiler(project, config, 'add_compile_options', config.compileOptions, false);
+    str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_compile_options', project.compileOptions, false);
+    str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_compile_options', config.compileOptions, false);
     return str;
 }
 
 function genLinkOptions(project: Project, config: Config): string {
     let str = '';
-    str += genGlobalItemsLanguageCompiler(project, config, 'add_link_options', project.linkOptions, false);
-    str += genGlobalItemsLanguageCompiler(project, config, 'add_link_options', config.linkOptions, false);
+    str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_link_options', project.linkOptions, false);
+    str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_link_options', config.linkOptions, false);
     return str;
 }
 
