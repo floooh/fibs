@@ -677,7 +677,7 @@ export function resolveProjectStringRecord(record: StringRecordFunc[] | Record<s
         }
     }
     if (Array.isArray(record)) {
-        record.forEach((func) => resolve(func(ctx)));
+        record.forEach((func) => resolve(func(ctx) as Record<string,string>));
     } else {
         resolve(record);
     }
@@ -701,7 +701,7 @@ export function resolveTargetStringRecord(record: StringRecordFunc[], ctx: Conte
             result[key] = resolveAliasOrPath(val, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths);
         }
     }
-    record.forEach((func) => resolve(func(ctx)));
+    record.forEach((func) => resolve(func(ctx) as Record<string,string>));
     return result;
 }
 
