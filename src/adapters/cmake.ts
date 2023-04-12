@@ -15,6 +15,7 @@ import {
     StringArrayFunc,
     Target,
     TargetArrayItems,
+    TargetRecordItems,
     util,
 } from '../../mod.ts';
 import { StringRecordFunc } from '../types.ts';
@@ -340,12 +341,56 @@ function genTargetArrayItems(
     return str;
 }
 
+function genTargetRecordItems(
+    project: Project,
+    config: Config,
+    target: Target,
+    statement: string,
+    items: TargetRecordItems,
+    itemsAreFilePaths: boolean,
+): string {
+    let str = '';
+    const aliasMap = util.buildTargetAliasMap(project, config, target);
+    languages().forEach((language) => {
+        conf.compilers(config).forEach((compiler) => {
+            const ctx: Context = {
+                project,
+                config,
+                target,
+                compiler,
+                language,
+                aliasMap,
+            };
+            const resolvedItems = proj.resolveTargetRecordItems(items, ctx, itemsAreFilePaths);
+            if (Object.keys(resolvedItems.interface).length > 0) {
+                const resolvedItemsString = Object.entries(resolvedItems.interface).map(([key,val]) => `${key}=${val}`);
+                str += `${statement}(${target.name} INTERFACE ${
+                    generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
+                })\n`;
+            }
+            if (Object.keys(resolvedItems.private).length > 0) {
+                const resolvedItemsString = Object.entries(resolvedItems.private).map(([key,val]) => `${key}=${val}`);
+                str += `${statement}(${target.name} PRIVATE ${
+                    generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
+                })\n`;
+            }
+            if (Object.keys(resolvedItems.public).length > 0) {
+                const resolvedItemsString = Object.entries(resolvedItems.public).map(([key,val]) => `${key}=${val}`);
+                str += `${statement}(${target.name} PUBLIC ${
+                    generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
+                })\n`;
+            }
+        });
+    });
+    return str;
+}
+
 function genTargetIncludeDirectories(project: Project, config: Config, target: Target): string {
     return genTargetArrayItems(project, config, target, 'target_include_directories', target.includeDirectories, true);
 }
 
 function genTargetCompileDefinitions(project: Project, config: Config, target: Target): string {
-    return genTargetArrayItems(project, config, target, 'target_compile_definitions', target.compileDefinitions, false);
+    return genTargetRecordItems(project, config, target, 'target_compile_definitions', target.compileDefinitions, false);
 }
 
 function genTargetCompileOptions(project: Project, config: Config, target: Target): string {

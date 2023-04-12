@@ -16,6 +16,8 @@ import {
     TargetDesc,
     TargetArrayItems,
     TargetArrayItemsDesc,
+    TargetRecordItems,
+    TargetRecordItemsDesc,
     TargetJob,
     TargetJobDesc,
     Opener,
@@ -173,14 +175,6 @@ function mergeArrays<T>(into: T[], src: T[]): T[] {
     return [...into, ...src];
 }
 
-function mergeTargetArrayItems(into: TargetArrayItems, src: TargetArrayItems): TargetArrayItems {
-    return {
-        interface: mergeArrays(into.interface, src.interface),
-        private: mergeArrays(into.private, src.private),
-        public: mergeArrays(into.public, src.public),
-    };
-}
-
 function cleanupUndefinedProperties<T>(obj: T) {
     let key: keyof typeof obj;
     for (key in obj) {
@@ -325,12 +319,32 @@ function integrateTarget(intoRecord: Record<string, Target>, name: string, impor
         private: optionalToArray(desc?.private),
         public: optionalToArray(desc?.public),
     });
+    const toTargetRecordItems = (desc: TargetRecordItemsDesc | undefined): TargetRecordItems => ({
+        interface: optionalToArray(desc?.interface),
+        private: optionalToArray(desc?.private),
+        public: optionalToArray(desc?.public),
+    });
     const toTargetJobs = (descs: TargetJobDesc[] | undefined): TargetJob[] => {
         if (descs === undefined) {
             return [];
         }
         return descs.map((desc) => ({job: desc.job, args: desc.args}));
     };
+    const mergeTargetArrayItems = (into: TargetArrayItems, src: TargetArrayItems): TargetArrayItems => {
+        return {
+            interface: mergeArrays(into.interface, src.interface),
+            private: mergeArrays(into.private, src.private),
+            public: mergeArrays(into.public, src.public),
+        };
+    };
+    const mergeTargetRecordItems = (into: TargetRecordItems, src: TargetRecordItems): TargetRecordItems => {
+        return {
+            interface: mergeArrays(into.interface, src.interface),
+            private: mergeArrays(into.private, src.private),
+            public: mergeArrays(into.public, src.public),
+        };
+    };
+
     const into = intoRecord[name];
     const from: Target = {
         name,
@@ -341,7 +355,7 @@ function integrateTarget(intoRecord: Record<string, Target>, name: string, impor
         sources: optionalToArray(desc.sources),
         libs: optionalToArray(desc.libs),
         includeDirectories: toTargetArrayItems(desc.includeDirectories),
-        compileDefinitions: toTargetArrayItems(desc.compileDefinitions),
+        compileDefinitions: toTargetRecordItems(desc.compileDefinitions),
         compileOptions: toTargetArrayItems(desc.compileOptions),
         linkOptions: toTargetArrayItems(desc.linkOptions),
         jobs: toTargetJobs(desc.jobs),
@@ -355,7 +369,7 @@ function integrateTarget(intoRecord: Record<string, Target>, name: string, impor
         into.sources = mergeArrays(into.sources, from.sources);
         into.libs = mergeArrays(into.libs, from.libs);
         into.includeDirectories = mergeTargetArrayItems(into.includeDirectories, from.includeDirectories);
-        into.compileDefinitions = mergeTargetArrayItems(into.compileDefinitions, from.compileDefinitions);
+        into.compileDefinitions = mergeTargetRecordItems(into.compileDefinitions, from.compileDefinitions);
         into.compileOptions = mergeTargetArrayItems(into.compileOptions, from.compileOptions);
         into.linkOptions = mergeTargetArrayItems(into.linkOptions, from.linkOptions);
         into.jobs = mergeArrays(into.jobs, from.jobs);
@@ -481,11 +495,11 @@ export function validateTarget(
 
     // check restrictions for interface targets
     if (target.type === 'interface') {
-        const checkInterfaceArrayItems = (items: TargetArrayItems): boolean => {
-            if ((typeof items.private === 'function') || (items.private.length > 0)) {
+        const check = (items: TargetArrayItems | TargetRecordItems): boolean => {
+            if (items.private.length > 0) {
                 return false;
             }
-            if ((typeof items.public === 'function') || (items.public.length > 0)) {
+            if (items.public.length > 0) {
                 return false;
             }
             return true;
@@ -494,19 +508,19 @@ export function validateTarget(
             res.valid = false;
             res.hints.push(`target type 'interface' cannot have source files attached`);
         }
-        if (!checkInterfaceArrayItems(target.includeDirectories)) {
+        if (!check(target.includeDirectories)) {
             res.valid = false;
             res.hints.push(`interface targets must only define interface include directories`);
         }
-        if (!checkInterfaceArrayItems(target.compileDefinitions)) {
+        if (!check(target.compileDefinitions)) {
             res.valid = false;
             res.hints.push(`interface targets must only define interface compile definitins`);
         }
-        if (!checkInterfaceArrayItems(target.compileOptions)) {
+        if (!check(target.compileOptions)) {
             res.valid = false;
             res.hints.push(`interface targets must only define interface compile options`);
         }
-        if (!checkInterfaceArrayItems(target.linkOptions)) {
+        if (!check(target.linkOptions)) {
             res.valid = false;
             res.hints.push(`interface targets must only define interface link options`);
         }
@@ -670,12 +684,25 @@ export function resolveProjectStringRecord(record: StringRecordFunc[] | Record<s
     return result;
 }
 
-export function resolveTargetStringArray(itemsArray: StringArrayFunc[], ctx: Context, itemsAreFilePaths: boolean): string[] {
+export function resolveTargetStringArray(array: StringArrayFunc[], ctx: Context, itemsAreFilePaths: boolean): string[] {
     const baseDir = ctx.target!.importDir;
     const subDir = ctx.target!.dir;
-    return itemsArray.flatMap((funcOrString) => {
+    return array.flatMap((funcOrString) => {
         return funcOrString(ctx).map((item) => resolveAliasOrPath(item, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths));
     });
+}
+
+export function resolveTargetStringRecord(record: StringRecordFunc[], ctx: Context, itemsAreFilePaths: boolean): Record<string,string> {
+    const baseDir = ctx.target!.importDir;
+    const subDir = ctx.target!.dir;
+    const result: Record<string, string> = {};
+    const resolve = (record: Record<string,string>) => {
+        for (const [key,val] of Object.entries(record)) {
+            result[key] = resolveAliasOrPath(val, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths);
+        }
+    }
+    record.forEach((func) => resolve(func(ctx)));
+    return result;
 }
 
 export type ResolvedTargetArrayItems = {
@@ -689,6 +716,20 @@ export function resolveTargetArrayItems(items: TargetArrayItems, ctx: Context, i
         interface: resolveTargetStringArray(items.interface, ctx, itemsAreFilePaths),
         private: resolveTargetStringArray(items.private, ctx, itemsAreFilePaths),
         public: resolveTargetStringArray(items.public, ctx, itemsAreFilePaths),
+    }
+}
+
+export type ResolvedTargetRecordItems = {
+    interface: Record<string,string>;
+    private: Record<string,string>;
+    public: Record<string,string>;
+}
+
+export function resolveTargetRecordItems(items: TargetRecordItems, ctx: Context, itemsAreFilePaths: boolean): ResolvedTargetRecordItems {
+    return {
+        interface: resolveTargetStringRecord(items.interface, ctx, itemsAreFilePaths),
+        private: resolveTargetStringRecord(items.private, ctx, itemsAreFilePaths),
+        public: resolveTargetStringRecord(items.public, ctx, itemsAreFilePaths),
     }
 }
 

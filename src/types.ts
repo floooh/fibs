@@ -151,6 +151,18 @@ export type TargetArrayItems = {
     public: StringArrayFunc[];
 };
 
+export type TargetRecordItemsDesc = {
+    interface?: StringRecordFunc;
+    private?: StringRecordFunc;
+    public?: StringRecordFunc;
+};
+
+export type TargetRecordItems = {
+    interface: StringRecordFunc[];
+    private: StringRecordFunc[];
+    public: StringRecordFunc[];
+};
+
 export type TargetJobDesc = {
     job: string;
     args: any;
@@ -168,7 +180,7 @@ export type TargetDesc = {
     sources?: StringArrayFunc;
     libs?: StringArrayFunc;
     includeDirectories?: TargetArrayItemsDesc;
-    compileDefinitions?: TargetArrayItemsDesc;
+    compileDefinitions?: TargetRecordItemsDesc;
     compileOptions?: TargetArrayItemsDesc;
     linkOptions?: TargetArrayItemsDesc;
     jobs?: TargetJobDesc[];
@@ -183,7 +195,7 @@ export type Target = {
     sources: StringArrayFunc[];
     libs: StringArrayFunc[];
     includeDirectories: TargetArrayItems;
-    compileDefinitions: TargetArrayItems;
+    compileDefinitions: TargetRecordItems;
     compileOptions: TargetArrayItems;
     linkOptions: TargetArrayItems;
     jobs: TargetJob[];
