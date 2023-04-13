@@ -655,16 +655,20 @@ function resolveAliasOrPath(item: string, baseDir: string, subDir: string | unde
     }
 }
 
+function removeNullish(array: (string|undefined|null)[]): string[] {
+    return array.filter((item) => item) as string[];
+}
+
 export function resolveProjectStringArray(array: StringArrayFunc[] | string[], ctx: Context, itemsAreFilePaths: boolean): string[] {
     const baseDir = ctx.project.dir;
     const subDir = undefined;
     return array.flatMap((funcOrString) => {
         if (typeof funcOrString === 'function') {
-            return funcOrString(ctx).map((item) => resolveAliasOrPath(item, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths));
+            return removeNullish(funcOrString(ctx)).map((item) => resolveAliasOrPath(item!, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths));
         } else {
-            return [ resolveAliasOrPath(funcOrString, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths) ];
+            return funcOrString ? [ resolveAliasOrPath(funcOrString, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths) ] : [];
         }
-    });
+    }) as string[];
 }
 
 export function resolveProjectStringRecord(record: StringRecordFunc[] | Record<string,string>, ctx: Context, itemsAreFilePaths: boolean): Record<string, string> {
@@ -688,7 +692,7 @@ export function resolveTargetStringArray(array: StringArrayFunc[], ctx: Context,
     const baseDir = ctx.target!.importDir;
     const subDir = ctx.target!.dir;
     return array.flatMap((funcOrString) => {
-        return funcOrString(ctx).map((item) => resolveAliasOrPath(item, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths));
+        return removeNullish(funcOrString(ctx)).filter((item) => item).map((item) => resolveAliasOrPath(item!, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths));
     });
 }
 
