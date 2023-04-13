@@ -15,25 +15,36 @@ export type RecordFunc<T> = Func<Record<string,T|undefined>>; // the undefined i
 export type StringArrayFunc = ArrayFunc<string>;
 export type StringRecordFunc = RecordFunc<string>;
 
+export type CMakeVariables = Record<string, string | boolean>;
 export type AliasMap = Record<string, string>;
+export type ImportDescs = Record<string, ImportDesc>;
+export type TargetDescs = Record<string, TargetDesc>;
+export type CommandDescs = Record<string, CommandDesc>;
+export type ToolDescs = Record<string, ToolDesc>;
+export type JobTemplateDescs = Record<string, JobTemplateDesc>;
+export type RunnerDescs = Record<string, RunnerDesc>;
+export type OpenerDescs = Record<string, OpenerDesc>;
+export type ConfigDescs = Record<string, ConfigDesc>;
+export type AdapterDescs = Record<string, AdapterDesc>;
+export type SettingsItems = Record<string, SettingsItem>;
 
 export type ProjectDesc = {
     name?: string;
-    cmakeVariables?: Record<string, string | boolean>;
+    cmakeVariables?: CMakeVariables;
     includeDirectories?: StringArrayFunc;
     compileDefinitions?: StringRecordFunc;
     compileOptions?: StringArrayFunc;
     linkOptions?: StringArrayFunc;
-    imports?: Record<string, ImportDesc>;
-    targets?: Record<string, TargetDesc>;
-    commands?: Record<string, CommandDesc>;
-    tools?: Record<string, ToolDesc>;
-    jobs?: Record<string, JobTemplateDesc>;
-    runners?: Record<string, RunnerDesc>;
-    openers?: Record<string, OpenerDesc>;
-    configs?: Record<string, ConfigDesc>;
-    adapters?: Record<string, AdapterDesc>;
-    settings?: Record<string, SettingsItem>;
+    imports?: ImportDescs;
+    targets?: TargetDescs;
+    commands?: CommandDescs;
+    tools?: ToolDescs;
+    jobs?: JobTemplateDescs;
+    runners?: RunnerDescs;
+    openers?: OpenerDescs;
+    configs?: ConfigDescs;
+    adapters?: AdapterDescs;
+    settings?: SettingsItems;
 };
 
 export type ConfigDescWithImportDir = ConfigDesc & { importDir: string };
@@ -42,7 +53,7 @@ export type Project = {
     name: string;
     dir: string;
     settings: Settings;
-    cmakeVariables: Record<string, string | boolean>;
+    cmakeVariables: CMakeVariables;
     includeDirectories: StringArrayFunc[];
     compileDefinitions: StringRecordFunc[];
     compileOptions: StringArrayFunc[];
@@ -96,7 +107,7 @@ export type ConfigDesc = {
     generator?: string;
     arch?: Arch;
     toolchainFile?: string;
-    cmakeVariables?: Record<string, string | boolean>;
+    cmakeVariables?: CMakeVariables;
     environment?: Record<string, string>;
     options?: Record<string, any>;
     includeDirectories?: string[];
@@ -115,7 +126,7 @@ export type Config = {
     generator: string | undefined;
     arch: Arch | undefined;
     toolchainFile: string | undefined;
-    cmakeVariables: Record<string, string | boolean>;
+    cmakeVariables: CMakeVariables;
     environment: Record<string, string>;
     options: Record<string, any>;
     includeDirectories: string[];
