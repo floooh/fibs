@@ -277,25 +277,22 @@ function genTarget(project: Project, config: Config, target: Target): string {
 function genTargetDependencies(project: Project, config: Config, target: Target): string {
     let str = '';
     const aliasMap = util.buildTargetAliasMap(project, config, target);
-    languages().forEach((language) => {
-        conf.compilers(config).forEach((compiler) => {
-            const ctx: Context = {
-                project,
-                config,
-                target,
-                compiler,
-                language,
-                aliasMap,
-            };
-            const libs = proj.resolveTargetStringArray(target.libs, ctx, false);
-            if (libs.length > 0) {
-                let type = '';
-                if (target.type === 'interface') {
-                    type = ' INTERFACE';
-                }
-                str += `target_link_libraries(${target.name}${type} ${generatorExpressionCompiler(compiler, libs)})\n`;
+    conf.compilers(config).forEach((compiler) => {
+        const ctx: Context = {
+            project,
+            config,
+            target,
+            compiler,
+            aliasMap,
+        };
+        const libs = proj.resolveTargetStringArray(target.libs, ctx, false);
+        if (libs.length > 0) {
+            let type = '';
+            if (target.type === 'interface') {
+                type = ' INTERFACE';
             }
-        });
+            str += `target_link_libraries(${target.name}${type} ${generatorExpressionCompiler(compiler, libs)})\n`;
+        }
     });
     return str;
 }
