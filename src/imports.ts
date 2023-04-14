@@ -39,8 +39,7 @@ export async function fetch(project: Project, options: FetchOptions): Promise<Fe
         if (util.dirExists(res.dir)) {
             res.valid = true;
             return res;
-        }
-        if (!util.dirExists(res.dir)) {
+        } else {
             if (!await git.clone({
                 url: options.url,
                 dir: importsDir,
