@@ -109,7 +109,7 @@ async function diagImports(project: Project) {
                 log.info(`  ${hint}`);
             }
         }
-    };
+    }
 }
 
 async function diagProject(project: Project) {

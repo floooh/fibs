@@ -155,7 +155,7 @@ function saveImportLinks(project: Project, links: Record<string,string|undefined
 }
 
 function linkUnlink(project: Project, importName: string, path: string | undefined): string | undefined {
-    if (util.find(importName, project.imports)) {
+    if (!util.find(importName, project.imports)) {
         log.error(`import '${importName}' not found (run 'fibs list imports')`);
     }
     if (path !== undefined) {

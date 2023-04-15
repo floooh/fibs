@@ -197,7 +197,7 @@ export interface TargetDesc extends NamedItem {
     compileOptions?: TargetArrayItemsDesc;
     linkOptions?: TargetArrayItemsDesc;
     jobs?: TargetJobDesc[];
-};
+}
 
 export interface Target extends NamedItem {
     importDir: string;
@@ -211,12 +211,12 @@ export interface Target extends NamedItem {
     compileOptions: TargetArrayItems;
     linkOptions: TargetArrayItems;
     jobs: TargetJob[];
-};
+}
 
 export type JobValidateResult = {
     valid: boolean;
     hints: string[];
-};
+}
 
 export interface JobTemplateDesc extends NamedItem {
     help(): void;
@@ -237,7 +237,7 @@ export interface Job extends NamedItem {
     addOutputsToTargetSources: boolean;
     args: any;
     func: (inputs: string[], output: string[], args: any) => Promise<void>;
-};
+}
 
 export interface CommandDesc extends NamedItem {
     help(): void;
@@ -299,7 +299,7 @@ export interface Tool extends NamedItem {
     optional: boolean;
     notFoundMsg: string;
     exists(): Promise<boolean>;
-};
+}
 
 export type AdapterOptions = {
     buildTarget?: string;
@@ -315,4 +315,4 @@ export interface Adapter extends NamedItem {
     importDir: string;
     configure(project: Project, config: Config, options: AdapterOptions): Promise<void>;
     build(project: Project, config: Config, options: AdapterOptions): Promise<void>;
-};
+}
