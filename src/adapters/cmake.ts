@@ -21,6 +21,7 @@ import {
 import { StringRecordFunc } from '../types.ts';
 
 export const cmakeAdapter: AdapterDesc = {
+    name: 'cmake',
     configure: configure,
     build: build,
 };
@@ -69,8 +70,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genCompileOptions(project, config);
     str += genLinkOptions(project, config);
     str += genAllJobsTarget(project, config);
-    const targets = Object.values(project.targets);
-    targets.forEach((target) => {
+    for (const target of project.targets) {
         if (proj.isTargetEnabled(project, config, target)) {
             str += genTarget(project, config, target);
             str += genTargetDependencies(project, config, target);
@@ -80,7 +80,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
             str += genTargetLinkOptions(project, config, target);
             str += genTargetJobDependencies(project, config, target);
         }
-    });
+    }
     return str;
 }
 
@@ -143,8 +143,8 @@ function genGlobalArrayItemsLanguageCompiler(
 ): string {
     let str = '';
     const aliasMap = util.buildProjectAliasMap(project, config);
-    languages().forEach((language) => {
-        conf.compilers(config).forEach((compiler) => {
+    for (const language of languages()) {
+        for (const compiler of conf.compilers(config)) {
             const ctx: Context = {
                 project,
                 config,
@@ -156,8 +156,8 @@ function genGlobalArrayItemsLanguageCompiler(
             if (resolvedItems.length > 0) {
                 str += `${statement}(${generatorExpressionLanguageCompiler(language, compiler, resolvedItems)})\n`;
             }
-        });
-    });
+        }
+    }
     return str;
 }
 
@@ -170,8 +170,8 @@ function genGlobalRecordItemsLanguageCompiler(
 ): string {
     let str = '';
     const aliasMap = util.buildProjectAliasMap(project, config);
-    languages().forEach((language) => {
-        conf.compilers(config).forEach((compiler) => {
+    for (const language of languages()) {
+        for (const compiler of conf.compilers(config)) {
             const ctx: Context = {
                 project,
                 config,
@@ -184,8 +184,8 @@ function genGlobalRecordItemsLanguageCompiler(
                 const resolvedItemsString = Object.entries(resolvedItems).map(([key,val]) => `${key}=${val}`);
                 str += `${statement}(${generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)})\n`;
             }
-        });
-    });
+        }
+    }
     return str;
 }
 
@@ -237,9 +237,9 @@ function genTarget(project: Project, config: Config, target: Target): string {
     });
 
     // need to create an empy dummy for any job output file that doesn't exist yet
-    jobOutputs.forEach((path) => {
+    for (const path of jobOutputs) {
         util.ensureFile(path);
-    });
+    }
 
     const targetSources = [...sources, ...jobOutputs];
     const targetSourcesStr = targetSources.join(' ');
@@ -277,7 +277,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
 function genTargetDependencies(project: Project, config: Config, target: Target): string {
     let str = '';
     const aliasMap = util.buildTargetAliasMap(project, config, target);
-    conf.compilers(config).forEach((compiler) => {
+    for (const compiler of conf.compilers(config)) {
         const ctx: Context = {
             project,
             config,
@@ -293,7 +293,7 @@ function genTargetDependencies(project: Project, config: Config, target: Target)
             }
             str += `target_link_libraries(${target.name}${type} ${generatorExpressionCompiler(compiler, libs)})\n`;
         }
-    });
+    }
     return str;
 }
 
@@ -307,8 +307,8 @@ function genTargetArrayItems(
 ): string {
     let str = '';
     const aliasMap = util.buildTargetAliasMap(project, config, target);
-    languages().forEach((language) => {
-        conf.compilers(config).forEach((compiler) => {
+    for (const language of languages()) {
+        for (const compiler of conf.compilers(config)) {
             const ctx: Context = {
                 project,
                 config,
@@ -333,8 +333,8 @@ function genTargetArrayItems(
                     generatorExpressionLanguageCompiler(language, compiler, resolvedItems.public)
                 })\n`;
             }
-        });
-    });
+        }
+    }
     return str;
 }
 
@@ -348,8 +348,8 @@ function genTargetRecordItems(
 ): string {
     let str = '';
     const aliasMap = util.buildTargetAliasMap(project, config, target);
-    languages().forEach((language) => {
-        conf.compilers(config).forEach((compiler) => {
+    for (const language of languages()) {
+        for (const compiler of conf.compilers(config)) {
             const ctx: Context = {
                 project,
                 config,
@@ -377,8 +377,8 @@ function genTargetRecordItems(
                     generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
                 })\n`;
             }
-        });
-    });
+        }
+    }
     return str;
 }
 
@@ -402,7 +402,7 @@ function genAllJobsTarget(project: Project, config: Config): string {
     let str = '';
     // first check if there are any jobs
     let hasJobs: boolean = false;
-    for (const target of Object.values(project.targets)) {
+    for (const target of project.targets) {
         if (target.jobs.length > 0) {
             hasJobs = true;
             break;

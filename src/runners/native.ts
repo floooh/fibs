@@ -1,6 +1,6 @@
 import { Config, Project, RunnerDesc, RunOptions, Target, util } from '../../mod.ts';
 
-export const nativeRunner: RunnerDesc = { run };
+export const nativeRunner: RunnerDesc = { name: 'native', run };
 
 async function run(project: Project, config: Config, target: Target, options: RunOptions) {
     // can assume here that run() will only be called for executable targets

@@ -1,7 +1,7 @@
 import { CommandDesc, log, Project, TargetType, proj, util } from '../../mod.ts';
 import { colors } from '../../deps.ts';
 
-export const listCmd: CommandDesc = { help, run };
+export const listCmd: CommandDesc = { name: 'list', help, run };
 
 function help() {
     log.helpCmd([
@@ -36,8 +36,7 @@ async function run(project: Project) {
         log.section('settings');
     }
     if (args.all || args.settings) {
-        for (const key in project.settings) {
-            const val = project.settings[key].value;
+        for (const [key,val] of Object.entries(project.settings)) {
             const def = project.settings[key].default;
             log.print(`${key}: ${val} (default: ${def})`);
         }
@@ -47,7 +46,7 @@ async function run(project: Project) {
         log.section('configs');
     }
     if (args.all || args.configs) {
-        for (const config of Object.values(project.configs)) {
+        for (const config of project.configs) {
             log.print(config.name);
         }
     }
@@ -56,7 +55,7 @@ async function run(project: Project) {
         log.section('imports');
     }
     if (args.all || args.imports) {
-        for (const imp of Object.values(project.imports)) {
+        for (const imp of project.imports) {
             log.print(`${imp.name}: ${imp.importDir}`);
         }
     }
@@ -65,7 +64,7 @@ async function run(project: Project) {
         log.section('runners');
     }
     if (args.all || args.runners) {
-        for (const runner of Object.values(project.runners)) {
+        for (const runner of project.runners) {
             log.print(runner.name);
 
         }
@@ -75,7 +74,7 @@ async function run(project: Project) {
         log.section('openers');
     }
     if (args.all || args.openers) {
-        for (const opener of Object.values(project.openers)) {
+        for (const opener of project.openers) {
             log.print(opener.name);
         }
     }
@@ -84,7 +83,7 @@ async function run(project: Project) {
         log.section('jobs');
     }
     if (args.all || args.jobs) {
-        for (const job of Object.values(project.jobs)) {
+        for (const job of project.jobs) {
             job.help();
         }
     }
@@ -94,7 +93,7 @@ async function run(project: Project) {
     }
     if (args.all || (args.targetTypes.length > 0)) {
         const types = allTargetTypes;
-        const targets = Object.values(project.targets);
+        const targets = project.targets;
         const config = util.activeConfig(project);
         for (const type of types) {
             for (const target of targets) {

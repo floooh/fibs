@@ -1,6 +1,6 @@
 import { AdapterOptions, CommandDesc, conf, imports, log, proj, Project, util } from '../../mod.ts';
 
-export const buildCmd: CommandDesc = { help, run };
+export const buildCmd: CommandDesc = { name: 'build', help, run };
 
 function help() {
     log.helpCmd([
@@ -15,7 +15,7 @@ async function run(project: Project) {
     if (imports.hasImportErrors(project)) {
         log.error('import errors detected');
     }
-    const adapter = project.adapters['cmake'];
+    const adapter = util.find('cmake', project.adapters)!;
     const config = util.activeConfig(project);
     const options: AdapterOptions = {};
     for (let i = 1; i < Deno.args.length; i++) {
@@ -27,7 +27,7 @@ async function run(project: Project) {
                 log.error(`unknown option '${arg}, type 'fibs help build'`);
             }
         } else {
-            if (project.targets[arg] !== undefined) {
+            if (util.find(arg, project.targets) !== undefined) {
                 options.buildTarget = arg;
             } else {
                 log.error(`unknown build target '${arg}`);

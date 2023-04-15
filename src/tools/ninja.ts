@@ -1,6 +1,7 @@
 import { ToolDesc, util } from '../../mod.ts';
 
 export const ninjaTool: ToolDesc = {
+    name: 'ninja',
     platforms: ['windows', 'macos', 'linux'],
     optional: true,
     notFoundMsg: 'required for building *-ninja-* configs',

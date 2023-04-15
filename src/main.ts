@@ -30,13 +30,12 @@ export async function main() {
             // setup the root project tree
             rootProject = await proj.setup(cwd, rootModule.project, stdDesc);
             // lookup and run subcommand
-            const cmd = Deno.args[0];
-            if (rootProject.commands[cmd] !== undefined) {
-                await rootProject.commands[cmd].run(rootProject);
+            const cmdName = Deno.args[0];
+            const cmd = util.find(cmdName, rootProject.commands);
+            if (cmd !== undefined) {
+                await cmd.run(rootProject);
             } else {
-                log.error(
-                    `command '${cmd}' not found in project '${rootProject.name}', run 'fibs help'`,
-                );
+                log.error(`command '${cmdName}' not found in project '${rootProject.name}', run 'fibs help'`);
             }
         } else {
             log.error('file \'fibs.ts\' in current directory has no export \'project\'');
@@ -63,7 +62,7 @@ const stdDesc: ProjectDesc = {
             default: util.defaultConfigForPlatform(host.platform()),
             value: util.defaultConfigForPlatform(host.platform()),
             validate: (project, value) => {
-                return { valid: project.configs[value] !== undefined, hint: 'run \'fibs list configs\'' };
+                return { valid:util.find(value, project.configs) !== undefined, hint: 'run \'fibs list configs\'' };
             },
         },
     },

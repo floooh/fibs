@@ -1,146 +1,178 @@
 import { ConfigDesc } from '../types.ts';
 
-export const configs: Record<string, ConfigDesc> = {
-    'win-vstudio': {
+export const configs: ConfigDesc[] = [
+    {
+        name: 'win-vstudio',
         ignore: true,
         platform: 'windows',
         arch: 'x86_64',
         opener: 'vstudio',
     },
-    'win-vstudio-release': {
+    {
+        name: 'win-vstudio-release',
         inherits: 'win-vstudio',
         buildType: 'release',
     },
-    'win-vstudio-debug': {
+    {
+        name: 'win-vstudio-debug',
         inherits: 'win-vstudio',
         buildType: 'debug',
     },
-    'macos-make': {
+    {
+        name: 'macos-make',
         ignore: true,
         platform: 'macos',
         generator: 'Unix Makefiles',
     },
-    'macos-ninja': {
+    {
+        name: 'macos-ninja',
         ignore: true,
         platform: 'macos',
         generator: 'Ninja',
     },
-    'macos-xcode': {
+    {
+        name: 'macos-xcode',
         ignore: true,
         platform: 'macos',
         generator: 'Xcode',
         opener: 'xcode',
     },
-    'macos-vscode': {
+    {
+        name: 'macos-vscode',
         ignore: true,
         platform: 'macos',
         generator: 'Ninja',
         opener: 'vscode',
     },
-    'macos-make-release': {
+    {
+        name: 'macos-make-release',
         inherits: 'macos-make',
         buildType: 'release',
     },
-    'macos-make-debug': {
+    {
+        name: 'macos-make-debug',
         inherits: 'macos-make',
         buildType: 'debug',
     },
-    'macos-ninja-release': {
+    {
+        name: 'macos-ninja-release',
         inherits: 'macos-ninja',
         buildType: 'release',
     },
-    'macos-ninja-debug': {
+    {
+        name: 'macos-ninja-debug',
         inherits: 'macos-ninja',
         buildType: 'debug',
     },
-    'macos-xcode-release': {
+    {
+        name: 'macos-xcode-release',
         inherits: 'macos-xcode',
         buildType: 'release',
     },
-    'macos-xcode-debug': {
+    {
+        name: 'macos-xcode-debug',
         inherits: 'macos-xcode',
         buildType: 'debug',
     },
-    'macos-vscode-release': {
+    {
+        name: 'macos-vscode-release',
         inherits: 'macos-vscode',
         buildType: 'release',
     },
-    'macos-vscode-debug': {
+    {
+        name: 'macos-vscode-debug',
         inherits: 'macos-vscode',
         buildType: 'debug',
     },
-    'linux-make': {
+    {
+        name: 'linux-make',
         ignore: true,
         platform: 'linux',
         generator: 'Unix Makefiles',
     },
-    'linux-ninja': {
+    {
+        name: 'linux-ninja',
         ignore: true,
         platform: 'linux',
         generator: 'Ninja',
     },
-    'linux-make-release': {
+    {
+        name: 'linux-make-release',
         inherits: 'linux-make',
         buildType: 'release',
     },
-    'linux-make-debug': {
+    {
+        name: 'linux-make-debug',
         inherits: 'linux-make',
         buildType: 'debug',
     },
-    'linux-ninja-release': {
+    {
+        name: 'linux-ninja-release',
         inherits: 'linux-ninja',
         buildType: 'release',
     },
-    'linux-ninja-debug': {
+    {
+        name: 'linux-ninja-debug',
         inherits: 'linux-ninja',
         buildType: 'debug',
     },
-    'emsc': {
+    {
+        name: 'emsc',
         ignore: true,
         platform: 'emscripten',
         runner: 'emscripten',
         toolchainFile: '@sdks:emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake',
     },
-    'emsc-make': {
+    {
+        name: 'emsc-make',
         ignore: true,
         inherits: 'emsc',
         generator: 'Unix Makefiles',
     },
-    'emsc-ninja': {
+    {
+        name: 'emsc-ninja',
         ignore: true,
         inherits: 'emsc',
         generator: 'Ninja',
     },
-    'emsc-vscode': {
+    {
+        name: 'emsc-vscode',
         ignore: true,
         inherits: 'emsc-ninja',
         opener: 'vscode',
     },
-    'emsc-make-debug': {
+    {
+        name: 'emsc-make-debug',
         inherits: 'emsc-make',
         buildType: 'debug',
     },
-    'emsc-make-release': {
+    {
+        name: 'emsc-make-release',
         inherits: 'emsc-make',
         buildType: 'release',
     },
-    'emsc-ninja-debug': {
+    {
+        name: 'emsc-ninja-debug',
         inherits: 'emsc-ninja',
         buildType: 'debug',
     },
-    'emsc-ninja-release': {
+    {
+        name: 'emsc-ninja-release',
         inherits: 'emsc-ninja',
         buildType: 'release',
     },
-    'emsc-vscode-debug': {
+    {
+        name: 'emsc-vscode-debug',
         inherits: 'emsc-vscode',
         buildType: 'debug',
     },
-    'emsc-vscode-release': {
+    {
+        name: 'emsc-vscode-release',
         inherits: 'emsc-vscode',
         buildType: 'release',
     },
-    'wasi': {
+    {
+        name: 'wasi',
         ignore: true,
         platform: 'wasi',
         runner: 'wasi',
@@ -149,30 +181,36 @@ export const configs: Record<string, ConfigDesc> = {
             WASI_SDK_PREFIX: '@sdks:wasisdk',
         },
     },
-    'wasi-make': {
+    {
+        name: 'wasi-make',
         ignore: true,
         inherits: 'wasi',
         generator: 'Unix Makefiles',
     },
-    'wasi-make-debug': {
+    {
+        name: 'wasi-make-debug',
         inherits: 'wasi-make',
         buildType: 'debug',
     },
-    'wasi-make-release': {
+    {
+        name: 'wasi-make-release',
         inherits: 'wasi-make',
         buildType: 'release',
     },
-    'wasi-ninja': {
+    {
+        name: 'wasi-ninja',
         ignore: true,
         inherits: 'wasi',
         generator: 'Ninja',
     },
-    'wasi-ninja-debug': {
+    {
+        name: 'wasi-ninja-debug',
         inherits: 'wasi-ninja',
         buildType: 'debug',
     },
-    'wasi-ninja-release': {
+    {
+        name: 'wasi-ninja-release',
         inherits: 'wasi-ninja',
         buildType: 'release',
     },
-};
+]

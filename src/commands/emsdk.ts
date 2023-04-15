@@ -1,6 +1,6 @@
 import { CommandDesc, emsdk, log, Project } from '../../mod.ts';
 
-export const emsdkCmd: CommandDesc = { help, run };
+export const emsdkCmd: CommandDesc = { name: 'emsdk', help, run };
 
 function help() {
     log.helpCmd([

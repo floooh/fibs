@@ -2,7 +2,7 @@ import { Config, host, log, OpenerDesc, Project, util } from '../../mod.ts';
 import { run } from '../tools/vscode.ts';
 import { fs } from '../../deps.ts';
 
-export const vscodeOpener: OpenerDesc = { configure, open };
+export const vscodeOpener: OpenerDesc = { name: 'vscode', configure, open };
 
 async function configure(project: Project, config: Config) {
     const vscodeDir = `${project.dir}/.vscode`;
@@ -22,7 +22,7 @@ function writeWorkspaceFile(project: Project, config: Config, vscodeDir: string)
     const ws = {
         folders: [
             { path: project.dir },
-            ...Object.values(project.imports).map((imp) => {
+            ...project.imports.map((imp) => {
                 return { path: imp.importDir };
             }),
         ],

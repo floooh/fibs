@@ -85,7 +85,7 @@ export async function importProjects(fromDir: string, importDesc: ImportDesc): P
 }
 
 export function hasImportErrors(project: Project): boolean {
-    return Object.values(project.imports).some(imp => (imp.importErrors.length > 0));
+    return project.imports.some(imp => (imp.importErrors.length > 0));
 }
 
 export type ValidateOptions = {
@@ -155,7 +155,7 @@ function saveImportLinks(project: Project, links: Record<string,string|undefined
 }
 
 function linkUnlink(project: Project, importName: string, path: string | undefined): string | undefined {
-    if (project.imports[importName] === undefined) {
+    if (util.find(importName, project.imports)) {
         log.error(`import '${importName}' not found (run 'fibs list imports')`);
     }
     if (path !== undefined) {

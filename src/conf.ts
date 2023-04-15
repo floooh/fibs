@@ -26,12 +26,12 @@ export async function validate(project: Project, config: Config, options: Valida
     // validate generators
     // TODO: more generator checks
     if (config.generator === 'Ninja') {
-        if (!await project.tools['ninja'].exists()) {
+        if (!await util.find('ninja', project.tools)!.exists()) {
             res.valid = false;
             res.hints.push('ninja build tool not found (run \'fibs diag tools\')');
         }
     } else if (config.generator === 'Unix Makefiles') {
-        if (!await project.tools['make'].exists()) {
+        if (!await util.find('make', project.tools)!.exists()) {
             res.valid = false;
             res.hints.push('make build tool not found (run \'fibs diag tools\')');
         }

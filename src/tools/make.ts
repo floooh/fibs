@@ -1,6 +1,7 @@
 import { ToolDesc, util } from '../../mod.ts';
 
 export const makeTool: ToolDesc = {
+    name: 'make',
     platforms: ['windows', 'macos', 'linux'],
     optional: true,
     notFoundMsg: 'required for building *-make-* configs',

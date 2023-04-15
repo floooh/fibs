@@ -1,7 +1,7 @@
 import { CommandDesc, conf, host, imports, log, proj, Project } from '../../mod.ts';
 import { colors } from '../../deps.ts';
 
-export const diagCmd: CommandDesc = { help, run };
+export const diagCmd: CommandDesc = { name: 'diag', help, run };
 
 function help() {
     log.helpCmd([
@@ -51,9 +51,7 @@ async function diagFibs() {
 }
 
 async function diagTools(project: Project) {
-    const tools = project.tools!;
-    for (const toolName in tools) {
-        const tool = tools[toolName];
+    for (const tool of project.tools) {
         if (tool.platforms.includes(host.platform())) {
             const exists = await tool.exists();
             let res: string;
@@ -70,9 +68,7 @@ async function diagTools(project: Project) {
 }
 
 async function diagConfigs(project: Project) {
-    const configs = project.configs;
-    for (const configName in configs) {
-        const config = configs[configName];
+    for (const config of project.configs) {
         log.write(`${config.name}: `);
         const res = await conf.validate(project, config, { silent: true, abortOnError: false });
         if (res.valid) {
@@ -87,9 +83,7 @@ async function diagConfigs(project: Project) {
 }
 
 async function diagTargets(project: Project) {
-    const targets = project.targets;
-    for (const targetName in targets) {
-        const target = targets[targetName];
+    for (const target of project.targets) {
         log.write(`${target.name} (${target.type}): `);
         const res = proj.validateTarget(project, target, { silent: true, abortOnError: false });
         if (res.valid) {
@@ -104,8 +98,7 @@ async function diagTargets(project: Project) {
 }
 
 async function diagImports(project: Project) {
-    for (const impName in project.imports) {
-        const imp = project.imports[impName];
+    for (const imp of project.imports) {
         log.write(`${imp.name}: `);
         const res = await imports.validate(project, imp, { silent: true, abortOnError: false });
         if (res.valid) {
@@ -116,7 +109,7 @@ async function diagImports(project: Project) {
                 log.info(`  ${hint}`);
             }
         }
-    }
+    };
 }
 
 async function diagProject(project: Project) {

@@ -1,6 +1,6 @@
 import { CommandDesc, log, Project, util } from '../../mod.ts';
 
-export const runCmd: CommandDesc = { help, run };
+export const runCmd: CommandDesc = { name: 'run', help, run };
 
 function help() {
     log.helpCmd([
@@ -14,10 +14,10 @@ async function run(project: Project) {
         log.error('no target provided (run \'fibs help run\')');
     }
     const name = Deno.args[1];
-    if (project.targets[name] === undefined) {
+    const target = util.find(name, project.targets);
+    if (target === undefined) {
         log.error(`unknown target '${name}' (run 'fibs list targets')`);
     }
-    const target = project.targets[name];
     if (target.type !== 'plain-exe' && target.type !== 'windowed-exe') {
         log.error(`target '${name}' is not an executable (run 'fibs list targets)`);
     }

@@ -16,22 +16,22 @@ import { wasisdkCmd } from './wasisdk.ts';
 import { updateCmd } from './update.ts';
 import { runjobsCmd } from './runjobs.ts';
 
-export const commands = {
-    help: helpCmd,
-    config: configCmd,
-    build: buildCmd,
-    run: runCmd,
-    open: openCmd,
-    clean: cleanCmd,
-    list: listCmd,
-    update: updateCmd,
-    diag: diagCmd,
-    link: linkCmd,
-    unlink: unlinkCmd,
-    set: setCmd,
-    get: getCmd,
-    unset: unsetCmd,
-    emsdk: emsdkCmd,
-    wasisdk: wasisdkCmd,
-    runjobs: runjobsCmd,
-};
+export const commands = [
+    helpCmd,
+    configCmd,
+    buildCmd,
+    runCmd,
+    openCmd,
+    cleanCmd,
+    listCmd,
+    updateCmd,
+    diagCmd,
+    linkCmd,
+    unlinkCmd,
+    setCmd,
+    getCmd,
+    unsetCmd,
+    emsdkCmd,
+    wasisdkCmd,
+    runjobsCmd,
+];

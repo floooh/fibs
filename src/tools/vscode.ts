@@ -1,6 +1,7 @@
 import { log, RunOptions, RunResult, ToolDesc, util } from '../../mod.ts';
 
 export const vscodeTool: ToolDesc = {
+    name: 'vscode',
     platforms: ['windows', 'macos', 'linux'],
     optional: true,
     notFoundMsg: 'required for opening projects in VSCode',

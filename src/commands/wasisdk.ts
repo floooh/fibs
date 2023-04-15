@@ -1,6 +1,6 @@
 import { CommandDesc, log, Project, wasisdk } from '../../mod.ts';
 
-export const wasisdkCmd: CommandDesc = { help, run };
+export const wasisdkCmd: CommandDesc = { name: 'wasisdk', help, run };
 
 function help() {
     log.helpCmd([

@@ -1,6 +1,30 @@
-import { AliasMap, Config, Platform, Project, RunOptions, RunResult, Target } from './types.ts';
+import { AliasMap, Config, NamedItem, Platform, Project, RunOptions, RunResult, Target } from './types.ts';
 import * as log from './log.ts';
 import { fs, path } from '../deps.ts';
+
+export function find<T extends NamedItem>(name: string | undefined, items: T[] | undefined): T | undefined {
+    if ((name === undefined) || (items === undefined)) {
+        return undefined;
+    }
+    return items.find((elm) => elm.name === name);
+}
+
+export function findIndex<T extends NamedItem>(name: string | undefined, items: T[] | undefined): number | undefined {
+    if ((name === undefined) || (items === undefined)) {
+        return undefined;
+    }
+    const index = items.findIndex((elm) => elm.name === name);
+    return (index === -1) ? undefined : index;
+}
+
+export function addOrReplace<T extends NamedItem>(items: T[], item: T) {
+    const index = findIndex(item.name, items);
+    if (index === undefined) {
+        items.push(item);
+    } else {
+        items[index] = item;
+    }
+}
 
 export function fileExists(path: string): boolean {
     try {
@@ -189,7 +213,7 @@ export function defaultConfigForPlatform(platform: Platform): string {
 
 export function activeConfig(project: Project): Config {
     const name = project.settings.config.value;
-    const config = project.configs[name];
+    const config = find(name, project.configs);
     if (config === undefined) {
         log.error(`active config ${name} does not exist`);
     }

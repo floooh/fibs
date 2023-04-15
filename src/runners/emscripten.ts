@@ -1,6 +1,6 @@
 import { Config, host, http, Project, RunnerDesc, RunOptions, Target, util } from '../../mod.ts';
 
-export const emscriptenRunner: RunnerDesc = { run };
+export const emscriptenRunner: RunnerDesc = { name: 'emscripten', run };
 
 async function run(project: Project, config: Config, target: Target, options: RunOptions) {
     // can assume here that run() will only be called for executable targets

@@ -1,6 +1,6 @@
 import { CommandDesc, log, Project, settings } from '../../mod.ts';
 
-export const unsetCmd: CommandDesc = { help, run };
+export const unsetCmd: CommandDesc = { name: 'unset', help, run };
 
 function help() {
     log.helpCmd([

@@ -17,15 +17,15 @@ export type StringRecordFunc = RecordFunc<string>;
 
 export type CMakeVariables = Record<string, string | boolean>;
 export type AliasMap = Record<string, string>;
-export type ImportDescs = Record<string, ImportDesc>;
-export type TargetDescs = Record<string, TargetDesc>;
-export type CommandDescs = Record<string, CommandDesc>;
-export type ToolDescs = Record<string, ToolDesc>;
-export type JobTemplateDescs = Record<string, JobTemplateDesc>;
-export type RunnerDescs = Record<string, RunnerDesc>;
-export type OpenerDescs = Record<string, OpenerDesc>;
-export type ConfigDescs = Record<string, ConfigDesc>;
-export type AdapterDescs = Record<string, AdapterDesc>;
+export type ImportDescs = ImportDesc[];
+export type TargetDescs = TargetDesc[];
+export type CommandDescs = CommandDesc[]
+export type ToolDescs = ToolDesc[];
+export type JobTemplateDescs = JobTemplateDesc[];
+export type RunnerDescs = RunnerDesc[];
+export type OpenerDescs = OpenerDesc[];
+export type ConfigDescs = ConfigDesc[];
+export type AdapterDescs = AdapterDesc[];
 export type SettingsItems = Record<string, SettingsItem>;
 
 export type ProjectDesc = {
@@ -58,16 +58,16 @@ export type Project = {
     compileDefinitions: StringRecordFunc[];
     compileOptions: StringArrayFunc[];
     linkOptions: StringArrayFunc[];
-    imports: Record<string, Import>;
-    targets: Record<string, Target>;
-    commands: Record<string, Command>;
-    tools: Record<string, Tool>;
-    jobs: Record<string, JobTemplate>;
-    runners: Record<string, Runner>;
-    openers: Record<string, Opener>;
-    configs: Record<string, Config>;
-    configDescs: Record<string, ConfigDescWithImportDir>;
-    adapters: Record<string, Adapter>;
+    imports: Import[];
+    targets: Target[];
+    commands: Command[];
+    tools: Tool[];
+    jobs: JobTemplate[];
+    runners: Runner[];
+    openers: Opener[];
+    configs: Config[];
+    configDescs: ConfigDescWithImportDir[];
+    adapters: Adapter[];
 };
 
 export type SettingsItem = {
@@ -97,7 +97,11 @@ export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll' | 'interfa
 
 export type BuildType = 'release' | 'debug';
 
-export type ConfigDesc = {
+export interface NamedItem {
+    name: string,
+}
+
+export interface ConfigDesc extends NamedItem {
     ignore?: boolean;
     inherits?: string;
     platform?: Platform;
@@ -114,10 +118,9 @@ export type ConfigDesc = {
     compileDefinitions?: Record<string,string>;
     compileOptions?: string[];
     linkOptions?: string[];
-};
+}
 
-export type Config = {
-    name: string;
+export interface Config extends NamedItem {
     importDir: string;
     platform: Platform;
     runner: Runner;
@@ -133,22 +136,21 @@ export type Config = {
     compileDefinitions: Record<string,string>;
     compileOptions: string[];
     linkOptions: string[];
-};
+}
 
-export type ImportDesc = {
+export interface ImportDesc extends NamedItem {
     url: string;
     ref?: string;
     project?: ProjectDesc;
     import?: string[];
-};
+}
 
-export type Import = {
-    name: string;
+export interface Import extends NamedItem {
     importDir: string;
     importErrors: Error[];
     url: string;
     ref: string | undefined;
-};
+}
 
 export type TargetArrayItemsDesc = {
     interface?: StringArrayFunc;
@@ -184,7 +186,7 @@ export type TargetJob = {
     args: any;
 }
 
-export type TargetDesc = {
+export interface TargetDesc extends NamedItem {
     type?: TargetType;
     enabled?: BooleanFunc;
     dir?: string;
@@ -197,8 +199,7 @@ export type TargetDesc = {
     jobs?: TargetJobDesc[];
 };
 
-export type Target = {
-    name: string;
+export interface Target extends NamedItem {
     importDir: string;
     dir: string | undefined;
     type: TargetType;
@@ -217,22 +218,20 @@ export type JobValidateResult = {
     hints: string[];
 };
 
-export interface JobTemplateDesc {
+export interface JobTemplateDesc extends NamedItem {
     help(): void;
     validate(args: any): JobValidateResult;
     builder(args: any): JobFunc;
 }
 
-export interface JobTemplate {
-    name: string;
+export interface JobTemplate extends NamedItem {
     importDir: string;
     help(): void;
     validate(args: any): JobValidateResult;
     builder(args: any): JobFunc;
 }
 
-export type Job = {
-    name: string;
+export interface Job extends NamedItem {
     inputs: string[];
     outputs: string[];
     addOutputsToTargetSources: boolean;
@@ -240,35 +239,32 @@ export type Job = {
     func: (inputs: string[], output: string[], args: any) => Promise<void>;
 };
 
-export interface CommandDesc {
+export interface CommandDesc extends NamedItem {
     help(): void;
     run(project: Project): Promise<void>;
 }
 
-export interface Command {
-    name: string;
+export interface Command extends NamedItem {
     importDir: string;
     help(): void;
     run(project: Project): Promise<void>;
 }
 
-export interface RunnerDesc {
+export interface RunnerDesc extends NamedItem {
     run(project: Project, config: Config, target: Target, options: RunOptions): Promise<void>;
 }
 
-export interface Runner {
-    name: string;
+export interface Runner extends NamedItem {
     importDir: string;
     run(project: Project, config: Config, target: Target, options: RunOptions): Promise<void>;
 }
 
-export interface OpenerDesc {
+export interface OpenerDesc extends NamedItem {
     configure(project: Project, config: Config): Promise<void>;
     open(project: Project, config: Config): Promise<void>;
 }
 
-export interface Opener {
-    name: string;
+export interface Opener extends NamedItem {
     importDir: string;
     configure(project: Project, config: Config): Promise<void>;
     open(project: Project, config: Config): Promise<void>;
@@ -290,15 +286,14 @@ export type RunResult = {
     stderr: string;
 };
 
-export type ToolDesc = {
+export interface ToolDesc extends NamedItem {
     platforms: Platform[];
     optional: boolean;
     notFoundMsg: string;
     exists(): Promise<boolean>;
-};
+}
 
-export type Tool = {
-    name: string;
+export interface Tool extends NamedItem {
     importDir: string;
     platforms: Platform[];
     optional: boolean;
@@ -311,13 +306,12 @@ export type AdapterOptions = {
     forceRebuild?: boolean;
 };
 
-export type AdapterDesc = {
+export interface AdapterDesc extends NamedItem {
     configure(project: Project, config: Config, options: AdapterOptions): Promise<void>;
     build(project: Project, config: Config, options: AdapterOptions): Promise<void>;
-};
+}
 
-export type Adapter = {
-    name: string;
+export interface Adapter extends NamedItem {
     importDir: string;
     configure(project: Project, config: Config, options: AdapterOptions): Promise<void>;
     build(project: Project, config: Config, options: AdapterOptions): Promise<void>;

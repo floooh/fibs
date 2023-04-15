@@ -1,6 +1,6 @@
 import { CommandDesc, log, proj, Project, util } from '../../mod.ts';
 
-export const runjobsCmd: CommandDesc = { help, run };
+export const runjobsCmd: CommandDesc = { name: 'runjobs', help, run };
 
 function help() {
     log.helpCmd([
@@ -12,9 +12,9 @@ function help() {
 
 async function run(project: Project) {
     const config = util.activeConfig(project);
-    Object.values(project.targets).forEach(async (target) => {
+    for (const target of project.targets) {
         if (target.jobs.length > 0) {
             await proj.runJobs(project, config, target);
         }
-    });
+    }
 }

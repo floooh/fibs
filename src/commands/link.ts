@@ -1,7 +1,7 @@
 import { CommandDesc, Project, imports, log } from '../../mod.ts';
 import { path } from '../../deps.ts';
 
-export const linkCmd: CommandDesc = { help, run };
+export const linkCmd: CommandDesc = { name: 'link', help, run };
 
 function help() {
     log.helpCmd([

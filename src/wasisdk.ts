@@ -39,11 +39,11 @@ export async function download(project: Project) {
     if (util.dirExists(dir(project))) {
         log.error(`WASI SDK already installed, run 'fibs wasisdk uninstall' first`);
     }
-    const sdkDir = `${util.sdkDir(project)}`;
-    const filename = SDKNAME + '.tgz';
-    if (!project.tools.tar.exists()) {
+    if (!await util.find('tar', project.tools)!.exists()) {
         log.error('tar command not found (run \'fibs diag tools\'');
     }
+    const sdkDir = `${util.sdkDir(project)}`;
+    const filename = SDKNAME + '.tgz';
     log.section('downloading WASI SDK');
     const url = URLS[host.platform()];
     await util.download({ url, dir: sdkDir, filename });

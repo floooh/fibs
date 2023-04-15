@@ -1,6 +1,6 @@
-import { CommandDesc, git, imports, log, Project } from '../../mod.ts';
+import { CommandDesc, git, imports, log, Project, util } from '../../mod.ts';
 
-export const updateCmd: CommandDesc = { help, run };
+export const updateCmd: CommandDesc = { name: 'update', help, run };
 
 function help() {
     log.helpCmd([
@@ -17,7 +17,7 @@ type Args = {
 async function run(project: Project) {
     const args = parseArgs(project);
     for (const item of args.items) {
-        const imp = project.imports[item];
+        const imp = util.find(item, project.imports)!;
         const dir = imp.importDir;
         log.section(`${imp.name}`);
         const hasUncommittedChanges = await git.hasUncommittedChanges({ dir: imp.importDir, showCmd: false });
@@ -66,10 +66,10 @@ function parseArgs(project: Project): Args {
         return true;
     });
     if (res.items.length === 0) {
-        res.items = Object.values(project.imports).map((imp) => imp.name);
+        res.items = project.imports.map((imp) => imp.name);
     }
     for (const item of res.items) {
-        if (project.imports[item] === undefined) {
+        if (util.find(item, project.imports) === undefined) {
             log.error(`import '${item}' not found (run 'fibs list imports')`);
         }
     }

@@ -1,6 +1,7 @@
 import { ToolDesc, util } from '../../mod.ts';
 
 export const tarTool: ToolDesc = {
+    name: 'tar',
     platforms: ['windows', 'macos', 'linux'],
     optional: true,
     notFoundMsg: 'required for unpacking downloaded sdk archives',

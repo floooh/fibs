@@ -1,6 +1,7 @@
 import { Config, OpenerDesc, Project, util } from '../../mod.ts';
 
 export const vstudioOpener: OpenerDesc = {
+    name: 'vstudio',
     configure: async (): Promise<void> => {},
     open,
 };

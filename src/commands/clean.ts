@@ -1,7 +1,7 @@
 import { CommandDesc, Config, log, Project, util } from '../../mod.ts';
 import { colors } from '../../deps.ts';
 
-export const cleanCmd: CommandDesc = { help, run };
+export const cleanCmd: CommandDesc = { name: 'clean', help, run };
 
 function help() {
     log.helpCmd([
@@ -12,7 +12,7 @@ function help() {
 async function run(project: Project) {
     const configs = parseArgs(project);
     let numDeleted = 0;
-    configs.forEach((config) => {
+    for (const config of configs) {
         const buildPath = util.buildDir(project, config);
         const distPath = util.distDir(project, config);
         const buildExists = util.dirExists(buildPath);
@@ -31,7 +31,7 @@ async function run(project: Project) {
             }
             log.print('');
         }
-    });
+    }
     if (0 === numDeleted) {
         log.print('nothing to do');
     } else {
@@ -53,15 +53,16 @@ function parseArgs(project: Project): Config[] {
         return true;
     });
     if (all) {
-        return Object.values(project.configs);
+        return project.configs;
     } else if (args.length === 0) {
         return [util.activeConfig(project)];
     } else {
         return args.map((arg) => {
-            if (project.configs[arg] === undefined) {
+            const config = util.find(arg, project.configs);
+            if (config === undefined) {
                 log.error(`unknown config '${arg}' (run 'fibs list configs')`);
             }
-            return project.configs[arg];
+            return config;
         });
     }
 }

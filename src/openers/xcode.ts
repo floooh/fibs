@@ -1,6 +1,7 @@
 import { Config, OpenerDesc, Project, util } from '../../mod.ts';
 
 export const xcodeOpener: OpenerDesc = {
+    name: 'xcode',
     configure: async (): Promise<void> => {},
     open,
 };
