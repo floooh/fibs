@@ -285,6 +285,15 @@ export function resolvePathNoAlias(...items: (string | undefined)[]): string {
 }
 
 export function resolvePath(aliasMap: Record<string, string>, ...items: (string | undefined)[]): string {
+    // the last path alias item in the chain invalidates all previous directory items
+    // e.g.
+    //      ['baseDir', 'subDir', '@targetbuild:']
+    // will be treated as
+    //      ['@targetbuild:']
+    const lastAliasIndex = items.findLastIndex((item) => (item !== undefined) ? item.startsWith('@') : false);
+    if (lastAliasIndex > 0) {
+        items = items.toSpliced(0, lastAliasIndex);
+    }
     return resolveAlias(aliasMap, resolvePathNoAlias(...items));
 }
 
