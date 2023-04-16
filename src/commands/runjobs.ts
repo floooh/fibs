@@ -12,9 +12,5 @@ function help() {
 
 async function run(project: Project) {
     const config = util.activeConfig(project);
-    for (const target of project.targets) {
-        if (target.jobs.length > 0) {
-            await proj.runJobs(project, config, target);
-        }
-    }
+    await Promise.all(project.targets.map((target): Promise<void> => proj.runJobs(project, config, target)));
 }
