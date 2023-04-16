@@ -383,6 +383,17 @@ export async function download(options: DownloadOptions): Promise<boolean> {
     return true;
 }
 
+export function arrayRemoveNullish<T>(array: (T|undefined|null)[]): T[] {
+    return array.filter((item) => item) as T[];
+}
+
+export function optionalArrayRemoveNullish<T>(array: (T|undefined|null)[] | undefined): T[] | undefined {
+    if (array === undefined) {
+        return undefined;
+    }
+    return array.filter((item) => item) as T[];
+}
+
 export function isString(val: unknown): boolean {
     return typeof val === 'string';
 }

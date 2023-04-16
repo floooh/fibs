@@ -200,7 +200,7 @@ export interface TargetDesc extends NamedItem {
     compileDefinitions?: TargetRecordItemsDesc;
     compileOptions?: TargetArrayItemsDesc;
     linkOptions?: TargetArrayItemsDesc;
-    jobs?: TargetJobDesc[];
+    jobs?: (TargetJobDesc|undefined|null)[];
 }
 
 export interface Target extends NamedItem {
