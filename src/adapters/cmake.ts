@@ -151,6 +151,7 @@ function genGlobalArrayItemsLanguageCompiler(
                 compiler,
                 language,
                 aliasMap,
+                host: { platform: host.platform(), arch: host.arch() },
             };
             const resolvedItems = proj.resolveProjectStringArray(items, ctx, itemsAreFilePaths);
             if (resolvedItems.length > 0) {
@@ -178,6 +179,7 @@ function genGlobalRecordItemsLanguageCompiler(
                 compiler,
                 language,
                 aliasMap,
+                host: { platform: host.platform(), arch: host.arch() },
             };
             const resolvedItems = proj.resolveProjectStringRecord(items, ctx, itemsAreFilePaths);
             if (Object.keys(resolvedItems).length > 0) {
@@ -224,6 +226,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
         config,
         target,
         aliasMap: util.buildTargetAliasMap(project, config, target),
+        host: { platform: host.platform(), arch: host.arch() },
     };
     const sources = proj.resolveTargetStringArray(target.sources, ctx, true);
 
@@ -284,6 +287,7 @@ function genTargetDependencies(project: Project, config: Config, target: Target)
             target,
             compiler,
             aliasMap,
+            host: { platform: host.platform(), arch: host.arch() },
         };
         const libs = proj.resolveTargetStringArray(target.libs, ctx, false);
         if (libs.length > 0) {
@@ -316,6 +320,7 @@ function genTargetArrayItems(
                 compiler,
                 language,
                 aliasMap,
+                host: { platform: host.platform(), arch: host.arch() },
             };
             const resolvedItems = proj.resolveTargetArrayItems(items, ctx, itemsAreFilePaths);
             if (resolvedItems.interface.length > 0) {
@@ -357,6 +362,7 @@ function genTargetRecordItems(
                 compiler,
                 language,
                 aliasMap,
+                host: { platform: host.platform(), arch: host.arch() },
             };
             const resolvedItems = proj.resolveTargetRecordItems(items, ctx, itemsAreFilePaths);
             if (Object.keys(resolvedItems.interface).length > 0) {

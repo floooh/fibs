@@ -5,6 +5,10 @@ export type Context = {
     compiler?: Compiler;
     language?: Language;
     aliasMap: AliasMap;
+    host: {
+        platform: Platform;
+        arch: Arch;
+    };
 };
 
 export type Func<T> = (ctx: Context) => T;

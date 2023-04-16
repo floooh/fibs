@@ -35,6 +35,7 @@ import * as settings from './settings.ts';
 import * as log from './log.ts';
 import * as imports from './imports.ts';
 import * as util from './util.ts';
+import * as host from './host.ts';
 import { conf } from '../mod.ts';
 
 export async function setup(
@@ -539,7 +540,13 @@ export function validateTarget(
         res.valid = false;
         res.hints.push(`src dir not found: ${srcDir}`);
     } else {
-        const ctx: Context = { project, config, target, aliasMap };
+        const ctx: Context = {
+            project,
+            config,
+            target,
+            aliasMap,
+            host: { platform: host.platform(), arch: host.arch() },
+        };
         const sources = resolveTargetStringArray(target.sources, ctx, true);
         for (const src of sources) {
             if (!util.fileExists(src)) {
@@ -565,6 +572,7 @@ export function validateTarget(
                 compiler,
                 language: language as Language,
                 aliasMap,
+                host: { platform: host.platform(), arch: host.arch() },
             };
             const resolvedItems = resolveTargetArrayItems(target.includeDirectories, ctx, true);
             missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.interface));
@@ -631,6 +639,7 @@ export async function runJobs(project: Project, config: Config, target: Target) 
         config,
         target,
         aliasMap: util.buildTargetAliasMap(project, config, target),
+        host: { platform: host.platform(), arch: host.arch() },
     };
     for (const targetJob of target.jobs) {
         const job = resolveJob(ctx, targetJob);
@@ -737,6 +746,7 @@ export function isTargetEnabled(project: Project, config: Config, target: Target
         project,
         config,
         target,
-        aliasMap: util.buildTargetAliasMap(project, config, target)
+        aliasMap: util.buildTargetAliasMap(project, config, target),
+        host: { platform: host.platform(), arch: host.arch() },
     });
 }
