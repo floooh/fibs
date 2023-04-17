@@ -2,7 +2,6 @@ import { Import, ImportDesc, Project, ProjectDesc } from './types.ts';
 import * as util from './util.ts';
 import * as git from './git.ts';
 import * as log from './log.ts';
-import { path } from '../deps.ts';
 
 export type FetchOptions = {
     name: string;
@@ -31,7 +30,7 @@ export async function fetch(project: Project, options: FetchOptions): Promise<Fe
     } else {
         // regular import
         const importsDir = util.ensureImportsDir(project);
-        const dirname = path.parse(new URLPattern(options.url).pathname).name;
+        const dirname = options.name;
         const res: FetchResult = {
             valid: false,
             dir: `${importsDir}/${dirname}`,
