@@ -66,7 +66,7 @@ function parseArgs(project: Project): Args {
         return true;
     });
     if (res.items.length === 0) {
-        res.items = project.imports.map((imp) => imp.name);
+        res.items = project.imports.toReversed().map((imp) => imp.name);
     }
     for (const item of res.items) {
         if (util.find(item, project.imports) === undefined) {

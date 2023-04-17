@@ -1,4 +1,5 @@
 import { helpCmd } from './help.ts';
+import { resetCmd } from './reset.ts';
 import { configCmd } from './config.ts';
 import { buildCmd } from './build.ts';
 import { runCmd } from './run.ts';
@@ -18,6 +19,7 @@ import { runjobsCmd } from './runjobs.ts';
 
 export const commands = [
     helpCmd,
+    resetCmd,
     configCmd,
     buildCmd,
     runCmd,

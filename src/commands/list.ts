@@ -55,7 +55,7 @@ async function run(project: Project) {
         log.section('imports');
     }
     if (args.all || args.imports) {
-        for (const imp of project.imports) {
+        for (const imp of project.imports.toReversed()) {
             log.print(`${imp.name}: ${imp.importDir}`);
         }
     }
