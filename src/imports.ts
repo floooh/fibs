@@ -183,3 +183,8 @@ export function unlink(project: Project, importName: string) {
         log.info(`  import '${importName}' was not linked`);
     }
 }
+
+export function isLinked(project: Project, importName: string) {
+    const links = loadImportLinks(project);
+    return (links[importName] !== undefined);
+}

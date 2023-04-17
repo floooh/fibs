@@ -20,18 +20,23 @@ async function run(project: Project) {
         const imp = util.find(item, project.imports)!;
         const dir = imp.importDir;
         log.section(`${imp.name}`);
+        const isLinked = imports.isLinked(project, imp.name);
         const hasUncommittedChanges = await git.hasUncommittedChanges({ dir: imp.importDir, showCmd: false });
         const hasUnpushedChanges = await git.hasUnpushedChanges({ dir: imp.importDir, showCmd: false });
-        if (hasUncommittedChanges || hasUnpushedChanges) {
+        if (isLinked || hasUncommittedChanges || hasUnpushedChanges) {
             log.print();
             log.warn(`skipping '${dir}' because:`);
+            if (isLinked) {
+                log.info("  import is a linked directory (run 'fibs list imports')");
+            }
             if (hasUncommittedChanges) {
                 log.info('  local repository has uncommitted changes\n');
             }
             if (hasUnpushedChanges) {
                 log.info('  local repository has unpushed changes\n');
             }
-            if (!args.clean) {
+            log.print();
+            if (isLinked || !args.clean) {
                 continue;
             }
         }

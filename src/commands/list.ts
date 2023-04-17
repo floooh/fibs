@@ -1,4 +1,4 @@
-import { CommandDesc, log, Project, TargetType, proj, util } from '../../mod.ts';
+import { CommandDesc, log, Project, TargetType, proj, util, imports } from '../../mod.ts';
 import { colors } from '../../deps.ts';
 
 export const listCmd: CommandDesc = { name: 'list', help, run };
@@ -56,7 +56,11 @@ async function run(project: Project) {
     }
     if (args.all || args.imports) {
         for (const imp of project.imports.toReversed()) {
-            log.print(`${imp.name}: ${imp.importDir}`);
+            if (imports.isLinked(project, imp.name)) {
+                log.print(`${imp.name}: ${colors.brightBlue(`link => ${imp.importDir}`)}`);
+            } else {
+                log.print(`${imp.name}: ${imp.importDir}`);
+            }
         }
     }
     if (args.all) {
