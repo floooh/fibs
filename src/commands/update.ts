@@ -39,7 +39,7 @@ async function run(project: Project) {
                 log.info(`  skipping ${repoDir}`);
             }
         } else {
-            if (!await git.update({ dir: imp.importDir, url: imp.url, ref: imp.ref, showCmd: true })) {
+            if (!await git.update({ dir: util.importsDir(project), url: imp.url, ref: imp.ref, showCmd: true })) {
                 log.print();
                 log.error(`updating '${repoDir}' failed\n\n(consider running 'fibs update --clean')\n`);
             }

@@ -38,8 +38,9 @@ export function helpJob(name: string, args: HelpJobArgs[], help: string) {
     print('');
 }
 
-export function run(cmdLine: string[]) {
-    print(colors.cyan(`=> ${cmdLine.join(' ')}`));
+export function run(cmdLine: string[], cwd?: string) {
+    const cwdString = cwd ? `(in ${cwd})` : '';
+    print(colors.brightBlue(`=> ${cmdLine.join(' ')} ${cwdString}`));
 }
 
 export function section(name: string) {

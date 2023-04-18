@@ -314,7 +314,7 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
         cmdLine = [cmd, ...args];
     }
     if (showCmd) {
-        log.run(cmdLine);
+        log.run(cmdLine, cwd);
     }
     try {
         const p = Deno.run({
