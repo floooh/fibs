@@ -18,40 +18,30 @@ async function run(project: Project) {
     const args = parseArgs(project);
     for (const item of args.items) {
         const imp = util.find(item, project.imports)!;
-        const dir = imp.importDir;
         log.section(`${imp.name}`);
         const isLinked = imports.isLinked(project, imp.name);
-        const hasUncommittedChanges = await git.hasUncommittedChanges({ dir: imp.importDir, showCmd: false });
-        const hasUnpushedChanges = await git.hasUnpushedChanges({ dir: imp.importDir, showCmd: false });
-        if (isLinked || hasUncommittedChanges || hasUnpushedChanges) {
+        if (isLinked) {
             log.print();
-            log.warn(`skipping '${dir}' because:`);
-            if (isLinked) {
-                log.info("  import is a linked directory (run 'fibs list imports')");
-            }
-            if (hasUncommittedChanges) {
-                log.info('  local repository has uncommitted changes\n');
-            }
-            if (hasUnpushedChanges) {
-                log.info('  local repository has unpushed changes\n');
-            }
+            log.warn(`skipping '${imp.name}' because:`);
+            log.info("  import is a linked directory (run 'fibs list imports')");
             log.print();
             if (isLinked || !args.clean) {
                 continue;
             }
         }
+        const repoDir = git.getDir(util.importsDir(project), imp.url, imp.ref);
         if (args.clean) {
-            if (log.ask(`delete and clone ${dir}`, false)) {
-                log.info(`  deleting ${dir}`);
-                Deno.removeSync(dir, { recursive: true });
+            if (log.ask(`delete and clone ${repoDir}`, false)) {
+                log.info(`  deleting ${repoDir}`);
+                Deno.removeSync(repoDir, { recursive: true });
                 await imports.fetch(project, { name: imp.name, url: imp.url, ref: imp.ref });
             } else {
-                log.info(`  skipping ${dir}`);
+                log.info(`  skipping ${repoDir}`);
             }
         } else {
-            if (!await git.pullOrFetch({ dir: imp.importDir, ref: imp.ref, showCmd: true })) {
+            if (!await git.update({ dir: imp.importDir, url: imp.url, ref: imp.ref, showCmd: true })) {
                 log.print();
-                log.error(`updating '${dir}' failed\n\n(consider running 'fibs update --clean')\n`);
+                log.error(`updating '${repoDir}' failed\n\n(consider running 'fibs update --clean')\n`);
             }
         }
     }

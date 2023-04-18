@@ -39,10 +39,10 @@ export async function cloneOrUpdateEmsdk(project: Project) {
     const emsdkDir = dir(project);
     if (util.dirExists(emsdkDir)) {
         log.section(`updating emsdk in ${emsdkDir}`);
-        await git.pullOrFetch({ dir: emsdkDir, force: true });
+        await git.update({ dir: emsdkDir, url: EMSDK_URL, force: true });
     } else {
         log.section(`cloning emsdk to ${emsdkDir} `);
-        await git.clone({ url: EMSDK_URL, name: 'emsdk', dir: sdkRoot, depth: 1 });
+        await git.clone({ url: EMSDK_URL, dir: sdkRoot });
     }
 }
 
