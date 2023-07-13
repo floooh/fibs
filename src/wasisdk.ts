@@ -4,7 +4,7 @@ import * as host from './host.ts';
 import * as log from './log.ts';
 import { colors } from '../deps.ts';
 
-const SDKVERSION = 19;
+const SDKVERSION = 20;
 const SDKNAME = `wasi-sdk-${SDKVERSION}.0`;
 const URLS = {
     'linux': `https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${SDKVERSION}/${SDKNAME}-linux.tar.gz`,
