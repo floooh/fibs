@@ -12,7 +12,6 @@ import { unlinkCmd } from './unlink.ts';
 import { setCmd } from './set.ts';
 import { getCmd } from './get.ts';
 import { unsetCmd } from './unset.ts';
-import { emsdkCmd } from './emsdk.ts';
 import { wasisdkCmd } from './wasisdk.ts';
 import { updateCmd } from './update.ts';
 import { runjobsCmd } from './runjobs.ts';
@@ -33,7 +32,6 @@ export const commands = [
     setCmd,
     getCmd,
     unsetCmd,
-    emsdkCmd,
     wasisdkCmd,
     runjobsCmd,
 ];

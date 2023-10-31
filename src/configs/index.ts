@@ -117,61 +117,6 @@ export const configs: ConfigDesc[] = [
         buildType: 'debug',
     },
     {
-        name: 'emsc',
-        ignore: true,
-        platform: 'emscripten',
-        runner: 'emscripten',
-        toolchainFile: '@sdks:emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake',
-    },
-    {
-        name: 'emsc-make',
-        ignore: true,
-        inherits: 'emsc',
-        generator: 'Unix Makefiles',
-    },
-    {
-        name: 'emsc-ninja',
-        ignore: true,
-        inherits: 'emsc',
-        generator: 'Ninja',
-    },
-    {
-        name: 'emsc-vscode',
-        ignore: true,
-        inherits: 'emsc-ninja',
-        opener: 'vscode',
-    },
-    {
-        name: 'emsc-make-debug',
-        inherits: 'emsc-make',
-        buildType: 'debug',
-    },
-    {
-        name: 'emsc-make-release',
-        inherits: 'emsc-make',
-        buildType: 'release',
-    },
-    {
-        name: 'emsc-ninja-debug',
-        inherits: 'emsc-ninja',
-        buildType: 'debug',
-    },
-    {
-        name: 'emsc-ninja-release',
-        inherits: 'emsc-ninja',
-        buildType: 'release',
-    },
-    {
-        name: 'emsc-vscode-debug',
-        inherits: 'emsc-vscode',
-        buildType: 'debug',
-    },
-    {
-        name: 'emsc-vscode-release',
-        inherits: 'emsc-vscode',
-        buildType: 'release',
-    },
-    {
         name: 'wasi',
         ignore: true,
         platform: 'wasi',
