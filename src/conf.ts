@@ -1,5 +1,4 @@
 import { Compiler, Config, Project } from './types.ts';
-import * as emsdk from './emsdk.ts';
 import * as wasisdk from './wasisdk.ts';
 import * as util from './util.ts';
 import * as log from './log.ts';
@@ -40,10 +39,13 @@ export async function validate(project: Project, config: Config, options: Valida
     // check platforms vs sdks
     // TODO: check Android
     if (config.platform === 'emscripten') {
-        if (!util.dirExists(emsdk.dir(project))) {
-            res.valid = false;
-            res.hints.push('Emscripten SDK not installed (install with \'fibs emsdk install\')');
-        }
+        // FIXME FIXME FIXME!
+        res.valid = false;
+        res.hints.push('FIXME FIXME FIXME');
+        //if (!util.dirExists(emsdk.dir(project))) {
+        //    res.valid = false;
+        //    res.hints.push('Emscripten SDK not installed (install with \'fibs emsdk install\')');
+        //}
     } else if (config.platform === 'wasi') {
         if (!util.dirExists(wasisdk.dir(project))) {
             res.valid = false;
