@@ -15,7 +15,7 @@ export type Func<T> = (ctx: Context) => T;
 export type BooleanFunc = Func<boolean>;
 export type JobFunc = Func<Job>;
 export type ArrayFunc<T> = Func<T[]>;
-export type RecordFunc<T> = Func<Record<string, T | undefined>>; // the undefined is not a bug, needed as workaround for a TS type system wart
+export type RecordFunc<T> = Func<Record<string, T>>;
 export type StringArrayFunc = ArrayFunc<string | undefined | null>;
 export type StringRecordFunc = RecordFunc<string>;
 
