@@ -37,7 +37,7 @@ async function run(project: Project) {
     }
     if (args.all || args.settings) {
         for (const [key, val] of Object.entries(project.settings)) {
-            const def = project.settings[key].default;
+            const def = val.default;
             log.print(`${key}: ${val.value} (default: ${def})`);
         }
     }
