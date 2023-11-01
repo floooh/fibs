@@ -413,7 +413,7 @@ function genAllJobsTarget(project: Project, config: Config): string {
     if (hasJobs) {
         str += `find_program(DENO deno REQUIRED)\n`;
         str +=
-            `add_custom_target(ALL_JOBS COMMAND \${DENO} run --allow-all --no-config https://raw.githubusercontent.com/floooh/fibs/main/fibs.ts runjobs WORKING_DIRECTORY ${project.dir})\n`;
+            `add_custom_target(ALL_JOBS COMMAND \${DENO} run --allow-all --no-config fibs.ts runjobs WORKING_DIRECTORY ${project.dir})\n`;
     }
     return str;
 }
