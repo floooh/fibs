@@ -91,9 +91,6 @@ function genProlog(project: Project, config: Config): string {
     str += 'set(CMAKE_CONFIGURATION_TYPES Debug Release)\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
-    if (config.platform === 'wasi') {
-        str += 'set(CMAKE_EXECUTABLE_SUFFIX ".wasm")\n';
-    }
     const aliasMap = util.buildConfigAliasMap(project, config);
     for (const includePath of config.cmakeIncludes) {
         str += `include("${util.resolvePath(aliasMap, includePath)}")\n`

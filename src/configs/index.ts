@@ -137,47 +137,4 @@ export const configs: ConfigDesc[] = [
         inherits: 'linux-ninja',
         buildType: 'debug',
     },
-    {
-        name: 'wasi',
-        ignore: true,
-        platform: 'wasi',
-        runner: 'wasi',
-        toolchainFile: '@sdks:wasisdk/share/cmake/wasi-sdk.cmake',
-        compilers: ['clang'],
-        cmakeVariables: {
-            WASI_SDK_PREFIX: '@sdks:wasisdk',
-        },
-    },
-    {
-        name: 'wasi-make',
-        ignore: true,
-        inherits: 'wasi',
-        generator: 'Unix Makefiles',
-    },
-    {
-        name: 'wasi-make-debug',
-        inherits: 'wasi-make',
-        buildType: 'debug',
-    },
-    {
-        name: 'wasi-make-release',
-        inherits: 'wasi-make',
-        buildType: 'release',
-    },
-    {
-        name: 'wasi-ninja',
-        ignore: true,
-        inherits: 'wasi',
-        generator: 'Ninja',
-    },
-    {
-        name: 'wasi-ninja-debug',
-        inherits: 'wasi-ninja',
-        buildType: 'debug',
-    },
-    {
-        name: 'wasi-ninja-release',
-        inherits: 'wasi-ninja',
-        buildType: 'release',
-    },
 ]
