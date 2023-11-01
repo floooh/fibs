@@ -1,6 +1,5 @@
 import {
     AdapterDesc,
-    AdapterOptions,
     BuildType,
     cmake,
     Compiler,
@@ -25,7 +24,7 @@ export const cmakeAdapter: AdapterDesc = {
     build: build,
 };
 
-export async function configure(project: Project, config: Config, options: AdapterOptions) {
+export async function configure(project: Project, config: Config) {
     const cmakeListsPath = `${project.dir}/CMakeLists.txt`;
     const cmakePresetsPath = `${project.dir}/CMakePresets.json`;
     log.info(`writing ${cmakeListsPath}`);
@@ -51,14 +50,11 @@ export async function configure(project: Project, config: Config, options: Adapt
     await cmake.configure(project, config);
 }
 
-export async function build(project: Project, config: Config, options: AdapterOptions) {
+export async function build(project: Project, config: Config, options: { buildTarget?: string; forceRebuild?: boolean }) {
     if (!util.fileExists(`${util.buildDir(project, config)}/CMakeCache.txt`)) {
-        await configure(project, config, options);
+        await configure(project, config);
     }
-    await cmake.build(project, config, {
-        target: options.buildTarget,
-        cleanFirst: options.forceRebuild,
-    });
+    await cmake.build(project, config, options);
 }
 
 function genCMakeListsTxt(project: Project, config: Config): string {

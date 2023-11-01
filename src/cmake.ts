@@ -32,16 +32,16 @@ export async function configure(project: Project, config: Config) {
     }
 }
 
-export async function build(project: Project, config: Config, options: { target?: string; cleanFirst?: boolean }) {
+export async function build(project: Project, config: Config, options: { target?: string; forceRebuild?: boolean }) {
     const {
         target,
-        cleanFirst = false,
+        forceRebuild = false,
     } = options;
     let args = ['--build', '--preset', 'default'];
     if (target !== undefined) {
         args = [...args, '--target', target];
     }
-    if (cleanFirst) {
+    if (forceRebuild) {
         args = [...args, '--clean-first'];
     }
     const res = await run({ args });

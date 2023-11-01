@@ -1,7 +1,6 @@
 import {
     Adapter,
     AdapterDesc,
-    AdapterOptions,
     Command,
     CommandDesc,
     Config,
@@ -460,7 +459,7 @@ export async function configure(
     project: Project,
     config: Config,
     adapter: Adapter,
-    options: AdapterOptions,
+    options: { buildTarget?: string; forceRebuild?: boolean },
 ): Promise<void> {
     await adapter.configure(project, config, options);
 }
@@ -469,7 +468,7 @@ export async function build(
     project: Project,
     config: Config,
     adapter: Adapter,
-    options: AdapterOptions,
+    options: { buildTarget?: string; forceRebuild?: boolean },
 ): Promise<void> {
     await adapter.build(project, config, options);
 }

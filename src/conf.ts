@@ -25,7 +25,7 @@ export async function validate(
     // check for 'unknown-compiler'
     if (config.compilers.includes('unknown-compiler')) {
         res.valid = false;
-        res.hints.push("config doesn't define valid compilers");
+        res.hints.push('config doesn\'t define valid compilers');
     }
 
     // validate generators

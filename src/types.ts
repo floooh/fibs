@@ -282,18 +282,13 @@ export interface Tool extends NamedItem {
     exists(): Promise<boolean>;
 }
 
-export type AdapterOptions = {
-    buildTarget?: string;
-    forceRebuild?: boolean;
-};
-
 export interface AdapterDesc extends NamedItem {
-    configure(project: Project, config: Config, options: AdapterOptions): Promise<void>;
-    build(project: Project, config: Config, options: AdapterOptions): Promise<void>;
+    configure(project: Project, config: Config, options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void>;
+    build(project: Project, config: Config, options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void>;
 }
 
 export interface Adapter extends NamedItem {
     importDir: string;
-    configure(project: Project, config: Config, options: AdapterOptions): Promise<void>;
-    build(project: Project, config: Config, options: AdapterOptions): Promise<void>;
+    configure(project: Project, config: Config, options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void>;
+    build(project: Project, config: Config, options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void>;
 }
