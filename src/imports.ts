@@ -1,25 +1,17 @@
-import { Import, ImportDesc, Project, ProjectDesc, ValidateResult } from './types.ts';
+import { Import, ImportDesc, Project, ProjectDesc } from './types.ts';
 import * as util from './util.ts';
 import * as git from './git.ts';
 import * as log from './log.ts';
 
-export type FetchOptions = {
-    name: string;
-    url: string;
-    ref?: string;
-};
-
-export type FetchResult = {
-    valid: boolean;
-    dir: string;
-};
-
-export async function fetch(project: Project, options: FetchOptions): Promise<FetchResult> {
+export async function fetch(
+    project: Project,
+    options: { name: string; url: string; ref?: string },
+): Promise<{ valid: boolean; dir: string }> {
     const links = loadImportLinks(project);
     const linkDir = links[options.name];
     if (linkDir !== undefined) {
         // override link
-        const res: FetchResult = {
+        const res = {
             valid: util.dirExists(linkDir),
             dir: linkDir,
         };
@@ -32,7 +24,7 @@ export async function fetch(project: Project, options: FetchOptions): Promise<Fe
         const importsDir = util.ensureImportsDir(project);
         const repoDir = git.getDir(importsDir, options.url, options.ref);
 
-        const res: FetchResult = {
+        const res = {
             valid: false,
             dir: repoDir,
         };
@@ -50,13 +42,11 @@ export async function fetch(project: Project, options: FetchOptions): Promise<Fe
     }
 }
 
-export type ImportProjectsResult = {
-    importErrors: Error[];
-    projectDescs: ProjectDesc[];
-};
-
-export async function importProjects(fromDir: string, importDesc: ImportDesc): Promise<ImportProjectsResult> {
-    const res: ImportProjectsResult = {
+export async function importProjects(
+    fromDir: string,
+    importDesc: ImportDesc,
+): Promise<{ importErrors: Error[]; projectDescs: ProjectDesc[] }> {
+    const res: { importErrors: Error[]; projectDescs: ProjectDesc[] } = {
         importErrors: [],
         projectDescs: [],
     };
@@ -81,17 +71,16 @@ export function hasImportErrors(project: Project): boolean {
     return project.imports.some((imp) => (imp.importErrors.length > 0));
 }
 
-export type ValidateOptions = {
-    silent?: boolean;
-    abortOnError?: boolean;
-};
-
-export async function validate(project: Project, imp: Import, options: ValidateOptions): Promise<ValidateResult> {
+export async function validate(
+    project: Project,
+    imp: Import,
+    options: { silent?: boolean; abortOnError?: boolean },
+): Promise<{ valid: boolean; hints: string[] }> {
     const {
         silent = false,
         abortOnError = true,
     } = options;
-    const res: ValidateResult = { valid: true, hints: [] };
+    const res: { valid: boolean; hints: string[] } = { valid: true, hints: [] };
 
     const dir = imp.importDir;
     if (!util.dirExists(dir)) {

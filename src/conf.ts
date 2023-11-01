@@ -1,18 +1,17 @@
-import { Config, Project, ValidateResult } from './types.ts';
+import { Config, Project } from './types.ts';
 import * as util from './util.ts';
 import * as log from './log.ts';
 
-export type ValidateOptions = {
-    silent?: boolean;
-    abortOnError?: boolean;
-};
-
-export async function validate(project: Project, config: Config, options: ValidateOptions): Promise<ValidateResult> {
+export async function validate(
+    project: Project,
+    config: Config,
+    options: { silent?: boolean; abortOnError?: boolean },
+): Promise<{ valid: boolean; hints: string[] }> {
     const {
         silent = false,
         abortOnError = true,
     } = options;
-    const res: ValidateResult = { valid: true, hints: [] };
+    const res: { valid: boolean; hints: string[] } = { valid: true, hints: [] };
 
     const configAliasMap = util.buildConfigAliasMap(project, config);
 

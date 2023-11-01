@@ -1,4 +1,4 @@
-import { AliasMap, Config, NamedItem, Project, RunOptions, RunResult, Target } from './types.ts';
+import { Config, NamedItem, Project, RunOptions, RunResult, Target } from './types.ts';
 import * as log from './log.ts';
 import { fs, path } from '../deps.ts';
 
@@ -209,16 +209,9 @@ export function validConfigForPlatform(config: Config, platform: string): boolea
     return config.platform === platform;
 }
 
-export type BuildAliasMapOptions = {
-    project: Project;
-    config: Config;
-    target?: Target;
-    selfDir?: string;
-};
-
-function buildAliasMap(options: BuildAliasMapOptions): AliasMap {
+function buildAliasMap(options: { project: Project; config: Config; target?: Target; selfDir?: string }): Record<string, string> {
     const { project, config, target, selfDir } = options;
-    const res: AliasMap = {
+    let res: Record<string, string> = {
         '@root:': project.dir,
         '@sdks:': sdkDir(project),
         '@build:': buildDir(project, config),
@@ -226,26 +219,32 @@ function buildAliasMap(options: BuildAliasMapOptions): AliasMap {
         '@imports:': importsDir(project),
     };
     if (selfDir !== undefined) {
-        res['@self:'] = selfDir;
+        res = {
+            ...res,
+            '@self:': selfDir,
+        };
     }
     if (target !== undefined) {
-        res['@targetsources:'] = resolvePathNoAlias(target.importDir, target.dir);
-        res['@targetbuild:'] = targetBuildDir(project, config, target);
-        res['@targetdist:'] = targetDistDir(project, config, target);
-        res['@targetassets:'] = targetAssetsDir(project, config, target);
+        res = {
+            ...res,
+            '@targetsources:': resolvePathNoAlias(target.importDir, target.dir),
+            '@targetbuild:': targetBuildDir(project, config, target),
+            '@targetdist:': targetDistDir(project, config, target),
+            '@targetassets:': targetAssetsDir(project, config, target),
+        };
     }
     return res;
 }
 
-export function buildProjectAliasMap(project: Project, config: Config): AliasMap {
+export function buildProjectAliasMap(project: Project, config: Config) {
     return buildAliasMap({ project, config, selfDir: project.dir });
 }
 
-export function buildConfigAliasMap(project: Project, config: Config): AliasMap {
+export function buildConfigAliasMap(project: Project, config: Config) {
     return buildAliasMap({ project, config, selfDir: config.importDir });
 }
 
-export function buildTargetAliasMap(project: Project, config: Config, target: Target): AliasMap {
+export function buildTargetAliasMap(project: Project, config: Config, target: Target) {
     return buildAliasMap({ project, config, target, selfDir: target.importDir });
 }
 
@@ -319,14 +318,7 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
     }
 }
 
-export type DownloadOptions = {
-    url: string;
-    dir: string;
-    filename: string;
-    abortOnError?: boolean;
-};
-
-export async function download(options: DownloadOptions): Promise<boolean> {
+export async function download(options: { url: string; dir: string; filename: string; abortOnError?: boolean }): Promise<boolean> {
     const {
         url,
         dir,
@@ -408,18 +400,11 @@ export function isBooleanArray(val: unknown): boolean {
     return Array.isArray(val) && val.every((item) => isBoolean(item));
 }
 
-export type ArgDesc = {
-    type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]';
-    optional: boolean;
-};
-
-export type ValidateArgsResult = {
-    valid: boolean;
-    hints: string[];
-};
-
-export function validateArgs(args: any, expected: Record<string, ArgDesc>): ValidateArgsResult {
-    const res: ValidateArgsResult = { valid: true, hints: [] };
+export function validateArgs(
+    args: any,
+    expected: Record<string, { type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]'; optional: boolean }>,
+): { valid: boolean; hints: string[] } {
+    const res: { valid: boolean; hints: string[] } = { valid: true, hints: [] };
     for (const [key, value] of Object.entries(expected)) {
         if (!value.optional && (args[key] === undefined)) {
             res.valid = false;

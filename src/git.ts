@@ -20,13 +20,6 @@ export async function exists(): Promise<boolean> {
     }
 }
 
-export type CloneOptions = {
-    url: string;
-    dir: string;
-    ref?: string;
-    showCmd?: boolean;
-};
-
 export function getDir(baseDir: string, url: string, ref?: string): string {
     const repoName = path.parse(new URLPattern(url).pathname).name;
     let repoDir = `${baseDir}/${repoName}`;
@@ -36,7 +29,7 @@ export function getDir(baseDir: string, url: string, ref?: string): string {
     return repoDir;
 }
 
-export async function clone(options: CloneOptions): Promise<boolean> {
+export async function clone(options: { url: string; dir: string; ref?: string; showCmd?: boolean }): Promise<boolean> {
     const {
         url,
         dir,
@@ -66,15 +59,7 @@ export async function clone(options: CloneOptions): Promise<boolean> {
     return await updateSubmodules({ url, dir, ref, showCmd });
 }
 
-export type UpdateOptions = {
-    url: string;
-    dir: string;
-    ref?: string;
-    force?: boolean;
-    showCmd?: boolean;
-};
-
-export async function update(options: UpdateOptions): Promise<boolean> {
+export async function update(options: { url: string; dir: string; ref?: string; force?: boolean; showCmd?: boolean }): Promise<boolean> {
     const {
         url,
         dir,
@@ -96,14 +81,7 @@ export async function update(options: UpdateOptions): Promise<boolean> {
     return await updateSubmodules({ url, dir, ref, showCmd });
 }
 
-export type UpdateSubmodulesOptions = {
-    url: string;
-    dir: string;
-    ref: string;
-    showCmd?: boolean;
-};
-
-export async function updateSubmodules(options: UpdateSubmodulesOptions): Promise<boolean> {
+export async function updateSubmodules(options: { url: string; dir: string; ref: string; showCmd?: boolean }): Promise<boolean> {
     const { url, dir, ref, showCmd = true } = options;
     const repoDir = getDir(dir, url, ref);
     if ((await run({ args: ['submodule', 'init'], cwd: repoDir, showCmd })).exitCode !== 0) {
@@ -118,28 +96,14 @@ export async function updateSubmodules(options: UpdateSubmodulesOptions): Promis
     return true;
 }
 
-export type HasUncommittedChangesOptions = {
-    url: string;
-    dir: string;
-    ref: string;
-    showCmd?: boolean;
-};
-
-export async function hasUncommittedChanges(options: HasUncommittedChangesOptions): Promise<boolean> {
+export async function hasUncommittedChanges(options: { url: string; dir: string; ref: string; showCmd?: boolean }): Promise<boolean> {
     const { url, dir, ref, showCmd = true } = options;
     const repoDir = getDir(dir, url, ref);
     const res = await run({ args: ['status', '-s'], cwd: repoDir, showCmd, stdout: 'piped' });
     return 0 !== res.stdout.length;
 }
 
-export type HasUnpushedChangesOptions = {
-    url: string;
-    dir: string;
-    ref: string;
-    showCmd?: boolean;
-};
-
-export async function hasUnpushedChanges(options: HasUnpushedChangesOptions): Promise<boolean> {
+export async function hasUnpushedChanges(options: { url: string; dir: string; ref: string; showCmd?: boolean }): Promise<boolean> {
     const { url, dir, ref, showCmd = true } = options;
     const repoDir = getDir(dir, url, ref);
     const res = await run({

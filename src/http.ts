@@ -2,19 +2,19 @@ import * as util from './util.ts';
 
 const FILE_SERVER_URL = 'https://deno.land/std@0.178.0/http/file_server.ts';
 
-export type ServeOptions = {
-    port?: string;
-    cors?: boolean;
-    dirListing?: boolean;
-    dotfiles?: boolean;
-    host?: string;
-    cert?: string;
-    key?: string;
-    target?: string;
-    headers?: string[];
-};
-
-export async function serve(options: ServeOptions) {
+export async function serve(
+    options: {
+        port?: string;
+        cors?: boolean;
+        dirListing?: boolean;
+        dotfiles?: boolean;
+        host?: string;
+        cert?: string;
+        key?: string;
+        target?: string;
+        headers?: string[];
+    },
+) {
     const {
         target = '.',
         host = 'localhost',

@@ -474,30 +474,17 @@ export async function build(
     await adapter.build(project, config, options);
 }
 
-export type ValidateTargetOptions = {
-    silent?: boolean;
-    abortOnError?: boolean;
-};
-
-type ValidateTargetResult = {
-    valid: boolean;
-    hints: string[];
-};
-
 export function validateTarget(
     project: Project,
     target: Target,
-    options: ValidateTargetOptions,
-): ValidateTargetResult {
+    options: { silent?: boolean; abortOnError?: boolean },
+): { valid: boolean; hints: string[] } {
     const {
         silent = false,
         abortOnError = false,
     } = options;
 
-    const res: ValidateTargetResult = {
-        valid: true,
-        hints: [],
-    };
+    const res: { valid: boolean; hints: string[] } = { valid: true, hints: [] };
 
     // check restrictions for interface targets
     if (target.type === 'interface') {
@@ -607,13 +594,13 @@ export function validateTarget(
     return res;
 }
 
-export type ValidateTargetJobResult = {
-    valid: boolean;
-    hints: string[];
-};
-
-export function validateTargetJob(project: Project, config: Config, target: Target, targetJob: TargetJob): ValidateTargetJobResult {
-    const res: ValidateTargetJobResult = { valid: true, hints: [] };
+export function validateTargetJob(
+    project: Project,
+    config: Config,
+    target: Target,
+    targetJob: TargetJob,
+): { valid: boolean; hints: string[] } {
+    const res: { valid: boolean; hints: string[] } = { valid: true, hints: [] };
     const jobName = targetJob.job;
     const jobTemplate = util.find(jobName, project.jobs);
     if (jobTemplate !== undefined) {
@@ -732,13 +719,11 @@ export function resolveTargetStringRecord(record: StringRecordFunc[], ctx: Conte
     return result;
 }
 
-export type ResolvedTargetArrayItems = {
-    interface: string[];
-    private: string[];
-    public: string[];
-};
-
-export function resolveTargetArrayItems(items: TargetArrayItems, ctx: Context, itemsAreFilePaths: boolean): ResolvedTargetArrayItems {
+export function resolveTargetArrayItems(
+    items: TargetArrayItems,
+    ctx: Context,
+    itemsAreFilePaths: boolean,
+): { interface: string[]; private: string[]; public: string[] } {
     return {
         interface: resolveTargetStringArray(items.interface, ctx, itemsAreFilePaths),
         private: resolveTargetStringArray(items.private, ctx, itemsAreFilePaths),
@@ -746,13 +731,11 @@ export function resolveTargetArrayItems(items: TargetArrayItems, ctx: Context, i
     };
 }
 
-export type ResolvedTargetRecordItems = {
-    interface: Record<string, string>;
-    private: Record<string, string>;
-    public: Record<string, string>;
-};
-
-export function resolveTargetRecordItems(items: TargetRecordItems, ctx: Context, itemsAreFilePaths: boolean): ResolvedTargetRecordItems {
+export function resolveTargetRecordItems(
+    items: TargetRecordItems,
+    ctx: Context,
+    itemsAreFilePaths: boolean,
+): { interface: Record<string, string>; private: Record<string, string>; public: Record<string, string> } {
     return {
         interface: resolveTargetStringRecord(items.interface, ctx, itemsAreFilePaths),
         private: resolveTargetStringRecord(items.private, ctx, itemsAreFilePaths),

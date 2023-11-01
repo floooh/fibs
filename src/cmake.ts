@@ -32,12 +32,7 @@ export async function configure(project: Project, config: Config) {
     }
 }
 
-export type BuildOptions = {
-    target?: string;
-    cleanFirst?: boolean;
-};
-
-export async function build(project: Project, config: Config, options: BuildOptions) {
+export async function build(project: Project, config: Config, options: { target?: string; cleanFirst?: boolean }) {
     const {
         target,
         cleanFirst = false,

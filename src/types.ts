@@ -4,7 +4,7 @@ export type Context = {
     target?: Target;
     compiler?: Compiler;
     language?: Language;
-    aliasMap: AliasMap;
+    aliasMap: Record<string, string>;
     host: {
         platform: string;
         arch: Arch;
@@ -19,36 +19,23 @@ export type RecordFunc<T> = Func<Record<string, T | undefined>>; // the undefine
 export type StringArrayFunc = ArrayFunc<string | undefined | null>;
 export type StringRecordFunc = RecordFunc<string>;
 
-export type CMakeVariables = Record<string, string | boolean>;
-export type AliasMap = Record<string, string>;
-export type ImportDescs = ImportDesc[];
-export type TargetDescs = TargetDesc[];
-export type CommandDescs = CommandDesc[];
-export type ToolDescs = ToolDesc[];
-export type JobTemplateDescs = JobTemplateDesc[];
-export type RunnerDescs = RunnerDesc[];
-export type OpenerDescs = OpenerDesc[];
-export type ConfigDescs = ConfigDesc[];
-export type AdapterDescs = AdapterDesc[];
-export type SettingsItems = Record<string, SettingsItem>;
-
 export type ProjectDesc = {
     name?: string;
-    cmakeVariables?: CMakeVariables;
+    cmakeVariables?: Record<string, string | boolean>;
     includeDirectories?: StringArrayFunc;
     compileDefinitions?: StringRecordFunc;
     compileOptions?: StringArrayFunc;
     linkOptions?: StringArrayFunc;
-    imports?: ImportDescs;
-    targets?: TargetDescs;
-    commands?: CommandDescs;
-    tools?: ToolDescs;
-    jobs?: JobTemplateDescs;
-    runners?: RunnerDescs;
-    openers?: OpenerDescs;
-    configs?: ConfigDescs;
-    adapters?: AdapterDescs;
-    settings?: SettingsItems;
+    imports?: ImportDesc[];
+    targets?: TargetDesc[];
+    commands?: CommandDesc[];
+    tools?: ToolDesc[];
+    jobs?: JobTemplateDesc[];
+    runners?: RunnerDesc[];
+    openers?: OpenerDesc[];
+    configs?: ConfigDesc[];
+    adapters?: AdapterDesc[];
+    settings?: Record<string, SettingsItem>;
 };
 
 export type ConfigDescWithImportDir = ConfigDesc & { importDir: string };
@@ -56,8 +43,8 @@ export type ConfigDescWithImportDir = ConfigDesc & { importDir: string };
 export type Project = {
     name: string;
     dir: string;
-    settings: Settings;
-    cmakeVariables: CMakeVariables;
+    settings: Record<string, SettingsItem>;
+    cmakeVariables: Record<string, string | boolean>;
     includeDirectories: StringArrayFunc[];
     compileDefinitions: StringRecordFunc[];
     compileOptions: StringArrayFunc[];
@@ -80,8 +67,6 @@ export type SettingsItem = {
     validate(project: Project, value: string): { valid: boolean; hint: string };
 };
 
-export type Settings = Record<string, SettingsItem>;
-
 export type Arch = 'x86_64' | 'arm64' | 'wasm32';
 
 export type Compiler = 'msvc' | 'gcc' | 'clang' | 'appleclang' | 'unknown-compiler';
@@ -91,11 +76,6 @@ export type Language = 'c' | 'cxx';
 export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll' | 'interface';
 
 export type BuildType = 'release' | 'debug';
-
-export type ValidateResult = {
-    valid: boolean;
-    hints: string[];
-};
 
 export interface NamedItem {
     name: string;
@@ -112,7 +92,7 @@ export interface ConfigDesc extends NamedItem {
     arch?: Arch;
     toolchainFile?: string;
     cmakeIncludes?: string[];
-    cmakeVariables?: CMakeVariables;
+    cmakeVariables?: Record<string, string | boolean>;
     environment?: Record<string, string>;
     options?: Record<string, any>;
     includeDirectories?: string[];
@@ -120,7 +100,7 @@ export interface ConfigDesc extends NamedItem {
     compileOptions?: string[];
     linkOptions?: string[];
     compilers?: Compiler[];
-    validate?(project: Project): ValidateResult;
+    validate?(project: Project): { valid: boolean; hints: string[] };
 }
 
 export interface Config extends NamedItem {
@@ -133,7 +113,7 @@ export interface Config extends NamedItem {
     arch: Arch | undefined;
     toolchainFile: string | undefined;
     cmakeIncludes: string[];
-    cmakeVariables: CMakeVariables;
+    cmakeVariables: Record<string, string | boolean>;
     environment: Record<string, string>;
     options: Record<string, any>;
     includeDirectories: string[];
@@ -141,7 +121,7 @@ export interface Config extends NamedItem {
     compileOptions: string[];
     linkOptions: string[];
     compilers: Compiler[];
-    validate(project: Project): ValidateResult;
+    validate(project: Project): { valid: boolean; hints: string[] };
 }
 
 export interface ImportDesc extends NamedItem {
@@ -221,14 +201,14 @@ export interface Target extends NamedItem {
 
 export interface JobTemplateDesc extends NamedItem {
     help(): void;
-    validate(args: any): ValidateResult;
+    validate(args: any): { valid: boolean; hints: string[] };
     builder(args: any): JobFunc;
 }
 
 export interface JobTemplate extends NamedItem {
     importDir: string;
     help(): void;
-    validate(args: any): ValidateResult;
+    validate(args: any): { valid: boolean; hints: string[] };
     builder(args: any): JobFunc;
 }
 
