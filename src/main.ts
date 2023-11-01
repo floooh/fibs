@@ -58,7 +58,7 @@ function hostDefaultConfig(): string {
         case 'macos':
             return 'macos-make-release';
         case 'windows':
-            return 'windows-vstudio-release';
+            return 'win-vstudio-release';
         case 'linux':
             return 'linux-make-release';
     }
