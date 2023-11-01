@@ -6,7 +6,7 @@ export type Context = {
     language?: Language;
     aliasMap: AliasMap;
     host: {
-        platform: Platform;
+        platform: string;
         arch: Arch;
     };
 };
@@ -84,22 +84,18 @@ export type Settings = Record<string, SettingsItem>;
 
 export type Arch = 'x86_64' | 'arm64' | 'wasm32';
 
-export type Platform =
-    | 'ios'
-    | 'linux'
-    | 'macos'
-    | 'windows'
-    | 'wasi'
-    | 'emscripten'
-    | 'android';
-
-export type Compiler = 'msvc' | 'gcc' | 'clang' | 'appleclang';
+export type Compiler = 'msvc' | 'gcc' | 'clang' | 'appleclang' | 'unknown-compiler';
 
 export type Language = 'c' | 'cxx';
 
 export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll' | 'interface';
 
 export type BuildType = 'release' | 'debug';
+
+export type ValidateResult = {
+    valid: boolean;
+    hints: string[];
+};
 
 export interface NamedItem {
     name: string,
@@ -108,13 +104,14 @@ export interface NamedItem {
 export interface ConfigDesc extends NamedItem {
     ignore?: boolean;
     inherits?: string;
-    platform?: Platform;
+    platform?: string;
     runner?: string;
     opener?: string;
     buildType?: BuildType;
     generator?: string;
     arch?: Arch;
     toolchainFile?: string;
+    cmakeIncludes?: string[];
     cmakeVariables?: CMakeVariables;
     environment?: Record<string, string>;
     options?: Record<string, any>;
@@ -122,17 +119,20 @@ export interface ConfigDesc extends NamedItem {
     compileDefinitions?: Record<string,string>;
     compileOptions?: string[];
     linkOptions?: string[];
+    compilers?: Compiler[],
+    validate?(project: Project): ValidateResult,
 }
 
 export interface Config extends NamedItem {
     importDir: string;
-    platform: Platform;
+    platform: string;
     runner: Runner;
     opener: Opener | undefined;
     buildType: BuildType;
     generator: string | undefined;
     arch: Arch | undefined;
     toolchainFile: string | undefined;
+    cmakeIncludes: string[];
     cmakeVariables: CMakeVariables;
     environment: Record<string, string>;
     options: Record<string, any>;
@@ -140,6 +140,8 @@ export interface Config extends NamedItem {
     compileDefinitions: Record<string,string>;
     compileOptions: string[];
     linkOptions: string[];
+    compilers: Compiler[],
+    validate(project: Project): ValidateResult,
 }
 
 export interface ImportDesc extends NamedItem {
@@ -217,21 +219,16 @@ export interface Target extends NamedItem {
     jobs: TargetJob[];
 }
 
-export type JobValidateResult = {
-    valid: boolean;
-    hints: string[];
-}
-
 export interface JobTemplateDesc extends NamedItem {
     help(): void;
-    validate(args: any): JobValidateResult;
+    validate(args: any): ValidateResult;
     builder(args: any): JobFunc;
 }
 
 export interface JobTemplate extends NamedItem {
     importDir: string;
     help(): void;
-    validate(args: any): JobValidateResult;
+    validate(args: any): ValidateResult;
     builder(args: any): JobFunc;
 }
 
@@ -291,7 +288,7 @@ export type RunResult = {
 };
 
 export interface ToolDesc extends NamedItem {
-    platforms: Platform[];
+    platforms: string[];
     optional: boolean;
     notFoundMsg: string;
     exists(): Promise<boolean>;
@@ -299,7 +296,7 @@ export interface ToolDesc extends NamedItem {
 
 export interface Tool extends NamedItem {
     importDir: string;
-    platforms: Platform[];
+    platforms: string[];
     optional: boolean;
     notFoundMsg: string;
     exists(): Promise<boolean>;

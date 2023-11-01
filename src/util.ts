@@ -1,4 +1,4 @@
-import { AliasMap, Config, NamedItem, Platform, Project, RunOptions, RunResult, Target } from './types.ts';
+import { AliasMap, Config, NamedItem, Project, RunOptions, RunResult, Target } from './types.ts';
 import * as log from './log.ts';
 import { fs, path } from '../deps.ts';
 
@@ -192,25 +192,6 @@ export function ensureTargetAssetsDir(project: Project, config: Config, target: 
     return path;
 }
 
-export function defaultConfigForPlatform(platform: Platform): string {
-    switch (platform) {
-        case 'windows':
-            return 'win-vstudio-release';
-        case 'macos':
-            return 'macos-make-release';
-        case 'ios':
-            return 'ios-xcode-release';
-        case 'linux':
-            return 'linux-make-release';
-        case 'android':
-            return 'android-make-release';
-        case 'emscripten':
-            return 'emscripten-make-release';
-        case 'wasi':
-            return 'wasi-make-release';
-    }
-}
-
 export function activeConfig(project: Project): Config {
     const name = project.settings.config.value;
     const config = find(name, project.configs);
@@ -220,7 +201,7 @@ export function activeConfig(project: Project): Config {
     return config;
 }
 
-export function validConfigForPlatform(config: Config, platform: Platform): boolean {
+export function validConfigForPlatform(config: Config, platform: string): boolean {
     // cross-compilation configs are valid on all platforms
     if (config.toolchainFile) {
         return true;

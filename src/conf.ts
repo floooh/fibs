@@ -1,16 +1,10 @@
-import { Compiler, Config, Project } from './types.ts';
-import * as wasisdk from './wasisdk.ts';
+import { Config, Project, ValidateResult } from './types.ts';
 import * as util from './util.ts';
 import * as log from './log.ts';
 
 export type ValidateOptions = {
     silent?: boolean;
     abortOnError?: boolean;
-};
-
-export type ValidateResult = {
-    valid: boolean;
-    hints: string[];
 };
 
 export async function validate(project: Project, config: Config, options: ValidateOptions): Promise<ValidateResult> {
@@ -21,6 +15,13 @@ export async function validate(project: Project, config: Config, options: Valida
     const res: ValidateResult = { valid: true, hints: [] };
 
     const configAliasMap = util.buildConfigAliasMap(project, config);
+
+    // run config validator function
+    const validateFuncRes = config.validate(project);
+    if (!validateFuncRes.valid) {
+        res.valid = false;
+        res.hints.push(...validateFuncRes.hints);
+    }
 
     // validate generators
     // TODO: more generator checks
@@ -33,23 +34,6 @@ export async function validate(project: Project, config: Config, options: Valida
         if (!await util.find('make', project.tools)!.exists()) {
             res.valid = false;
             res.hints.push('make build tool not found (run \'fibs diag tools\')');
-        }
-    }
-
-    // check platforms vs sdks
-    // TODO: check Android
-    if (config.platform === 'emscripten') {
-        // FIXME FIXME FIXME!
-        res.valid = false;
-        res.hints.push('FIXME FIXME FIXME');
-        //if (!util.dirExists(emsdk.dir(project))) {
-        //    res.valid = false;
-        //    res.hints.push('Emscripten SDK not installed (install with \'fibs emsdk install\')');
-        //}
-    } else if (config.platform === 'wasi') {
-        if (!util.dirExists(wasisdk.dir(project))) {
-            res.valid = false;
-            res.hints.push('WASI SDK not installed (install with \'fibs wasisdk install\')');
         }
     }
 
@@ -71,23 +55,4 @@ export async function validate(project: Project, config: Config, options: Valida
         }
     }
     return res;
-}
-
-export function compilers(config: Config): Compiler[] {
-    switch (config.platform) {
-        case 'windows':
-            return ['msvc', 'gcc', 'clang'];
-        case 'linux':
-            return ['gcc', 'clang'];
-        case 'android':
-            return ['clang'];
-        case 'emscripten':
-            return ['clang'];
-        case 'wasi':
-            return ['clang'];
-        case 'macos':
-            return ['appleclang'];
-        case 'ios':
-            return ['appleclang'];
-    }
 }

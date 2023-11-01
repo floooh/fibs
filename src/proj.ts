@@ -36,7 +36,6 @@ import * as log from './log.ts';
 import * as imports from './imports.ts';
 import * as util from './util.ts';
 import * as host from './host.ts';
-import { conf } from '../mod.ts';
 
 export async function setup(
     rootDir: string,
@@ -114,6 +113,7 @@ function resolveConfigs(project: Project) {
             generator: desc.generator,
             arch: desc.arch ?? undefined,
             toolchainFile: desc.toolchainFile,
+            cmakeIncludes: desc.cmakeIncludes ?? [],
             cmakeVariables: desc.cmakeVariables ?? {},
             environment: desc.environment ?? {},
             options: desc.options ?? {},
@@ -121,6 +121,9 @@ function resolveConfigs(project: Project) {
             compileDefinitions: desc.compileDefinitions ?? {},
             compileOptions: desc.compileOptions ?? [],
             linkOptions: desc.linkOptions ?? [],
+            compilers: desc.compilers ?? ['unknown-compiler'],
+            validate: desc.validate ?? (() => ({ valid: false, hints: ['no validate function set on config!'] })),
+
         };
         util.addOrReplace(project.configs, config);
     }
@@ -168,14 +171,16 @@ function mergeArraysMaybeUndefined<T>(into: T[] | undefined, src: T[] | undefine
     if (src === undefined) {
         return into;
     }
-    return [...into, ...src];
+    // remove duplicates
+    return [...new Set([...into, ...src])];
 }
 
 function mergeArrays<T>(into: T[], src: T[]): T[] {
     if (src === undefined) {
         return into;
     }
-    return [...into, ...src];
+    // remove duplicates
+    return [...new Set([...into, ...src])];
 }
 
 function cleanupUndefinedProperties<T>(obj: T) {
@@ -197,6 +202,7 @@ function mergeConfigDescWithImportDir(into: ConfigDescWithImportDir, from: Confi
     into.generator = assignMaybeUndefined(into.generator, from.generator);
     into.arch = assignMaybeUndefined(into.arch, from.arch);
     into.toolchainFile = assignMaybeUndefined(into.toolchainFile, from.toolchainFile);
+    into.cmakeIncludes = mergeArraysMaybeUndefined(into.cmakeIncludes, from.cmakeIncludes);
     into.cmakeVariables = mergeRecordsMaybeUndefined(into.cmakeVariables, from.cmakeVariables);
     into.environment = mergeRecordsMaybeUndefined(into.environment, from.environment);
     into.options = mergeRecordsMaybeUndefined(into.options, from.options);
@@ -204,6 +210,8 @@ function mergeConfigDescWithImportDir(into: ConfigDescWithImportDir, from: Confi
     into.compileDefinitions = mergeRecordsMaybeUndefined(into.compileDefinitions, from.compileDefinitions);
     into.compileOptions = mergeArraysMaybeUndefined(into.compileOptions, from.compileOptions);
     into.linkOptions = mergeArraysMaybeUndefined(into.linkOptions, from.linkOptions);
+    into.compilers = assignMaybeUndefined(into.compilers, from.compilers);
+    into.validate = assignMaybeUndefined(into.validate, from.validate);
     cleanupUndefinedProperties(into);
 }
 
@@ -228,7 +236,7 @@ function integrateCommand(commands: Command[], desc: CommandDesc, importDir: str
             importDir,
             help: desc.help,
             run: desc.run,
-        })
+        });
     } else {
         into.help = desc.help;
         into.run = desc.run;
@@ -564,7 +572,7 @@ export function validateTarget(
         });
     };
     for (const language of ['c', 'cxx']) {
-        for (const compiler of conf.compilers(config)) {
+        for (const compiler of config.compilers) {
             const ctx: Context = {
                 project,
                 config,

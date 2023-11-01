@@ -5,7 +5,6 @@ import {
     cmake,
     Compiler,
     Context,
-    conf,
     Config,
     host,
     Language,
@@ -95,6 +94,10 @@ function genProlog(project: Project, config: Config): string {
     if (config.platform === 'wasi') {
         str += 'set(CMAKE_EXECUTABLE_SUFFIX ".wasm")\n';
     }
+    const aliasMap = util.buildConfigAliasMap(project, config);
+    for (const includePath of config.cmakeIncludes) {
+        str += `include("${util.resolvePath(aliasMap, includePath)}")\n`
+    }
     return str;
 }
 
@@ -108,6 +111,8 @@ function compilerId(compiler: Compiler): string {
             return 'Clang';
         case 'appleclang':
             return 'AppleClang';
+        case 'unknown-compiler':
+            return 'UNKNOWN-COMPILER';
     }
 }
 
@@ -142,7 +147,7 @@ function genGlobalArrayItemsLanguageCompiler(
     let str = '';
     const aliasMap = util.buildProjectAliasMap(project, config);
     for (const language of languages()) {
-        for (const compiler of conf.compilers(config)) {
+        for (const compiler of config.compilers) {
             const ctx: Context = {
                 project,
                 config,
@@ -170,7 +175,7 @@ function genGlobalRecordItemsLanguageCompiler(
     let str = '';
     const aliasMap = util.buildProjectAliasMap(project, config);
     for (const language of languages()) {
-        for (const compiler of conf.compilers(config)) {
+        for (const compiler of config.compilers) {
             const ctx: Context = {
                 project,
                 config,
@@ -278,7 +283,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
 function genTargetDependencies(project: Project, config: Config, target: Target): string {
     let str = '';
     const aliasMap = util.buildTargetAliasMap(project, config, target);
-    for (const compiler of conf.compilers(config)) {
+    for (const compiler of config.compilers) {
         const ctx: Context = {
             project,
             config,
@@ -310,7 +315,7 @@ function genTargetArrayItems(
     let str = '';
     const aliasMap = util.buildTargetAliasMap(project, config, target);
     for (const language of languages()) {
-        for (const compiler of conf.compilers(config)) {
+        for (const compiler of config.compilers) {
             const ctx: Context = {
                 project,
                 config,
@@ -352,7 +357,7 @@ function genTargetRecordItems(
     let str = '';
     const aliasMap = util.buildTargetAliasMap(project, config, target);
     for (const language of languages()) {
-        for (const compiler of conf.compilers(config)) {
+        for (const compiler of config.compilers) {
             const ctx: Context = {
                 project,
                 config,

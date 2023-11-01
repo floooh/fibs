@@ -2,11 +2,18 @@ import { ConfigDesc } from '../types.ts';
 
 export const configs: ConfigDesc[] = [
     {
-        name: 'win-vstudio',
+        name: 'win',
         ignore: true,
         platform: 'windows',
         arch: 'x86_64',
+        validate: () => ({ valid: true, hints: [] }),
+    },
+    {
+        name: 'win-vstudio',
+        inherits: 'win',
+        ignore: true,
         opener: 'vstudio',
+        compilers: ['msvc'],
     },
     {
         name: 'win-vstudio-release',
@@ -19,28 +26,35 @@ export const configs: ConfigDesc[] = [
         buildType: 'debug',
     },
     {
-        name: 'macos-make',
+        name: 'macos',
         ignore: true,
         platform: 'macos',
+        compilers: ['appleclang'],
+        validate: () => ({ valid: true, hints: [] }),
+    },
+    {
+        name: 'macos-make',
+        inherits: 'macos',
+        ignore: true,
         generator: 'Unix Makefiles',
     },
     {
         name: 'macos-ninja',
+        inherits: 'macos',
         ignore: true,
-        platform: 'macos',
         generator: 'Ninja',
     },
     {
         name: 'macos-xcode',
+        inherits: 'macos',
         ignore: true,
-        platform: 'macos',
         generator: 'Xcode',
         opener: 'xcode',
     },
     {
         name: 'macos-vscode',
+        inherits: 'macos',
         ignore: true,
-        platform: 'macos',
         generator: 'Ninja',
         opener: 'vscode',
     },
@@ -85,15 +99,22 @@ export const configs: ConfigDesc[] = [
         buildType: 'debug',
     },
     {
-        name: 'linux-make',
+        name: 'linux',
         ignore: true,
         platform: 'linux',
+        compilers: ['gcc', 'clang'],
+        validate: () => ({ valid: true, hints: [] }),
+    },
+    {
+        name: 'linux-make',
+        inherits: 'linux',
+        ignore: true,
         generator: 'Unix Makefiles',
     },
     {
         name: 'linux-ninja',
+        inherits: 'linux',
         ignore: true,
-        platform: 'linux',
         generator: 'Ninja',
     },
     {
@@ -122,6 +143,7 @@ export const configs: ConfigDesc[] = [
         platform: 'wasi',
         runner: 'wasi',
         toolchainFile: '@sdks:wasisdk/share/cmake/wasi-sdk.cmake',
+        compilers: ['clang'],
         cmakeVariables: {
             WASI_SDK_PREFIX: '@sdks:wasisdk',
         },

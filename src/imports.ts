@@ -1,4 +1,4 @@
-import { Import, ImportDesc, Project, ProjectDesc } from './types.ts';
+import { Import, ImportDesc, Project, ProjectDesc, ValidateResult } from './types.ts';
 import * as util from './util.ts';
 import * as git from './git.ts';
 import * as log from './log.ts';
@@ -88,11 +88,6 @@ export function hasImportErrors(project: Project): boolean {
 export type ValidateOptions = {
     silent?: boolean;
     abortOnError?: boolean;
-};
-
-export type ValidateResult = {
-    valid: boolean;
-    hints: string[];
 };
 
 export async function validate(project: Project, imp: Import, options: ValidateOptions): Promise<ValidateResult> {
