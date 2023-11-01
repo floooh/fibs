@@ -1,8 +1,4 @@
-import { Project, ProjectDesc } from './types.ts';
-import * as log from './log.ts';
-import * as proj from './proj.ts';
-import * as util from './util.ts';
-import * as host from './host.ts';
+import { host, log, proj, Project, ProjectDesc, util } from '../mod.ts';
 
 import { commands } from './commands/index.ts';
 import { tools } from './tools/index.ts';

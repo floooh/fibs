@@ -11,12 +11,12 @@ import {
     proj,
     Project,
     StringArrayFunc,
+    StringRecordFunc,
     Target,
     TargetArrayItems,
     TargetRecordItems,
     util,
 } from '../../mod.ts';
-import { StringRecordFunc } from '../types.ts';
 
 export const cmakeAdapter: AdapterDesc = {
     name: 'cmake',

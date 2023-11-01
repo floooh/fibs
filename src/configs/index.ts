@@ -1,4 +1,4 @@
-import { ConfigDesc } from '../types.ts';
+import { ConfigDesc } from '../../mod.ts';
 
 export const configs: ConfigDesc[] = [
     {

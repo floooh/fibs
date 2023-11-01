@@ -1,4 +1,4 @@
-import { colors } from '../deps.ts';
+import { colors } from '../../deps.ts';
 
 const textEncoder = new TextEncoder();
 
