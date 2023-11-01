@@ -8,5 +8,4 @@ export * as util from './src/util.ts';
 export * as settings from './src/settings.ts';
 export * as cmake from './src/cmake.ts';
 export * as git from './src/git.ts';
-export * as http from './src/http.ts';
 export * as imports from './src/imports.ts';
