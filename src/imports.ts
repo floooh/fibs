@@ -46,7 +46,7 @@ export async function importProjects(
     fromDir: string,
     importDesc: ImportDesc,
 ): Promise<{ importErrors: Error[]; projectDescs: ProjectDesc[] }> {
-    const res: { importErrors: Error[]; projectDescs: ProjectDesc[] } = {
+    const res: Awaited<ReturnType<typeof importProjects>> = {
         importErrors: [],
         projectDescs: [],
     };
@@ -80,7 +80,7 @@ export async function validate(
         silent = false,
         abortOnError = true,
     } = options;
-    const res: { valid: boolean; hints: string[] } = { valid: true, hints: [] };
+    const res: Awaited<ReturnType<typeof validate>> = { valid: true, hints: [] };
 
     const dir = imp.importDir;
     if (!util.dirExists(dir)) {
@@ -99,7 +99,7 @@ export async function validate(
 }
 
 function loadImportLinks(project: Project): Record<string, string | undefined> {
-    let result: Record<string, string | undefined> = {};
+    let result: ReturnType<typeof loadImportLinks> = {};
     const linksJsonPath = `${util.ensureFibsDir(project)}/links.json`;
     if (util.fileExists(linksJsonPath)) {
         try {

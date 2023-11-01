@@ -11,7 +11,7 @@ export async function validate(
         silent = false,
         abortOnError = true,
     } = options;
-    const res: { valid: boolean; hints: string[] } = { valid: true, hints: [] };
+    const res: Awaited<ReturnType<typeof validate>> = { valid: true, hints: [] };
 
     const configAliasMap = util.buildConfigAliasMap(project, config);
 

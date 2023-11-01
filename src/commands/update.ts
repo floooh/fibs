@@ -9,11 +9,6 @@ function help() {
     ], 'update all or specific import, use --clean to delete and fetch from scratch');
 }
 
-type Args = {
-    clean: boolean;
-    items: string[];
-};
-
 async function run(project: Project) {
     const args = parseArgs(project);
     for (const item of args.items) {
@@ -47,8 +42,8 @@ async function run(project: Project) {
     }
 }
 
-function parseArgs(project: Project): Args {
-    const res: Args = { clean: false, items: [] };
+function parseArgs(project: Project): { clean: boolean; items: string[] } {
+    const res: ReturnType<typeof parseArgs> = { clean: false, items: [] };
     res.items = Deno.args.slice(1).filter((arg) => {
         if (arg.startsWith('--')) {
             if (arg === '--clean') {

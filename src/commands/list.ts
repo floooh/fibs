@@ -18,18 +18,6 @@ function help() {
 
 const allTargetTypes: TargetType[] = ['windowed-exe', 'plain-exe', 'lib', 'dll', 'interface'];
 
-type ListArgs = {
-    all: boolean;
-    settings: boolean;
-    configs: boolean;
-    imports: boolean;
-    runners: boolean;
-    openers: boolean;
-    jobs: boolean;
-    disabled: boolean;
-    targetTypes: TargetType[];
-};
-
 async function run(project: Project) {
     const args = parseArgs();
     if (args.all) {
@@ -118,8 +106,18 @@ async function run(project: Project) {
     }
 }
 
-function parseArgs(): ListArgs {
-    const args: ListArgs = {
+function parseArgs(): {
+    all: boolean;
+    settings: boolean;
+    configs: boolean;
+    imports: boolean;
+    runners: boolean;
+    openers: boolean;
+    jobs: boolean;
+    disabled: boolean;
+    targetTypes: TargetType[];
+} {
+    const args: ReturnType<typeof parseArgs> = {
         all: false,
         settings: false,
         configs: false,

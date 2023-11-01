@@ -483,7 +483,7 @@ export function validateTarget(
         abortOnError = false,
     } = options;
 
-    const res: { valid: boolean; hints: string[] } = { valid: true, hints: [] };
+    const res: ReturnType<typeof validateTarget> = { valid: true, hints: [] };
 
     // check restrictions for interface targets
     if (target.type === 'interface') {
@@ -599,7 +599,7 @@ export function validateTargetJob(
     target: Target,
     targetJob: TargetJob,
 ): { valid: boolean; hints: string[] } {
-    const res: { valid: boolean; hints: string[] } = { valid: true, hints: [] };
+    const res: ReturnType<typeof validateTargetJob> = { valid: true, hints: [] };
     const jobName = targetJob.job;
     const jobTemplate = util.find(jobName, project.jobs);
     if (jobTemplate !== undefined) {

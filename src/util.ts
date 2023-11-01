@@ -404,7 +404,7 @@ export function validateArgs(
     args: any,
     expected: Record<string, { type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]'; optional: boolean }>,
 ): { valid: boolean; hints: string[] } {
-    const res: { valid: boolean; hints: string[] } = { valid: true, hints: [] };
+    const res: ReturnType<typeof validateArgs> = { valid: true, hints: [] };
     for (const [key, value] of Object.entries(expected)) {
         if (!value.optional && (args[key] === undefined)) {
             res.valid = false;
