@@ -7,7 +7,7 @@ export type FetchOptions = {
     name: string;
     url: string;
     ref?: string;
-}
+};
 
 export type FetchResult = {
     valid: boolean;
@@ -16,7 +16,7 @@ export type FetchResult = {
 
 export async function fetch(project: Project, options: FetchOptions): Promise<FetchResult> {
     const links = loadImportLinks(project);
-    const linkDir = links[options.name]
+    const linkDir = links[options.name];
     if (linkDir !== undefined) {
         // override link
         const res: FetchResult = {
@@ -40,11 +40,7 @@ export async function fetch(project: Project, options: FetchOptions): Promise<Fe
             res.valid = true;
             return res;
         } else {
-            if (!await git.clone({
-                url: options.url,
-                dir: importsDir,
-                ref: options.ref,
-            })) {
+            if (!await git.clone({ url: options.url, dir: importsDir, ref: options.ref })) {
                 log.warn(`Failed to clone ${options.url} into ${res.dir}`);
                 return res;
             }
@@ -57,20 +53,20 @@ export async function fetch(project: Project, options: FetchOptions): Promise<Fe
 export type ImportProjectsResult = {
     importErrors: Error[];
     projectDescs: ProjectDesc[];
-}
+};
 
 export async function importProjects(fromDir: string, importDesc: ImportDesc): Promise<ImportProjectsResult> {
     const res: ImportProjectsResult = {
         importErrors: [],
         projectDescs: [],
-    }
+    };
     if (importDesc.project) {
         res.projectDescs.push(importDesc.project);
     }
     if (importDesc.import) {
         for (const file of importDesc.import) {
             try {
-                const module = await import(`file://${fromDir}/${file}`)
+                const module = await import(`file://${fromDir}/${file}`);
                 res.projectDescs.push(module.project);
             } catch (err) {
                 log.warn('importing module failed with:', err);
@@ -82,7 +78,7 @@ export async function importProjects(fromDir: string, importDesc: ImportDesc): P
 }
 
 export function hasImportErrors(project: Project): boolean {
-    return project.imports.some(imp => (imp.importErrors.length > 0));
+    return project.imports.some((imp) => (imp.importErrors.length > 0));
 }
 
 export type ValidateOptions = {
@@ -113,8 +109,8 @@ export async function validate(project: Project, imp: Import, options: ValidateO
     return res;
 }
 
-function loadImportLinks(project: Project): Record<string,string|undefined> {
-    let result: Record<string, string|undefined> = {};
+function loadImportLinks(project: Project): Record<string, string | undefined> {
+    let result: Record<string, string | undefined> = {};
     const linksJsonPath = `${util.ensureFibsDir(project)}/links.json`;
     if (util.fileExists(linksJsonPath)) {
         try {
@@ -126,7 +122,7 @@ function loadImportLinks(project: Project): Record<string,string|undefined> {
     return result;
 }
 
-function saveImportLinks(project: Project, links: Record<string,string|undefined>) {
+function saveImportLinks(project: Project, links: Record<string, string | undefined>) {
     const linksJsonPath = `${util.ensureFibsDir(project)}/links.json`;
     try {
         Deno.writeTextFileSync(linksJsonPath, JSON.stringify(links, null, 2));

@@ -23,7 +23,7 @@ async function run(project: Project) {
         if (isLinked) {
             log.print();
             log.warn(`skipping '${imp.name}' because:`);
-            log.info("  import is a linked directory (run 'fibs list imports')");
+            log.info('  import is a linked directory (run \'fibs list imports\')');
             log.print();
             if (isLinked || !args.clean) {
                 continue;

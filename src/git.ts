@@ -51,7 +51,7 @@ export async function clone(options: CloneOptions): Promise<boolean> {
     if ((await run({ args: ['init', '-q'], cwd: repoDir, showCmd })).exitCode !== 0) {
         return false;
     }
-    if ((await run({ args: ['remote', 'add', 'origin', url], cwd: repoDir, showCmd})).exitCode !== 0) {
+    if ((await run({ args: ['remote', 'add', 'origin', url], cwd: repoDir, showCmd })).exitCode !== 0) {
         return false;
     }
     if ((await run({ args: ['remote', 'set-url', '--push', 'origin', 'nopush'], cwd: repoDir, showCmd })).exitCode !== 0) {
@@ -60,17 +60,17 @@ export async function clone(options: CloneOptions): Promise<boolean> {
     if ((await run({ args: ['fetch', '--depth=1', 'origin', ref], cwd: repoDir, showCmd })).exitCode !== 0) {
         return false;
     }
-    if ((await run({ args: ['-c', 'advice.detachedHead=false', 'checkout', 'FETCH_HEAD'], cwd: repoDir, showCmd})).exitCode !== 0) {
+    if ((await run({ args: ['-c', 'advice.detachedHead=false', 'checkout', 'FETCH_HEAD'], cwd: repoDir, showCmd })).exitCode !== 0) {
         return false;
     }
     return await updateSubmodules({ url, dir, ref, showCmd });
 }
 
 export type UpdateOptions = {
-    url: string,
+    url: string;
     dir: string;
     ref?: string;
-    force?: boolean,
+    force?: boolean;
     showCmd?: boolean;
 };
 
@@ -83,21 +83,21 @@ export async function update(options: UpdateOptions): Promise<boolean> {
         showCmd = true,
     } = options;
     let repoDir = getDir(dir, url, ref);
-    const args = ['fetch', '--depth=1', 'origin', ref ];
+    const args = ['fetch', '--depth=1', 'origin', ref];
     if (force) {
         args.push('-f');
     }
     if ((await run({ args, cwd: repoDir, showCmd })).exitCode !== 0) {
         return false;
     }
-    if ((await run({ args: ['-c', 'advice.detachedHead=false', 'checkout', 'FETCH_HEAD'], cwd: repoDir, showCmd})).exitCode !== 0) {
+    if ((await run({ args: ['-c', 'advice.detachedHead=false', 'checkout', 'FETCH_HEAD'], cwd: repoDir, showCmd })).exitCode !== 0) {
         return false;
     }
     return await updateSubmodules({ url, dir, ref, showCmd });
 }
 
 export type UpdateSubmodulesOptions = {
-    url: string,
+    url: string;
     dir: string;
     ref: string;
     showCmd?: boolean;
@@ -119,7 +119,7 @@ export async function updateSubmodules(options: UpdateSubmodulesOptions): Promis
 }
 
 export type HasUncommittedChangesOptions = {
-    url: string,
+    url: string;
     dir: string;
     ref: string;
     showCmd?: boolean;
@@ -133,7 +133,7 @@ export async function hasUncommittedChanges(options: HasUncommittedChangesOption
 }
 
 export type HasUnpushedChangesOptions = {
-    url: string,
+    url: string;
     dir: string;
     ref: string;
     showCmd?: boolean;

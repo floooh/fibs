@@ -1,4 +1,4 @@
-import { CommandDesc, Config, conf, imports, log, proj, Project, settings, util } from '../../mod.ts';
+import { CommandDesc, conf, Config, imports, log, proj, Project, settings, util } from '../../mod.ts';
 
 export const configCmd: CommandDesc = { name: 'config', help, run };
 

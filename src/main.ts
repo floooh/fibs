@@ -55,9 +55,12 @@ export async function main() {
 
 function hostDefaultConfig(): string {
     switch (host.platform()) {
-        case 'macos': return 'macos-make-release';
-        case 'windows': return 'windows-vstudio-release';
-        case 'linux': return 'linux-make-release';
+        case 'macos':
+            return 'macos-make-release';
+        case 'windows':
+            return 'windows-vstudio-release';
+        case 'linux':
+            return 'linux-make-release';
     }
 }
 
@@ -78,7 +81,7 @@ const stdDesc: ProjectDesc = {
             default: hostDefaultConfig(),
             value: hostDefaultConfig(),
             validate: (project, value) => {
-                return { valid:util.find(value, project.configs) !== undefined, hint: 'run \'fibs list configs\'' };
+                return { valid: util.find(value, project.configs) !== undefined, hint: 'run \'fibs list configs\'' };
             },
         },
     },

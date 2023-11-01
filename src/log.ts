@@ -25,9 +25,9 @@ export function helpCmd(cmds: string[], help: string | string[]) {
 }
 
 export type HelpJobArgs = {
-    name: string,
-    type: string,
-    desc: string,
+    name: string;
+    type: string;
+    desc: string;
 };
 
 export function helpJob(name: string, args: HelpJobArgs[], help: string) {

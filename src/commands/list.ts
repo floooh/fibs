@@ -1,4 +1,4 @@
-import { CommandDesc, log, Project, TargetType, proj, util, imports } from '../../mod.ts';
+import { CommandDesc, imports, log, proj, Project, TargetType, util } from '../../mod.ts';
 import { colors } from '../../deps.ts';
 
 export const listCmd: CommandDesc = { name: 'list', help, run };
@@ -36,7 +36,7 @@ async function run(project: Project) {
         log.section('settings');
     }
     if (args.all || args.settings) {
-        for (const [key,val] of Object.entries(project.settings)) {
+        for (const [key, val] of Object.entries(project.settings)) {
             const def = project.settings[key].default;
             log.print(`${key}: ${val} (default: ${def})`);
         }
@@ -70,7 +70,6 @@ async function run(project: Project) {
     if (args.all || args.runners) {
         for (const runner of project.runners) {
             log.print(runner.name);
-
         }
     }
     if (args.all) {
@@ -102,7 +101,7 @@ async function run(project: Project) {
         for (const type of types) {
             for (const target of targets) {
                 if ((target.type === type) && (args.targetTypes.includes(type))) {
-                    const str = `${target.name} (${target.type})`
+                    const str = `${target.name} (${target.type})`;
                     if (proj.isTargetEnabled(project, config, target)) {
                         log.print(str);
                     } else {

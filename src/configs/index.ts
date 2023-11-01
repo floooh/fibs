@@ -137,4 +137,4 @@ export const configs: ConfigDesc[] = [
         inherits: 'linux-ninja',
         buildType: 'debug',
     },
-]
+];

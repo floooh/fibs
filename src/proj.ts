@@ -2,34 +2,34 @@ import {
     Adapter,
     AdapterDesc,
     AdapterOptions,
+    Command,
+    CommandDesc,
     Config,
     ConfigDesc,
     ConfigDescWithImportDir,
-    Job,
-    Language,
-    Project,
-    ProjectDesc,
-    StringArrayFunc,
-    StringRecordFunc,
     Context,
-    Target,
-    TargetDesc,
-    TargetArrayItems,
-    TargetArrayItemsDesc,
-    TargetRecordItems,
-    TargetRecordItemsDesc,
-    TargetJob,
-    TargetJobDesc,
-    Opener,
-    OpenerDesc,
-    Runner,
-    RunnerDesc,
+    Job,
     JobTemplate,
     JobTemplateDesc,
+    Language,
+    Opener,
+    OpenerDesc,
+    Project,
+    ProjectDesc,
+    Runner,
+    RunnerDesc,
+    StringArrayFunc,
+    StringRecordFunc,
+    Target,
+    TargetArrayItems,
+    TargetArrayItemsDesc,
+    TargetDesc,
+    TargetJob,
+    TargetJobDesc,
+    TargetRecordItems,
+    TargetRecordItemsDesc,
     Tool,
     ToolDesc,
-    Command,
-    CommandDesc,
 } from './types.ts';
 import * as settings from './settings.ts';
 import * as log from './log.ts';
@@ -123,7 +123,6 @@ function resolveConfigs(project: Project) {
             linkOptions: desc.linkOptions ?? [],
             compilers: desc.compilers ?? ['unknown-compiler'],
             validate: desc.validate ?? (() => ({ valid: false, hints: ['no validate function set on config!'] })),
-
         };
         util.addOrReplace(project.configs, config);
     }
@@ -141,7 +140,10 @@ function assign<T>(into: T, src: T | undefined): T {
     return (src === undefined) ? into : src;
 }
 
-function mergeRecordsMaybeUndefined<T>(into: Record<string, T> | undefined, src: Record<string, T> | undefined): Record<string, T> | undefined {
+function mergeRecordsMaybeUndefined<T>(
+    into: Record<string, T> | undefined,
+    src: Record<string, T> | undefined,
+): Record<string, T> | undefined {
     if ((into === undefined) && (src === undefined)) {
         return undefined;
     }
@@ -187,7 +189,7 @@ function cleanupUndefinedProperties<T>(obj: T) {
     let key: keyof typeof obj;
     for (key in obj) {
         if (obj[key] === undefined) {
-            delete obj[key]
+            delete obj[key];
         }
     }
 }
@@ -219,11 +221,10 @@ function mergeTransformArray<T0, T1>(
     into: T0[],
     from: T1[] | undefined,
     importDir: string,
-    mergeTransformFunc: (into: T0[], src: T1, importDir: string) => void)
-    : T0[]
-{
+    mergeTransformFunc: (into: T0[], src: T1, importDir: string) => void,
+): T0[] {
     if (from !== undefined) {
-        from.forEach((src) => mergeTransformFunc(into, src, importDir))
+        from.forEach((src) => mergeTransformFunc(into, src, importDir));
     }
     return into;
 }
@@ -337,7 +338,7 @@ function integrateTarget(targets: Target[], desc: TargetDesc, importDir: string)
         if (descs === undefined) {
             return [];
         }
-        return descs.map((desc) => ({job: desc.job, args: desc.args}));
+        return descs.map((desc) => ({ job: desc.job, args: desc.args }));
     };
     const mergeTargetArrayItems = (into: TargetArrayItems, src: TargetArrayItems): TargetArrayItems => {
         return {
@@ -368,7 +369,7 @@ function integrateTarget(targets: Target[], desc: TargetDesc, importDir: string)
         compileOptions: toTargetArrayItems(desc.compileOptions),
         linkOptions: toTargetArrayItems(desc.linkOptions),
         jobs: toTargetJobs(util.optionalArrayRemoveNullish(desc.jobs)),
-    }
+    };
     if (into === undefined) {
         targets.push(target);
     } else {
@@ -425,7 +426,7 @@ async function integrateProjectDesc(into: Project, other: ProjectDesc, importDir
     into.linkOptions = mergeArrays(into.linkOptions, optionalToArray(other.linkOptions));
     into.commands = mergeTransformArray(into.commands, other.commands, importDir, integrateCommand);
     into.tools = mergeTransformArray(into.tools, other.tools, importDir, integrateTool);
-    into.jobs = mergeTransformArray(into.jobs, other.jobs, importDir, integrateJobTemplate)
+    into.jobs = mergeTransformArray(into.jobs, other.jobs, importDir, integrateJobTemplate);
     into.runners = mergeTransformArray(into.runners, other.runners, importDir, integrateRunner);
     into.openers = mergeTransformArray(into.openers, other.openers, importDir, integrateOpener);
     into.adapters = mergeTransformArray(into.adapters, other.adapters, importDir, integrateAdapter);
@@ -444,7 +445,7 @@ function resolveInheritedConfigDesc(config: ConfigDescWithImportDir, configs: Co
             if (nextConfig === undefined) {
                 log.error(`config '${curConfig.name}' tries to inherit from non-existing config '${curConfig.inherits}'`);
             }
-            curConfig = nextConfig
+            curConfig = nextConfig;
         } else {
             break;
         }
@@ -623,7 +624,7 @@ export function validateTargetJob(project: Project, config: Config, target: Targ
                 `job '${jobName}' in target '${target.name}' has invalid args:`,
                 ...valRes.hints.map((hint) => `  - ${hint}`),
                 'in:',
-                ...JSON.stringify(targetJob.args, null, 2).split('\n').map((line) => `  ${line}`)
+                ...JSON.stringify(targetJob.args, null, 2).split('\n').map((line) => `  ${line}`),
             );
         }
     } else {
@@ -659,7 +660,13 @@ export async function runJobs(project: Project, config: Config, target: Target) 
     }
 }
 
-function resolveAliasOrPath(item: string, baseDir: string, subDir: string | undefined, aliasMap: Record<string, string>, itemsAreFilePaths: boolean): string {
+function resolveAliasOrPath(
+    item: string,
+    baseDir: string,
+    subDir: string | undefined,
+    aliasMap: Record<string, string>,
+    itemsAreFilePaths: boolean,
+): string {
     if (itemsAreFilePaths) {
         return util.resolvePath(aliasMap, baseDir, subDir, item);
     } else {
@@ -672,24 +679,30 @@ export function resolveProjectStringArray(array: StringArrayFunc[] | string[], c
     const subDir = undefined;
     return array.flatMap((funcOrString) => {
         if (typeof funcOrString === 'function') {
-            return util.arrayRemoveNullish(funcOrString(ctx)).map((item) => resolveAliasOrPath(item!, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths));
+            return util.arrayRemoveNullish(funcOrString(ctx)).map((item) =>
+                resolveAliasOrPath(item!, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths)
+            );
         } else {
-            return funcOrString ? [ resolveAliasOrPath(funcOrString, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths) ] : [];
+            return funcOrString ? [resolveAliasOrPath(funcOrString, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths)] : [];
         }
     }) as string[];
 }
 
-export function resolveProjectStringRecord(record: StringRecordFunc[] | Record<string,string>, ctx: Context, itemsAreFilePaths: boolean): Record<string, string> {
+export function resolveProjectStringRecord(
+    record: StringRecordFunc[] | Record<string, string>,
+    ctx: Context,
+    itemsAreFilePaths: boolean,
+): Record<string, string> {
     const baseDir = ctx.project.dir;
     const subDir = undefined;
     const result: Record<string, string> = {};
-    const resolve = (record: Record<string,string>) => {
-        for (const [key,val] of Object.entries(record)) {
+    const resolve = (record: Record<string, string>) => {
+        for (const [key, val] of Object.entries(record)) {
             result[key] = resolveAliasOrPath(val, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths);
         }
-    }
+    };
     if (Array.isArray(record)) {
-        record.forEach((func) => resolve(func(ctx) as Record<string,string>));
+        record.forEach((func) => resolve(func(ctx) as Record<string, string>));
     } else {
         resolve(record);
     }
@@ -700,20 +713,22 @@ export function resolveTargetStringArray(array: StringArrayFunc[], ctx: Context,
     const baseDir = ctx.target!.importDir;
     const subDir = ctx.target!.dir;
     return array.flatMap((funcOrString) => {
-        return util.arrayRemoveNullish(funcOrString(ctx)).filter((item) => item).map((item) => resolveAliasOrPath(item!, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths));
+        return util.arrayRemoveNullish(funcOrString(ctx)).filter((item) => item).map((item) =>
+            resolveAliasOrPath(item!, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths)
+        );
     });
 }
 
-export function resolveTargetStringRecord(record: StringRecordFunc[], ctx: Context, itemsAreFilePaths: boolean): Record<string,string> {
+export function resolveTargetStringRecord(record: StringRecordFunc[], ctx: Context, itemsAreFilePaths: boolean): Record<string, string> {
     const baseDir = ctx.target!.importDir;
     const subDir = ctx.target!.dir;
     const result: Record<string, string> = {};
-    const resolve = (record: Record<string,string>) => {
-        for (const [key,val] of Object.entries(record)) {
+    const resolve = (record: Record<string, string>) => {
+        for (const [key, val] of Object.entries(record)) {
             result[key] = resolveAliasOrPath(val, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths);
         }
-    }
-    record.forEach((func) => resolve(func(ctx) as Record<string,string>));
+    };
+    record.forEach((func) => resolve(func(ctx) as Record<string, string>));
     return result;
 }
 
@@ -721,28 +736,28 @@ export type ResolvedTargetArrayItems = {
     interface: string[];
     private: string[];
     public: string[];
-}
+};
 
 export function resolveTargetArrayItems(items: TargetArrayItems, ctx: Context, itemsAreFilePaths: boolean): ResolvedTargetArrayItems {
     return {
         interface: resolveTargetStringArray(items.interface, ctx, itemsAreFilePaths),
         private: resolveTargetStringArray(items.private, ctx, itemsAreFilePaths),
         public: resolveTargetStringArray(items.public, ctx, itemsAreFilePaths),
-    }
+    };
 }
 
 export type ResolvedTargetRecordItems = {
-    interface: Record<string,string>;
-    private: Record<string,string>;
-    public: Record<string,string>;
-}
+    interface: Record<string, string>;
+    private: Record<string, string>;
+    public: Record<string, string>;
+};
 
 export function resolveTargetRecordItems(items: TargetRecordItems, ctx: Context, itemsAreFilePaths: boolean): ResolvedTargetRecordItems {
     return {
         interface: resolveTargetStringRecord(items.interface, ctx, itemsAreFilePaths),
         private: resolveTargetStringRecord(items.private, ctx, itemsAreFilePaths),
         public: resolveTargetStringRecord(items.public, ctx, itemsAreFilePaths),
-    }
+    };
 }
 
 export function isTargetEnabled(project: Project, config: Config, target: Target): boolean {

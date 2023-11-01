@@ -9,12 +9,11 @@
         "checkJs": true
     },
     "fmt": {
-        "options": {
-            "useTabs": false,
-            "indentWidth": 4,
-            "singleQuote": true,
-            "lineWidth": 140
-        }
+        "useTabs": false,
+        "indentWidth": 4,
+        "singleQuote": true,
+        "lineWidth": 140,
+        "proseWrap": "never"
     },
     "lint": {
         "rules": {

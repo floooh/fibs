@@ -15,15 +15,15 @@ export type Func<T> = (ctx: Context) => T;
 export type BooleanFunc = Func<boolean>;
 export type JobFunc = Func<Job>;
 export type ArrayFunc<T> = Func<T[]>;
-export type RecordFunc<T> = Func<Record<string,T|undefined>>; // the undefined is not a bug, needed as workaround for a TS type system wart
-export type StringArrayFunc = ArrayFunc<string|undefined|null>;
+export type RecordFunc<T> = Func<Record<string, T | undefined>>; // the undefined is not a bug, needed as workaround for a TS type system wart
+export type StringArrayFunc = ArrayFunc<string | undefined | null>;
 export type StringRecordFunc = RecordFunc<string>;
 
 export type CMakeVariables = Record<string, string | boolean>;
 export type AliasMap = Record<string, string>;
 export type ImportDescs = ImportDesc[];
 export type TargetDescs = TargetDesc[];
-export type CommandDescs = CommandDesc[]
+export type CommandDescs = CommandDesc[];
 export type ToolDescs = ToolDesc[];
 export type JobTemplateDescs = JobTemplateDesc[];
 export type RunnerDescs = RunnerDesc[];
@@ -98,7 +98,7 @@ export type ValidateResult = {
 };
 
 export interface NamedItem {
-    name: string,
+    name: string;
 }
 
 export interface ConfigDesc extends NamedItem {
@@ -116,11 +116,11 @@ export interface ConfigDesc extends NamedItem {
     environment?: Record<string, string>;
     options?: Record<string, any>;
     includeDirectories?: string[];
-    compileDefinitions?: Record<string,string>;
+    compileDefinitions?: Record<string, string>;
     compileOptions?: string[];
     linkOptions?: string[];
-    compilers?: Compiler[],
-    validate?(project: Project): ValidateResult,
+    compilers?: Compiler[];
+    validate?(project: Project): ValidateResult;
 }
 
 export interface Config extends NamedItem {
@@ -137,11 +137,11 @@ export interface Config extends NamedItem {
     environment: Record<string, string>;
     options: Record<string, any>;
     includeDirectories: string[];
-    compileDefinitions: Record<string,string>;
+    compileDefinitions: Record<string, string>;
     compileOptions: string[];
     linkOptions: string[];
-    compilers: Compiler[],
-    validate(project: Project): ValidateResult,
+    compilers: Compiler[];
+    validate(project: Project): ValidateResult;
 }
 
 export interface ImportDesc extends NamedItem {
@@ -185,12 +185,12 @@ export type TargetRecordItems = {
 export type TargetJobDesc = {
     job: string;
     args: any;
-}
+};
 
 export type TargetJob = {
     job: string;
     args: any;
-}
+};
 
 export interface TargetDesc extends NamedItem {
     type?: TargetType;
@@ -202,7 +202,7 @@ export interface TargetDesc extends NamedItem {
     compileDefinitions?: TargetRecordItemsDesc;
     compileOptions?: TargetArrayItemsDesc;
     linkOptions?: TargetArrayItemsDesc;
-    jobs?: (TargetJobDesc|undefined|null)[];
+    jobs?: (TargetJobDesc | undefined | null)[];
 }
 
 export interface Target extends NamedItem {

@@ -210,11 +210,11 @@ export function validConfigForPlatform(config: Config, platform: string): boolea
 }
 
 export type BuildAliasMapOptions = {
-    project: Project,
-    config: Config,
-    target?: Target,
-    selfDir?: string,
-}
+    project: Project;
+    config: Config;
+    target?: Target;
+    selfDir?: string;
+};
 
 function buildAliasMap(options: BuildAliasMapOptions): AliasMap {
     const { project, config, target, selfDir } = options;
@@ -238,7 +238,7 @@ function buildAliasMap(options: BuildAliasMapOptions): AliasMap {
 }
 
 export function buildProjectAliasMap(project: Project, config: Config): AliasMap {
-    return buildAliasMap({project, config, selfDir: project.dir });
+    return buildAliasMap({ project, config, selfDir: project.dir });
 }
 
 export function buildConfigAliasMap(project: Project, config: Config): AliasMap {
@@ -373,11 +373,11 @@ export async function download(options: DownloadOptions): Promise<boolean> {
     return true;
 }
 
-export function arrayRemoveNullish<T>(array: (T|undefined|null)[]): T[] {
+export function arrayRemoveNullish<T>(array: (T | undefined | null)[]): T[] {
     return array.filter((item) => item) as T[];
 }
 
-export function optionalArrayRemoveNullish<T>(array: (T|undefined|null)[] | undefined): T[] | undefined {
+export function optionalArrayRemoveNullish<T>(array: (T | undefined | null)[] | undefined): T[] | undefined {
     if (array === undefined) {
         return undefined;
     }
@@ -409,9 +409,9 @@ export function isBooleanArray(val: unknown): boolean {
 }
 
 export type ArgDesc = {
-    type: 'string'|'number'|'boolean'|'string[]'|'number[]'|'boolean[]';
+    type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]';
     optional: boolean;
-}
+};
 
 export type ValidateArgsResult = {
     valid: boolean;

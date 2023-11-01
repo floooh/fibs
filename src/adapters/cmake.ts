@@ -4,8 +4,8 @@ import {
     BuildType,
     cmake,
     Compiler,
-    Context,
     Config,
+    Context,
     host,
     Language,
     log,
@@ -93,7 +93,7 @@ function genProlog(project: Project, config: Config): string {
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     const aliasMap = util.buildConfigAliasMap(project, config);
     for (const includePath of config.cmakeIncludes) {
-        str += `include("${util.resolvePath(aliasMap, includePath)}")\n`
+        str += `include("${util.resolvePath(aliasMap, includePath)}")\n`;
     }
     return str;
 }
@@ -166,8 +166,8 @@ function genGlobalRecordItemsLanguageCompiler(
     project: Project,
     config: Config,
     statement: string,
-    items: StringRecordFunc[] | Record<string,string>,
-    itemsAreFilePaths: boolean
+    items: StringRecordFunc[] | Record<string, string>,
+    itemsAreFilePaths: boolean,
 ): string {
     let str = '';
     const aliasMap = util.buildProjectAliasMap(project, config);
@@ -183,7 +183,7 @@ function genGlobalRecordItemsLanguageCompiler(
             };
             const resolvedItems = proj.resolveProjectStringRecord(items, ctx, itemsAreFilePaths);
             if (Object.keys(resolvedItems).length > 0) {
-                const resolvedItemsString = Object.entries(resolvedItems).map(([key,val]) => `${key}=${val}`);
+                const resolvedItemsString = Object.entries(resolvedItems).map(([key, val]) => `${key}=${val}`);
                 str += `${statement}(${generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)})\n`;
             }
         }
@@ -366,19 +366,19 @@ function genTargetRecordItems(
             };
             const resolvedItems = proj.resolveTargetRecordItems(items, ctx, itemsAreFilePaths);
             if (Object.keys(resolvedItems.interface).length > 0) {
-                const resolvedItemsString = Object.entries(resolvedItems.interface).map(([key,val]) => `${key}=${val}`);
+                const resolvedItemsString = Object.entries(resolvedItems.interface).map(([key, val]) => `${key}=${val}`);
                 str += `${statement}(${target.name} INTERFACE ${
                     generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
                 })\n`;
             }
             if (Object.keys(resolvedItems.private).length > 0) {
-                const resolvedItemsString = Object.entries(resolvedItems.private).map(([key,val]) => `${key}=${val}`);
+                const resolvedItemsString = Object.entries(resolvedItems.private).map(([key, val]) => `${key}=${val}`);
                 str += `${statement}(${target.name} PRIVATE ${
                     generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
                 })\n`;
             }
             if (Object.keys(resolvedItems.public).length > 0) {
-                const resolvedItemsString = Object.entries(resolvedItems.public).map(([key,val]) => `${key}=${val}`);
+                const resolvedItemsString = Object.entries(resolvedItems.public).map(([key, val]) => `${key}=${val}`);
                 str += `${statement}(${target.name} PUBLIC ${
                     generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
                 })\n`;
@@ -416,7 +416,8 @@ function genAllJobsTarget(project: Project, config: Config): string {
     }
     if (hasJobs) {
         str += `find_program(DENO deno REQUIRED)\n`;
-        str += `add_custom_target(ALL_JOBS COMMAND \${DENO} run --allow-all --no-config https://raw.githubusercontent.com/floooh/fibs/main/fibs.ts runjobs WORKING_DIRECTORY ${project.dir})\n`;
+        str +=
+            `add_custom_target(ALL_JOBS COMMAND \${DENO} run --allow-all --no-config https://raw.githubusercontent.com/floooh/fibs/main/fibs.ts runjobs WORKING_DIRECTORY ${project.dir})\n`;
     }
     return str;
 }
@@ -424,7 +425,7 @@ function genAllJobsTarget(project: Project, config: Config): string {
 function genTargetJobDependencies(project: Project, config: Config, target: Target) {
     let str = '';
     if (target.jobs.length > 0) {
-        str += `add_dependencies(${target.name} ALL_JOBS)\n`
+        str += `add_dependencies(${target.name} ALL_JOBS)\n`;
     }
     return str;
 }
