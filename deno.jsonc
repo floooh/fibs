@@ -18,7 +18,6 @@
     "lint": {
         "rules": {
             "tags": [],
-            "exclude": ["require-await"],
             "include": ["recommended", "eqeqeq", "camelcase", "no-extra-semi"]
         }
     }
