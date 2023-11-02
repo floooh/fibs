@@ -1,22 +1,13 @@
 import {
     Adapter,
-    AdapterDesc,
-    Command,
-    CommandDesc,
     Config,
     ConfigDesc,
     ConfigDescWithImportDir,
     Context,
     Job,
-    JobTemplate,
-    JobTemplateDesc,
     Language,
-    Opener,
-    OpenerDesc,
     Project,
     ProjectDesc,
-    Runner,
-    RunnerDesc,
     StringArrayFunc,
     StringRecordFunc,
     Target,
@@ -27,8 +18,7 @@ import {
     TargetJobDesc,
     TargetRecordItems,
     TargetRecordItemsDesc,
-    Tool,
-    ToolDesc,
+    NamedItem,
 } from './types.ts';
 import * as settings from './settings.ts';
 import * as log from './log.ts';
@@ -185,8 +175,7 @@ function mergeArrays<T>(into: T[], src: T[]): T[] {
 }
 
 function cleanupUndefinedProperties<T>(obj: T) {
-    let key: keyof typeof obj;
-    for (key in obj) {
+    for (let key in obj) {
         if (obj[key] === undefined) {
             delete obj[key];
         }
@@ -228,97 +217,13 @@ function mergeTransformArray<T0, T1>(
     return into;
 }
 
-function integrateCommand(commands: Command[], desc: CommandDesc, importDir: string) {
-    const into = util.find(desc.name, commands);
+function integrateSimpleItem<T0 extends NamedItem, T1 extends NamedItem>(items: T0[], desc: T1, importDir: string) {
+    const item: T0 = { importDir, ...desc } as unknown as T0;
+    let into = util.find(desc.name, items);
     if (into === undefined) {
-        commands.push({
-            name: desc.name,
-            importDir,
-            help: desc.help,
-            run: desc.run,
-        });
+        items.push(item);
     } else {
-        into.help = desc.help;
-        into.run = desc.run;
-    }
-}
-
-function integrateTool(tools: Tool[], desc: ToolDesc, importDir: string) {
-    const into = util.find(desc.name, tools);
-    if (into === undefined) {
-        tools.push({
-            name: desc.name,
-            importDir,
-            platforms: desc.platforms,
-            optional: desc.optional,
-            notFoundMsg: desc.notFoundMsg,
-            exists: desc.exists,
-        });
-    } else {
-        into.platforms = desc.platforms;
-        into.optional = desc.optional;
-        into.notFoundMsg = desc.notFoundMsg;
-        into.exists = desc.exists;
-    }
-}
-
-function integrateJobTemplate(jobTemplates: JobTemplate[], desc: JobTemplateDesc, importDir: string) {
-    const into = util.find(desc.name, jobTemplates);
-    if (into === undefined) {
-        jobTemplates.push({
-            name: desc.name,
-            importDir,
-            help: desc.help,
-            validate: desc.validate,
-            builder: desc.builder,
-        });
-    } else {
-        into.help = desc.help;
-        into.validate = desc.validate;
-        into.builder = desc.builder;
-    }
-}
-
-function integrateRunner(runners: Runner[], desc: RunnerDesc, importDir: string) {
-    const into = util.find(desc.name, runners);
-    if (into === undefined) {
-        runners.push({
-            name: desc.name,
-            importDir,
-            run: desc.run,
-        });
-    } else {
-        into.run = desc.run;
-    }
-}
-
-function integrateOpener(openers: Opener[], desc: OpenerDesc, importDir: string) {
-    const into = util.find(desc.name, openers);
-    if (into === undefined) {
-        openers.push({
-            name: desc.name,
-            importDir,
-            configure: desc.configure,
-            open: desc.open,
-        });
-    } else {
-        into.configure = desc.configure;
-        into.open = desc.open;
-    }
-}
-
-function integrateAdapter(adapters: Adapter[], desc: AdapterDesc, importDir: string) {
-    const into = util.find(desc.name, adapters);
-    if (into === undefined) {
-        adapters.push({
-            name: desc.name,
-            importDir,
-            configure: desc.configure,
-            build: desc.build,
-        });
-    } else {
-        into.configure = desc.configure;
-        into.build = desc.build;
+        into = item;
     }
 }
 
@@ -423,12 +328,12 @@ async function integrateProjectDesc(into: Project, other: ProjectDesc, importDir
     into.compileDefinitions = mergeArrays(into.compileDefinitions, optionalToArray(other.compileDefinitions));
     into.compileOptions = mergeArrays(into.compileOptions, optionalToArray(other.compileOptions));
     into.linkOptions = mergeArrays(into.linkOptions, optionalToArray(other.linkOptions));
-    into.commands = mergeTransformArray(into.commands, other.commands, importDir, integrateCommand);
-    into.tools = mergeTransformArray(into.tools, other.tools, importDir, integrateTool);
-    into.jobs = mergeTransformArray(into.jobs, other.jobs, importDir, integrateJobTemplate);
-    into.runners = mergeTransformArray(into.runners, other.runners, importDir, integrateRunner);
-    into.openers = mergeTransformArray(into.openers, other.openers, importDir, integrateOpener);
-    into.adapters = mergeTransformArray(into.adapters, other.adapters, importDir, integrateAdapter);
+    into.commands = mergeTransformArray(into.commands, other.commands, importDir, integrateSimpleItem);
+    into.tools = mergeTransformArray(into.tools, other.tools, importDir, integrateSimpleItem);
+    into.jobs = mergeTransformArray(into.jobs, other.jobs, importDir, integrateSimpleItem);
+    into.runners = mergeTransformArray(into.runners, other.runners, importDir, integrateSimpleItem);
+    into.openers = mergeTransformArray(into.openers, other.openers, importDir, integrateSimpleItem);
+    into.adapters = mergeTransformArray(into.adapters, other.adapters, importDir, integrateSimpleItem);
     into.targets = mergeTransformArray(into.targets, other.targets, importDir, integrateTarget);
     into.settings = mergeRecords(into.settings, other.settings);
 }
