@@ -1,4 +1,7 @@
 {
+    "imports": {
+        "$std/": "https://deno.land/std@0.204.0/"
+    },
     "compilerOptions": {
         "strict": true,
         "allowJs": true,

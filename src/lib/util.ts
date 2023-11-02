@@ -1,6 +1,7 @@
 import { Config, NamedItem, Project, RunOptions, RunResult, Target } from './types.ts';
 import * as log from './log.ts';
-import { fs, path } from '../../deps.ts';
+import * as path from '$std/path/mod.ts';
+import * as fs from '$std/fs/mod.ts';
 
 export function find<T extends NamedItem>(name: string | undefined, items: T[] | undefined): T | undefined {
     if ((name === undefined) || (items === undefined)) {

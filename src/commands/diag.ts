@@ -1,5 +1,5 @@
 import { CommandDesc, conf, host, imports, log, proj, Project } from '../../mod.ts';
-import { colors } from '../../deps.ts';
+import * as colors from '$std/fmt/colors.ts'
 
 export const diagCmd: CommandDesc = { name: 'diag', help, run };
 

@@ -1,5 +1,5 @@
 import { CommandDesc, imports, log, Project } from '../../mod.ts';
-import { path } from '../../deps.ts';
+import * as path from '$std/path/mod.ts';
 
 export const linkCmd: CommandDesc = { name: 'link', help, run };
 

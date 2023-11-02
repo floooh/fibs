@@ -1,5 +1,5 @@
 import { CommandDesc, imports, log, proj, Project, TargetType, util } from '../../mod.ts';
-import { colors } from '../../deps.ts';
+import * as colors from '$std/fmt/colors.ts'
 
 export const listCmd: CommandDesc = { name: 'list', help, run };
 
