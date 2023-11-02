@@ -18,6 +18,7 @@ export type ArrayFunc<T> = Func<T[]>;
 export type RecordFunc<T> = Func<Record<string, T | undefined>>;
 export type StringArrayFunc = ArrayFunc<string | undefined | null>;
 export type StringRecordFunc = RecordFunc<string>;
+export type TargetJobArrayFunc = ArrayFunc<TargetJob | undefined | null>;
 
 export type ProjectDesc = {
     name?: string;
@@ -162,11 +163,6 @@ export type TargetRecordItems = {
     public: StringRecordFunc[];
 };
 
-export type TargetJobDesc = {
-    job: string;
-    args: any;
-};
-
 export type TargetJob = {
     job: string;
     args: any;
@@ -182,7 +178,7 @@ export interface TargetDesc extends NamedItem {
     compileDefinitions?: TargetRecordItemsDesc;
     compileOptions?: TargetArrayItemsDesc;
     linkOptions?: TargetArrayItemsDesc;
-    jobs?: (TargetJobDesc | undefined | null)[];
+    jobs?: TargetJobArrayFunc;
 }
 
 export interface Target extends NamedItem {
@@ -196,7 +192,7 @@ export interface Target extends NamedItem {
     compileDefinitions: TargetRecordItems;
     compileOptions: TargetArrayItems;
     linkOptions: TargetArrayItems;
-    jobs: TargetJob[];
+    jobs: TargetJobArrayFunc[];
 }
 
 export interface JobTemplateDesc extends NamedItem {

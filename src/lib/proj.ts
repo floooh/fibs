@@ -15,7 +15,6 @@ import {
     TargetArrayItemsDesc,
     TargetDesc,
     TargetJob,
-    TargetJobDesc,
     TargetRecordItems,
     TargetRecordItemsDesc,
     NamedItem,
@@ -238,12 +237,6 @@ function integrateTarget(targets: Target[], desc: TargetDesc, importDir: string)
         private: optionalToArray(desc?.private),
         public: optionalToArray(desc?.public),
     });
-    const toTargetJobs = (descs: TargetJobDesc[] | undefined): TargetJob[] => {
-        if (descs === undefined) {
-            return [];
-        }
-        return descs.map((desc) => ({ job: desc.job, args: desc.args }));
-    };
     const mergeTargetArrayItems = (into: TargetArrayItems, src: TargetArrayItems): TargetArrayItems => {
         return {
             interface: mergeArrays(into.interface, src.interface),
@@ -272,7 +265,7 @@ function integrateTarget(targets: Target[], desc: TargetDesc, importDir: string)
         compileDefinitions: toTargetRecordItems(desc.compileDefinitions),
         compileOptions: toTargetArrayItems(desc.compileOptions),
         linkOptions: toTargetArrayItems(desc.linkOptions),
-        jobs: toTargetJobs(util.optionalArrayRemoveNullish(desc.jobs)),
+        jobs: optionalToArray(desc.jobs),
     };
     if (into === undefined) {
         targets.push(target);
@@ -425,28 +418,31 @@ export function validateTarget(
 
     // check that jobs exist and have valid arg types
     const config = util.activeConfig(project);
-    for (const targetJob of target.jobs) {
-        const targetJobRes = validateTargetJob(project, config, target, targetJob);
-        if (!targetJobRes.valid) {
-            res.valid = false;
-            res.hints.push(...targetJobRes.hints);
+    const aliasMap = util.buildTargetAliasMap(project, config, target);
+    const ctx: Context = {
+        project,
+        config,
+        target,
+        aliasMap,
+        host: { platform: host.platform(), arch: host.arch() },
+    };
+    for (const targetJobFunc of target.jobs) {
+        const targetJobs = util.arrayRemoveNullish(targetJobFunc(ctx));
+        for (const targetJob of targetJobs) {
+            const targetJobRes = validateTargetJob(project, config, target, targetJob);
+            if (!targetJobRes.valid) {
+                res.valid = false;
+                res.hints.push(...targetJobRes.hints);
+            }
         }
     }
 
     // check that source files exist
-    const aliasMap = util.buildTargetAliasMap(project, config, target);
     const srcDir = util.resolvePath(aliasMap, target.importDir, target.dir);
     if (!util.dirExists(srcDir)) {
         res.valid = false;
         res.hints.push(`src dir not found: ${srcDir}`);
     } else {
-        const ctx: Context = {
-            project,
-            config,
-            target,
-            aliasMap,
-            host: { platform: host.platform(), arch: host.arch() },
-        };
         const sources = resolveTargetStringArray(target.sources, ctx, true);
         for (const src of sources) {
             if (!util.fileExists(src)) {
@@ -525,12 +521,15 @@ export function validateTargetJob(
     return res;
 }
 
-export function resolveJob(ctx: Context, targetJob: TargetJob): Job {
-    const res = validateTargetJob(ctx.project, ctx.config, ctx.target!, targetJob);
-    if (!res.valid) {
-        log.error(`failed to validate job ${targetJob.job} in target ${ctx.target!.name}:\n${res.hints.map((line) => `  ${line}\n`)}`);
-    }
-    return util.find(targetJob.job, ctx.project.jobs)!.builder(targetJob.args)(ctx);
+export function resolveTargetJobs(ctx: Context): Job[] {
+    const targetJobs = util.arrayRemoveNullish(ctx.target!.jobs.flatMap((jobFunc) => jobFunc(ctx)));
+    return targetJobs.map((targetJob) => {
+        const res = validateTargetJob(ctx.project, ctx.config, ctx.target!, targetJob);
+        if (!res.valid) {
+            log.error(`failed to validate job ${targetJob.job} in target ${ctx.target!.name}:\n${res.hints.map((line) => `  ${line}\n`)}`);
+        }
+        return util.find(targetJob.job, ctx.project.jobs)!.builder(targetJob.args)(ctx);
+    });
 }
 
 export async function runJobs(project: Project, config: Config, target: Target) {
@@ -541,12 +540,12 @@ export async function runJobs(project: Project, config: Config, target: Target) 
         aliasMap: util.buildTargetAliasMap(project, config, target),
         host: { platform: host.platform(), arch: host.arch() },
     };
-    for (const targetJob of target.jobs) {
-        const job = resolveJob(ctx, targetJob);
+    const jobs = resolveTargetJobs(ctx);
+    for (const job of jobs) {
         try {
             await job.func(job.inputs, job.outputs, job.args);
         } catch (err) {
-            log.error(`job '${targetJob.job}' in target '${target.name}' failed with ${err}`);
+            log.error(`job '${job.name}' in target '${target.name}' failed with ${err}`);
         }
     }
 }

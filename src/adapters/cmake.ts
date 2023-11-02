@@ -227,12 +227,12 @@ function genTarget(project: Project, config: Config, target: Target): string {
     const sources = proj.resolveTargetStringArray(target.sources, ctx, true);
 
     // get any job outputs which need to be added as target sources
-    const jobOutputs = target.jobs.flatMap((targetJob) => {
-        const job = proj.resolveJob(ctx, targetJob);
+    const jobOutputs = proj.resolveTargetJobs(ctx).flatMap((job) => {
         if (job.addOutputsToTargetSources) {
             return job.outputs;
+        } else {
+            return [];
         }
-        return [];
     });
 
     // need to create an empy dummy for any job output file that doesn't exist yet
