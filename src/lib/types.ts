@@ -251,19 +251,31 @@ export interface Opener extends NamedItem {
     open(project: Project, config: Config): Promise<void>;
 }
 
+/** options for running a command line tool */
 export type RunOptions = {
+    /** command line arguments */
     args: string[];
+    /** optional current working directory to run the command in */
     cwd?: string;
+    /** whether to print or capture stdout */
     stdout?: 'inherit' | 'piped';
+    /** whether to print or capture stderr */
     stderr?: 'inherit' | 'piped';
+    /** whether to log the cmdline before executing */
     showCmd?: boolean;
+    /** whether to abort on error */
     abortOnError?: boolean;
+    /** whether to run via 'cmd /c' on Windows */
     winUseCmd?: boolean;
 };
 
+/** result of running a command line tool */
 export type RunResult = {
+    /** the exit code of the command (zero on success) */
     exitCode: number;
+    /** captured stdout */
     stdout: string;
+    /** captured stderr */
     stderr: string;
 };
 
