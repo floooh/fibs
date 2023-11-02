@@ -1,8 +1,7 @@
 import { RunOptions, RunResult } from './types.ts';
 import * as util from './util.ts';
 import * as log from './log.ts';
-import * as path from '$std/path/mod.ts';
-import * as fs from '$std/fs/mod.ts';
+import { fs, path } from '../../deps.ts';
 
 export async function run(options: RunOptions): Promise<RunResult> {
     try {

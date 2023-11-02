@@ -1,4 +1,4 @@
-import * as colors from '$std/fmt/colors.ts'
+import { colors } from '../../deps.ts';
 
 const textEncoder = new TextEncoder();
 
