@@ -173,6 +173,7 @@ export interface TargetDesc extends NamedItem {
     enabled?: BooleanFunc;
     dir?: string;
     sources?: StringArrayFunc;
+    deps?: StringArrayFunc;
     libs?: StringArrayFunc;
     includeDirectories?: TargetArrayItemsDesc;
     compileDefinitions?: TargetRecordItemsDesc;
@@ -187,6 +188,7 @@ export interface Target extends NamedItem {
     type: TargetType;
     enabled: BooleanFunc;
     sources: StringArrayFunc[];
+    deps: StringArrayFunc[];
     libs: StringArrayFunc[];
     includeDirectories: TargetArrayItems;
     compileDefinitions: TargetRecordItems;

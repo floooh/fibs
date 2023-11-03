@@ -285,7 +285,10 @@ function genTargetDependencies(project: Project, config: Config, target: Target)
             aliasMap,
             host: { platform: host.platform(), arch: host.arch() },
         };
-        const libs = proj.resolveTargetStringArray(target.libs, ctx, false);
+        const libs = [
+            ...proj.resolveTargetStringArray(target.deps, ctx, false),
+            ...proj.resolveTargetStringArray(target.libs, ctx, false),
+        ];
         if (libs.length > 0) {
             let type = '';
             if (target.type === 'interface') {

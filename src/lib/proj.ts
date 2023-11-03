@@ -260,6 +260,7 @@ function integrateTarget(targets: Target[], desc: TargetDesc, importDir: string)
         type: desc.type ?? 'plain-exe',
         enabled: desc.enabled ?? (() => true),
         sources: optionalToArray(desc.sources),
+        deps: optionalToArray(desc.deps),
         libs: optionalToArray(desc.libs),
         includeDirectories: toTargetArrayItems(desc.includeDirectories),
         compileDefinitions: toTargetRecordItems(desc.compileDefinitions),
@@ -274,6 +275,7 @@ function integrateTarget(targets: Target[], desc: TargetDesc, importDir: string)
         into.dir = assign(into.dir, desc.dir);
         into.enabled = assign(into.enabled, desc.enabled);
         into.sources = mergeArrays(into.sources, target.sources);
+        into.deps = mergeArrays(into.deps, target.deps);
         into.libs = mergeArrays(into.libs, target.libs);
         into.includeDirectories = mergeTargetArrayItems(into.includeDirectories, target.includeDirectories);
         into.compileDefinitions = mergeTargetRecordItems(into.compileDefinitions, target.compileDefinitions);
@@ -434,6 +436,30 @@ export function validateTarget(
                 res.valid = false;
                 res.hints.push(...targetJobRes.hints);
             }
+        }
+    }
+
+    // check that dependencies exist as targets
+    const deps = resolveTargetStringArray(target.deps, ctx, false);
+    for (const dep of deps) {
+        const depTarget = util.find(dep, project.targets);
+        if (depTarget === undefined) {
+            res.valid = false;
+            res.hints.push(`dependency target not found: ${dep}`);
+        } else {
+            if ((depTarget.type === 'plain-exe') || (depTarget.type === 'windowed-exe')) {
+                res.valid = false;
+                res.hints.push(`dependency target is an executable: ${dep}`);
+            }
+        }
+    }
+
+    // check that lib names don't collide with target names
+    const libs = resolveTargetStringArray(target.libs, ctx, false);
+    for (const lib of libs) {
+        if (util.find(lib, project.targets) !== undefined) {
+            res.valid = false;
+            res.hints.push(`library name collides with target: ${lib}`);
         }
     }
 
