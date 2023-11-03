@@ -603,8 +603,8 @@ export function resolveTargetStringArray(array: StringArrayFunc[], ctx: Context,
     const baseDir = ctx.target!.importDir;
     const subDir = ctx.target!.dir;
     return array.flatMap((funcOrString) => {
-        return util.arrayRemoveNullish(funcOrString(ctx)).filter((item) => item).map((item) =>
-            resolveAliasOrPath(item!, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths)
+        return util.arrayRemoveNullish(funcOrString(ctx)).map((item) =>
+            resolveAliasOrPath(item, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths)
         );
     });
 }
