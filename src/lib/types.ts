@@ -1,43 +1,86 @@
-export type Context = {
-    project: Project;
-    config: Config;
-    target?: Target;
-    compiler?: Compiler;
-    language?: Language;
-    aliasMap: Record<string, string>;
-    host: {
-        platform: string;
-        arch: Arch;
-    };
-};
+export type Configurer = {
+    setProjectName(name: string): void;
+    addCmakeVariable(key: string, value: string | boolean): void;
+    addImport(imp: ImportDesc): void;
+    addCommand(cmd: CommandDesc): void;
+    addJob(job: JobBuilderDesc): void;
+    addTool(tool: ToolDesc): void;
+    addRunner(runner: RunnerDesc): void;
+    addOpener(opener: OpenerDesc): void;
+    addConfig(config: ConfigDesc): void;
+    addAdapter(adapter: AdapterDesc): void;
+    addSetting(key: string, value: string, deflt: string): void;
 
-export type Func<T> = (ctx: Context) => T;
-export type BooleanFunc = Func<boolean>;
-export type JobFunc = Func<Job>;
-export type ArrayFunc<T> = Func<T[]>;
-export type RecordFunc<T> = Func<Record<string, T | undefined>>;
-export type StringArrayFunc = ArrayFunc<string | undefined | null>;
-export type StringRecordFunc = RecordFunc<string>;
-export type TargetJobArrayFunc = ArrayFunc<TargetJob | undefined | null>;
+    hostPlatform(): Platform;
+    hostArch(): Arch;
+}
 
-export type ProjectDesc = {
-    name?: string;
-    cmakeVariables?: Record<string, string | boolean>;
-    includeDirectories?: StringArrayFunc;
-    compileDefinitions?: StringRecordFunc;
-    compileOptions?: StringArrayFunc;
-    linkOptions?: StringArrayFunc;
-    imports?: ImportDesc[];
-    targets?: TargetDesc[];
-    commands?: CommandDesc[];
-    tools?: ToolDesc[];
-    jobs?: JobTemplateDesc[];
-    runners?: RunnerDesc[];
-    openers?: OpenerDesc[];
-    configs?: ConfigDesc[];
-    adapters?: AdapterDesc[];
-    settings?: Record<string, SettingsItem>;
-};
+export type ProjectInfo = {
+    projectName(): string;
+    arch(): Arch;
+    platform(): Platform;
+    compiler(): Compiler;
+    buildMode(): BuildMode;
+    hostPlatform(): Platform;
+    hostArch(): Arch;
+    projectDir(): string;
+    sdkDir(): string;
+    buildRootDir(): string;
+    distRootDir(): string;
+    importsDir(): string;
+    targetDir(target: string): string;
+    targetSourcesDir(target: string): string;
+    targetBuildDir(target: string): string;
+    targetDistDir(target: string): string;
+    targetAssetsDir(target: string): string;
+    isArch(arch: Arch): boolean;
+    isPlatform(platform: Platform): boolean;
+    isWindows(): boolean;
+    isLinux(): boolean;
+    isMacOS(): boolean;
+    isIOS(): boolean;
+    isAndroid(): boolean;
+    isWasm(): boolean;
+    isEmscripten(): boolean;
+    isWasi(): boolean;
+    isHostPlatform(platform: Platform): boolean;
+    isHostWindows(): boolean;
+    isHostLinux(): boolean;
+    isHostMacOS(): boolean;
+    isCompiler(compiler: Compiler): boolean;
+    isClang(): boolean; // includes AppleClang
+    isAppleClang(): boolean;
+    isMsvc(): boolean;
+    isGcc(): boolean;
+    isBuildMode(): boolean;
+    isDebug(): boolean;
+    isRelease(): boolean;
+}
+
+export type Builder = ProjectInfo & {
+    addTarget(name: string, desc: TargetDesc): void;
+    addIncludeDirectory(dir: string): void;
+    addCompileDefinition(key: string, value?: string): void;
+    addCompileOption(opt: string): void;
+    addLinkOption(opt: string): void;
+}
+
+export type FibsModule = {
+    configure(c: Configurer): void;
+    build(b: Builder): void;
+}
+
+export type Arch = 'x86_64' | 'arm64' | 'wasm32';
+
+export type Platform = 'windows' | 'macos' | 'linux' | 'ios' | 'android' | 'emscripten' | 'wasi';
+
+export type Compiler = 'msvc' | 'gcc' | 'clang' | 'appleclang' | 'unknown-compiler';
+
+export type Language = 'c' | 'cxx';
+
+export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll' | 'interface';
+
+export type BuildMode = 'release' | 'debug';
 
 export type ConfigDescWithImportDir = ConfigDesc & { importDir: string };
 
@@ -46,49 +89,43 @@ export type Project = {
     dir: string;
     settings: Record<string, SettingsItem>;
     cmakeVariables: Record<string, string | boolean>;
-    includeDirectories: StringArrayFunc[];
-    compileDefinitions: StringRecordFunc[];
-    compileOptions: StringArrayFunc[];
-    linkOptions: StringArrayFunc[];
+    global: {
+        includeDirectories: string[];
+        compileDefinitions: Record<string, string>;
+        compileOptions: string[];
+        linkOptions: string[];
+    };
     imports: Import[];
     targets: Target[];
     commands: Command[];
     tools: Tool[];
-    jobs: JobTemplate[];
+    jobs: JobBuilder[];
     runners: Runner[];
     openers: Opener[];
     configs: Config[];
     configDescs: ConfigDescWithImportDir[];
     adapters: Adapter[];
-};
+}
 
 export type SettingsItem = {
     default: string;
     value: string;
     validate(project: Project, value: string): { valid: boolean; hint: string };
-};
+}
 
-export type Arch = 'x86_64' | 'arm64' | 'wasm32';
-
-export type Compiler = 'msvc' | 'gcc' | 'clang' | 'appleclang' | 'unknown-compiler';
-
-export type Language = 'c' | 'cxx';
-
-export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll' | 'interface';
-
-export type BuildType = 'release' | 'debug';
-
-export interface NamedItem {
+export type NamedItem = {
     name: string;
 }
 
-export interface ConfigDesc extends NamedItem {
-    ignore?: boolean;
-    inherits?: string;
-    platform?: string;
+export type ImportedItem = {
+    importDir: string;
+}
+
+export type ConfigDesc = NamedItem & {
+    platform?: Platform;
     runner?: string;
     opener?: string;
-    buildType?: BuildType;
+    buildMode?: BuildMode;
     generator?: string;
     arch?: Arch;
     toolchainFile?: string;
@@ -104,15 +141,14 @@ export interface ConfigDesc extends NamedItem {
     validate?(project: Project): { valid: boolean; hints: string[] };
 }
 
-export interface Config extends NamedItem {
-    importDir: string;
-    platform: string;
+export type Config = ImportedItem & NamedItem & {
+    platform: Platform;
     runner: Runner;
-    opener: Opener | undefined;
-    buildType: BuildType;
-    generator: string | undefined;
-    arch: Arch | undefined;
-    toolchainFile: string | undefined;
+    opener?: Opener;
+    buildMode: BuildMode;
+    generator?: string;
+    arch?: Arch;
+    toolchainFile?: string;
     cmakeIncludes: string[];
     cmakeVariables: Record<string, string | boolean>;
     environment: Record<string, string>;
@@ -125,92 +161,76 @@ export interface Config extends NamedItem {
     validate(project: Project): { valid: boolean; hints: string[] };
 }
 
-export interface ImportDesc extends NamedItem {
+export type ImportDesc = NamedItem & {
     url: string;
     ref?: string;
-    project?: ProjectDesc;
-    import?: string[];
+    files?: string[];
 }
 
-export interface Import extends NamedItem {
-    importDir: string;
+export type Import = NamedItem & ImportedItem & {
     importErrors: Error[];
     url: string;
     ref: string | undefined;
 }
 
 export type TargetArrayItemsDesc = {
-    interface?: StringArrayFunc;
-    private?: StringArrayFunc;
-    public?: StringArrayFunc;
+    interface?: string[];
+    private?: string[];
+    public?: string[];
 };
 
-export type TargetArrayItems = {
-    interface: StringArrayFunc[];
-    private: StringArrayFunc[];
-    public: StringArrayFunc[];
-};
+export type TargetArrayItems = Required<TargetArrayItemsDesc>;
 
 export type TargetRecordItemsDesc = {
-    interface?: StringRecordFunc;
-    private?: StringRecordFunc;
-    public?: StringRecordFunc;
+    interface?: Record<string, string>;
+    private?: Record<string, string>;
+    public?: Record<string, string>;
 };
 
-export type TargetRecordItems = {
-    interface: StringRecordFunc[];
-    private: StringRecordFunc[];
-    public: StringRecordFunc[];
-};
+export type TargetRecordItems = Required<TargetRecordItemsDesc>;
 
 export type TargetJob = {
     job: string;
-    args: any;
+    args: unknown;
 };
 
-export interface TargetDesc extends NamedItem {
+export type TargetDesc = NamedItem & {
     type?: TargetType;
-    enabled?: BooleanFunc;
     dir?: string;
-    sources?: StringArrayFunc;
-    deps?: StringArrayFunc;
-    libs?: StringArrayFunc;
+    sources?: string[];
+    deps?: string[];
+    libs?: string[];
     includeDirectories?: TargetArrayItemsDesc;
     compileDefinitions?: TargetRecordItemsDesc;
     compileOptions?: TargetArrayItemsDesc;
     linkOptions?: TargetArrayItemsDesc;
-    jobs?: TargetJobArrayFunc;
+    jobs?: TargetJob[];
 }
 
-export interface Target extends NamedItem {
-    importDir: string;
-    dir: string | undefined;
+export type Target = NamedItem & ImportedItem & {
     type: TargetType;
-    enabled: BooleanFunc;
-    sources: StringArrayFunc[];
-    deps: StringArrayFunc[];
-    libs: StringArrayFunc[];
+    dir: string;
+    sources: string[];
+    deps: string[];
+    libs: string[];
     includeDirectories: TargetArrayItems;
     compileDefinitions: TargetRecordItems;
     compileOptions: TargetArrayItems;
     linkOptions: TargetArrayItems;
-    jobs: TargetJobArrayFunc[];
+    jobs: TargetJob[];
 }
 
-export interface JobTemplateDesc extends NamedItem {
+export type JobFunc = (info: ProjectInfo) => Job;
+
+export type JobBuilderDesc = NamedItem & {
     help(): void;
     validate(args: any): { valid: boolean; hints: string[] };
-    builder(args: any): JobFunc;
+    build(args: any): JobFunc;
 }
 
-export interface JobTemplate extends NamedItem {
-    importDir: string;
-    help(): void;
-    validate(args: any): { valid: boolean; hints: string[] };
-    builder(args: any): JobFunc;
-}
+export type JobBuilder = ImportedItem & JobBuilderDesc;
 
-export interface Job extends NamedItem {
+export type Job = NamedItem & {
     inputs: string[];
     outputs: string[];
     addOutputsToTargetSources: boolean;
@@ -218,36 +238,22 @@ export interface Job extends NamedItem {
     func: (inputs: string[], output: string[], args: any) => Promise<void>;
 }
 
-export interface CommandDesc extends NamedItem {
+export type CommandDesc = NamedItem & {
     help(): void;
-    run(project: Project): Promise<void>;
+    run(info: ProjectInfo): Promise<void>;
 }
+export type Command = ImportedItem & Required<CommandDesc>;
 
-export interface Command extends NamedItem {
-    importDir: string;
-    help(): void;
-    run(project: Project): Promise<void>;
+export type RunnerDesc = NamedItem & {
+    run(info: ProjectInfo, config: Config, target: Target, options: RunOptions): Promise<void>;
 }
+export type Runner = ImportedItem & Required<RunnerDesc>;
 
-export interface RunnerDesc extends NamedItem {
-    run(project: Project, config: Config, target: Target, options: RunOptions): Promise<void>;
-}
-
-export interface Runner extends NamedItem {
-    importDir: string;
-    run(project: Project, config: Config, target: Target, options: RunOptions): Promise<void>;
-}
-
-export interface OpenerDesc extends NamedItem {
+export type OpenerDesc = NamedItem & {
     configure(project: Project, config: Config): Promise<void>;
-    open(project: Project, config: Config): Promise<void>;
+    open(info: ProjectInfo, config: Config): Promise<void>;
 }
-
-export interface Opener extends NamedItem {
-    importDir: string;
-    configure(project: Project, config: Config): Promise<void>;
-    open(project: Project, config: Config): Promise<void>;
-}
+export type Opener = ImportedItem & Required<OpenerDesc>
 
 /** options for running a command line tool */
 export type RunOptions = {
@@ -277,28 +283,20 @@ export type RunResult = {
     stderr: string;
 };
 
-export interface ToolDesc extends NamedItem {
+export type ToolDesc = NamedItem & {
     platforms: string[];
     optional: boolean;
     notFoundMsg: string;
     exists(): Promise<boolean>;
 }
+export type Tool = ImportedItem & Required<ToolDesc>;
 
-export interface Tool extends NamedItem {
-    importDir: string;
-    platforms: string[];
-    optional: boolean;
-    notFoundMsg: string;
-    exists(): Promise<boolean>;
+export type AdapterOptions = {
+    buildTarget?: string;
+    forceRebuild?: boolean;
+};
+export type AdapterDesc = NamedItem & {
+    configure(project: Project, config: Config, options: AdapterOptions): Promise<void>;
+    build(project: Project, config: Config, options: AdapterOptions): Promise<void>;
 }
-
-export interface AdapterDesc extends NamedItem {
-    configure(project: Project, config: Config, options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void>;
-    build(project: Project, config: Config, options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void>;
-}
-
-export interface Adapter extends NamedItem {
-    importDir: string;
-    configure(project: Project, config: Config, options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void>;
-    build(project: Project, config: Config, options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void>;
-}
+export type Adapter = ImportedItem & Required<AdapterDesc>;

@@ -28,6 +28,18 @@ export async function main() {
             log.panic('current directory is not a fibs project (no fibs.ts found)');
         }
         const rootModule = await import(`file://${rootPath}`);
+        assertFibsModule(rootModule);
+
+        // run configure pass
+        if (typeof rootModule.configure === 'function') {
+            rootModule.configure
+        }
+
+        // run build pass
+        if (typeof rootModule.build === 'function') {
+
+        }
+
         if (rootModule.project !== undefined) {
             // setup the root project tree
             rootProject = await proj.setup(cwd, rootModule.project, stdDesc);
