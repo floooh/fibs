@@ -1,7 +1,5 @@
-import { Import, ImportDesc, Project, ProjectDesc } from './types.ts';
-import * as util from './util.ts';
-import * as git from './git.ts';
-import * as log from './log.ts';
+import { util, git, log } from './index.ts';
+import { Import, ImportDesc, Project } from '../types.ts';
 
 export async function fetch(
     project: Project,

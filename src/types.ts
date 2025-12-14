@@ -16,23 +16,29 @@ export type Configurer = {
 }
 
 export type ProjectInfo = {
-    projectName(): string;
+    name(): string;
+    config(configName: string): Config;
+    target(targetName: string): Target;
+    adapter(adapterName: string): Adapter;
+    command(commandName: string): Command;
+    import(importName: string): Import;
+    tool(toolName: string): Tool;
+    activeConfig(): Config;
     arch(): Arch;
     platform(): Platform;
     compiler(): Compiler;
     buildMode(): BuildMode;
     hostPlatform(): Platform;
     hostArch(): Arch;
-    projectDir(): string;
+    dir(): string;
+    fibsDir(): string;
     sdkDir(): string;
-    buildRootDir(): string;
-    distRootDir(): string;
+    buildDir(configName?: string): string;
+    distDir(configName?: string): string;
     importsDir(): string;
-    targetDir(target: string): string;
-    targetSourcesDir(target: string): string;
-    targetBuildDir(target: string): string;
-    targetDistDir(target: string): string;
-    targetAssetsDir(target: string): string;
+    targetBuildDir(targetName: string, configName?: string): string;
+    targetDistDir(targetName: string, configName?: string): string;
+    targetAssetsDir(targetName: string, configName?: string): string;
     isArch(arch: Arch): boolean;
     isPlatform(platform: Platform): boolean;
     isWindows(): boolean;
@@ -40,9 +46,9 @@ export type ProjectInfo = {
     isMacOS(): boolean;
     isIOS(): boolean;
     isAndroid(): boolean;
-    isWasm(): boolean;
     isEmscripten(): boolean;
     isWasi(): boolean;
+    isWasm(): boolean;
     isHostPlatform(platform: Platform): boolean;
     isHostWindows(): boolean;
     isHostLinux(): boolean;
@@ -52,7 +58,7 @@ export type ProjectInfo = {
     isAppleClang(): boolean;
     isMsvc(): boolean;
     isGcc(): boolean;
-    isBuildMode(): boolean;
+    isBuildMode(buildMode: BuildMode): boolean;
     isDebug(): boolean;
     isRelease(): boolean;
 }
@@ -66,8 +72,18 @@ export type Builder = ProjectInfo & {
 }
 
 export type FibsModule = {
-    configure(c: Configurer): void;
-    build(b: Builder): void;
+    configure?(c: Configurer): void;
+    build?(b: Builder): void;
+}
+
+export function assertFibsModule(val: unknown): asserts val is FibsModule {
+    const obj = val as Record<string, unknown>;
+    if (obj.configure !== undefined && typeof obj.configure !== 'function') {
+        throw new Error('exported configure property must be a function!');
+    }
+    if (obj.build !== undefined && typeof obj.build !== 'function') {
+        throw new Error('exported build property must be a function!');
+    }
 }
 
 export type Arch = 'x86_64' | 'arm64' | 'wasm32';
@@ -75,6 +91,8 @@ export type Arch = 'x86_64' | 'arm64' | 'wasm32';
 export type Platform = 'windows' | 'macos' | 'linux' | 'ios' | 'android' | 'emscripten' | 'wasi';
 
 export type Compiler = 'msvc' | 'gcc' | 'clang' | 'appleclang' | 'unknown-compiler';
+
+export type Generator = 'vstudio' | 'xcode' | 'ninja' | 'make';
 
 export type Language = 'c' | 'cxx';
 
@@ -84,17 +102,13 @@ export type BuildMode = 'release' | 'debug';
 
 export type ConfigDescWithImportDir = ConfigDesc & { importDir: string };
 
-export type Project = {
-    name: string;
-    dir: string;
+export type Project = ProjectInfo & {
     settings: Record<string, SettingsItem>;
     cmakeVariables: Record<string, string | boolean>;
-    global: {
-        includeDirectories: string[];
-        compileDefinitions: Record<string, string>;
-        compileOptions: string[];
-        linkOptions: string[];
-    };
+    includeDirectories: string[];
+    compileDefinitions: Record<string, string>;
+    compileOptions: string[];
+    linkOptions: string[];
     imports: Import[];
     targets: Target[];
     commands: Command[];
@@ -103,7 +117,6 @@ export type Project = {
     runners: Runner[];
     openers: Opener[];
     configs: Config[];
-    configDescs: ConfigDescWithImportDir[];
     adapters: Adapter[];
 }
 
@@ -122,11 +135,11 @@ export type ImportedItem = {
 }
 
 export type ConfigDesc = NamedItem & {
-    platform?: Platform;
+    platform: Platform;
+    buildMode: BuildMode;
     runner?: string;
     opener?: string;
-    buildMode?: BuildMode;
-    generator?: string;
+    generator?: Generator;
     arch?: Arch;
     toolchainFile?: string;
     cmakeIncludes?: string[];
@@ -146,8 +159,8 @@ export type Config = ImportedItem & NamedItem & {
     runner: Runner;
     opener?: Opener;
     buildMode: BuildMode;
-    generator?: string;
-    arch?: Arch;
+    generator: Generator;
+    arch: Arch;
     toolchainFile?: string;
     cmakeIncludes: string[];
     cmakeVariables: Record<string, string | boolean>;
@@ -220,7 +233,7 @@ export type Target = NamedItem & ImportedItem & {
     jobs: TargetJob[];
 }
 
-export type JobFunc = (info: ProjectInfo) => Job;
+export type JobFunc = (project: Project) => Job;
 
 export type JobBuilderDesc = NamedItem & {
     help(): void;
@@ -240,18 +253,18 @@ export type Job = NamedItem & {
 
 export type CommandDesc = NamedItem & {
     help(): void;
-    run(info: ProjectInfo): Promise<void>;
+    run(project: Project): Promise<void>;
 }
 export type Command = ImportedItem & Required<CommandDesc>;
 
 export type RunnerDesc = NamedItem & {
-    run(info: ProjectInfo, config: Config, target: Target, options: RunOptions): Promise<void>;
+    run(project: Project, config: Config, target: Target, options: RunOptions): Promise<void>;
 }
 export type Runner = ImportedItem & Required<RunnerDesc>;
 
 export type OpenerDesc = NamedItem & {
     configure(project: Project, config: Config): Promise<void>;
-    open(info: ProjectInfo, config: Config): Promise<void>;
+    open(project: Project, config: Config): Promise<void>;
 }
 export type Opener = ImportedItem & Required<OpenerDesc>
 

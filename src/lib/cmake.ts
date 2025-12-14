@@ -1,6 +1,5 @@
-import { Config, Project, RunOptions, RunResult } from './types.ts';
-import * as util from './util.ts';
-import * as log from './log.ts';
+import { util, log } from './index.ts';
+import { Config, Project, RunOptions, RunResult } from '../types.ts';
 
 export async function run(options: RunOptions): Promise<RunResult> {
     try {
@@ -24,7 +23,7 @@ export async function configure(project: Project, config: Config) {
     if (config.opener !== undefined) {
         await config.opener.configure(project, config);
     }
-    const args = ['--preset', config.name, '-B', util.buildDir(project, config)];
+    const args = ['--preset', config.name, '-B', project.buildDir(config.name)];
     const res = await run({ args, stderr: 'piped' });
     if (res.exitCode !== 0) {
         log.panic(

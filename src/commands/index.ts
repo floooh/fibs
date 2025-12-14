@@ -1,3 +1,4 @@
+import { Configurer } from '../types.ts';
 import { helpCmd } from './help.ts';
 import { resetCmd } from './reset.ts';
 import { configCmd } from './config.ts';
@@ -15,21 +16,21 @@ import { unsetCmd } from './unset.ts';
 import { updateCmd } from './update.ts';
 import { runjobsCmd } from './runjobs.ts';
 
-export const commands = [
-    helpCmd,
-    resetCmd,
-    configCmd,
-    buildCmd,
-    runCmd,
-    openCmd,
-    cleanCmd,
-    listCmd,
-    updateCmd,
-    diagCmd,
-    linkCmd,
-    unlinkCmd,
-    setCmd,
-    getCmd,
-    unsetCmd,
-    runjobsCmd,
-];
+export function addDefaultCommands(c: Configurer): void {
+    c.addCommand(helpCmd);
+    c.addCommand(resetCmd);
+    c.addCommand(configCmd);
+    c.addCommand(buildCmd);
+    c.addCommand(runCmd);
+    c.addCommand(openCmd);
+    c.addCommand(cleanCmd);
+    c.addCommand(listCmd);
+    c.addCommand(updateCmd);
+    c.addCommand(diagCmd);
+    c.addCommand(linkCmd);
+    c.addCommand(unlinkCmd);
+    c.addCommand(setCmd);
+    c.addCommand(getCmd);
+    c.addCommand(unsetCmd);
+    c.addCommand(runjobsCmd);
+}

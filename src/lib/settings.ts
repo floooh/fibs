@@ -1,6 +1,5 @@
-import { Project } from './types.ts';
-import * as util from './util.ts';
-import * as log from './log.ts';
+import { util, log } from './index.ts';
+import { Project } from '../types.ts';
 
 export function set(project: Project, key: string, value: string) {
     if (validate(project, key, value)) {
@@ -33,7 +32,7 @@ export function getDefault(project: Project, key: string): string | undefined {
 }
 
 export function load(project: Project) {
-    const path = util.fibsDir(project) + '/settings.json';
+    const path = project.fibsDir() + '/settings.json';
     let items: Record<string, string> = {};
     if (util.fileExists(path)) {
         try {

@@ -1,11 +1,12 @@
-import { Config, host, log, OpenerDesc, Project, util } from '../../index.ts';
+import { host, log } from '../lib/index.ts';
+import { Config, OpenerDesc, Project } from '../types.ts';
 import { run } from '../tools/vscode.ts';
 import * as fs from '@std/fs';
 
 export const vscodeOpener: OpenerDesc = { name: 'vscode', configure, open };
 
 async function configure(project: Project, config: Config) {
-    const vscodeDir = `${project.dir}/.vscode`;
+    const vscodeDir = `${project.dir()}/.vscode`;
     fs.ensureDirSync(vscodeDir);
     writeWorkspaceFile(project, config, vscodeDir);
     writeLaunchJson(project, config, vscodeDir);
@@ -32,7 +33,7 @@ function writeWorkspaceFile(project: Project, config: Config, vscodeDir: string)
                 testPreset: { visibility: 'hidden' },
                 debug: { visibility: 'hidden' },
             },
-            'cmake.debugConfig': { cwd: util.distDir(project, config) },
+            'cmake.debugConfig': { cwd: project.distDir(config.name) },
             'cmake.autoSelectActiveFolder': false,
             'cmake.ignoreCMakeListsMissing': true,
             'cmake.configureOnOpen': false,
@@ -66,7 +67,7 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
         name: 'Debug Current Target',
         request: 'launch',
         program: '${command:cmake.launchTargetPath}',
-        cwd: util.distDir(project, config),
+        cwd: project.distDir(config.name),
         args: [],
         type: getType(),
         MIMode: getMIMode(),

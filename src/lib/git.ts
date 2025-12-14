@@ -1,6 +1,5 @@
-import { RunOptions, RunResult } from './types.ts';
-import * as util from './util.ts';
-import * as log from './log.ts';
+import { util, log } from './index.ts';
+import { RunOptions, RunResult } from '../types.ts';
 import * as fs from '@std/fs';
 import * as path from '@std/path';
 

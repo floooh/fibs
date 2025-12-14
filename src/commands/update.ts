@@ -1,4 +1,5 @@
-import { CommandDesc, git, imports, log, Project, util } from '../../index.ts';
+import { git, imports, log } from '../lib/index.ts';
+import { CommandDesc, Project } from '../types.ts';
 
 export const updateCmd: CommandDesc = { name: 'update', help, run };
 
@@ -12,7 +13,7 @@ function help() {
 async function run(project: Project) {
     const args = parseArgs(project);
     for (const item of args.items) {
-        const imp = util.find(item, project.imports)!;
+        const imp = project.import(item);
         log.section(`${imp.name}`);
         const isLinked = imports.isLinked(project, imp.name);
         if (isLinked) {
@@ -24,7 +25,7 @@ async function run(project: Project) {
                 continue;
             }
         }
-        const repoDir = git.getDir(util.importsDir(project), imp.url, imp.ref);
+        const repoDir = git.getDir(project.importsDir(), imp.url, imp.ref);
         if (args.clean) {
             if (log.ask(`delete and clone ${repoDir}`, false)) {
                 log.info(`  deleting ${repoDir}`);
@@ -34,7 +35,7 @@ async function run(project: Project) {
                 log.info(`  skipping ${repoDir}`);
             }
         } else {
-            if (!await git.update({ dir: util.importsDir(project), url: imp.url, ref: imp.ref, showCmd: true })) {
+            if (!await git.update({ dir: project.importsDir(), url: imp.url, ref: imp.ref, showCmd: true })) {
                 log.print();
                 log.panic(`updating '${repoDir}' failed\n\n(consider running 'fibs update --clean')\n`);
             }
@@ -57,11 +58,6 @@ function parseArgs(project: Project): { clean: boolean; items: string[] } {
     });
     if (res.items.length === 0) {
         res.items = project.imports.toReversed().map((imp) => imp.name);
-    }
-    for (const item of res.items) {
-        if (util.find(item, project.imports) === undefined) {
-            log.panic(`import '${item}' not found (run 'fibs list imports')`);
-        }
     }
     return res;
 }

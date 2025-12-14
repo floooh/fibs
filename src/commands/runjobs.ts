@@ -1,4 +1,5 @@
-import { CommandDesc, log, proj, Project, util } from '../../index.ts';
+import { log, proj } from '../lib/index.ts';
+import { CommandDesc, Project } from '../types.ts';
 
 export const runjobsCmd: CommandDesc = { name: 'runjobs', help, run };
 
@@ -11,6 +12,6 @@ function help() {
 }
 
 async function run(project: Project) {
-    const config = util.activeConfig(project);
+    const config = project.activeConfig();
     await Promise.all(project.targets.map((target): Promise<void> => proj.runJobs(project, config, target)));
 }

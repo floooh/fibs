@@ -1,140 +1,32 @@
 import { ConfigDesc } from '../../index.ts';
+import { Configurer } from '../types.ts';
 
-export const configs: ConfigDesc[] = [
-    {
-        name: 'win',
-        ignore: true,
-        platform: 'windows',
-        arch: 'x86_64',
-        validate: () => ({ valid: true, hints: [] }),
-    },
-    {
-        name: 'win-vstudio',
-        inherits: 'win',
-        ignore: true,
-        opener: 'vstudio',
-        compilers: ['msvc'],
-    },
-    {
-        name: 'win-vstudio-release',
-        inherits: 'win-vstudio',
-        buildType: 'release',
-    },
-    {
-        name: 'win-vstudio-debug',
-        inherits: 'win-vstudio',
-        buildType: 'debug',
-    },
-    {
-        name: 'macos',
-        ignore: true,
-        platform: 'macos',
-        compilers: ['appleclang'],
-        validate: () => ({ valid: true, hints: [] }),
-    },
-    {
-        name: 'macos-make',
-        inherits: 'macos',
-        ignore: true,
-        generator: 'Unix Makefiles',
-    },
-    {
-        name: 'macos-ninja',
-        inherits: 'macos',
-        ignore: true,
-        generator: 'Ninja',
-    },
-    {
-        name: 'macos-xcode',
-        inherits: 'macos',
-        ignore: true,
-        generator: 'Xcode',
-        opener: 'xcode',
-    },
-    {
-        name: 'macos-vscode',
-        inherits: 'macos',
-        ignore: true,
-        generator: 'Ninja',
-        opener: 'vscode',
-    },
-    {
-        name: 'macos-make-release',
-        inherits: 'macos-make',
-        buildType: 'release',
-    },
-    {
-        name: 'macos-make-debug',
-        inherits: 'macos-make',
-        buildType: 'debug',
-    },
-    {
-        name: 'macos-ninja-release',
-        inherits: 'macos-ninja',
-        buildType: 'release',
-    },
-    {
-        name: 'macos-ninja-debug',
-        inherits: 'macos-ninja',
-        buildType: 'debug',
-    },
-    {
-        name: 'macos-xcode-release',
-        inherits: 'macos-xcode',
-        buildType: 'release',
-    },
-    {
-        name: 'macos-xcode-debug',
-        inherits: 'macos-xcode',
-        buildType: 'debug',
-    },
-    {
-        name: 'macos-vscode-release',
-        inherits: 'macos-vscode',
-        buildType: 'release',
-    },
-    {
-        name: 'macos-vscode-debug',
-        inherits: 'macos-vscode',
-        buildType: 'debug',
-    },
-    {
-        name: 'linux',
-        ignore: true,
-        platform: 'linux',
-        compilers: ['gcc', 'clang'],
-        validate: () => ({ valid: true, hints: [] }),
-    },
-    {
-        name: 'linux-make',
-        inherits: 'linux',
-        ignore: true,
-        generator: 'Unix Makefiles',
-    },
-    {
-        name: 'linux-ninja',
-        inherits: 'linux',
-        ignore: true,
-        generator: 'Ninja',
-    },
-    {
-        name: 'linux-make-release',
-        inherits: 'linux-make',
-        buildType: 'release',
-    },
-    {
-        name: 'linux-make-debug',
-        inherits: 'linux-make',
-        buildType: 'debug',
-    },
-    {
-        name: 'linux-ninja-release',
-        inherits: 'linux-ninja',
-        buildType: 'release',
-    },
-    {
-        name: 'linux-ninja-debug',
-        inherits: 'linux-ninja',
-        buildType: 'debug',
-    },
-];
+const win = { platform: 'windows', arch: 'x86_64' } satisfies Partial<ConfigDesc>;
+const mac = { platform: 'macos', compilers: ['appleclang'] } satisfies Partial<ConfigDesc>;
+const linux = { platform: 'linux', compilers: ['gcc', 'clang'] } satisfies Partial<ConfigDesc>;
+const vstudio = { compilers: ['msvc'], opener: 'vstudio' } satisfies Partial<ConfigDesc>;
+const xcode = { generator: 'xcode', opener: 'xcode' } satisfies Partial<ConfigDesc>;
+const vscode = { generator: 'ninja', opener: 'vscode' } satisfies Partial<ConfigDesc>;
+const make = { generator: 'make' } satisfies Partial<ConfigDesc>;
+const ninja = { generator: 'ninja' } satisfies Partial<ConfigDesc>;
+const release = { buildMode: 'release' } satisfies Partial<ConfigDesc>;
+const debug = { buildMode: 'debug' } satisfies Partial<ConfigDesc>;
+
+export function addDefaultConfigs(c: Configurer): void {
+    c.addConfig({ name: 'win-vstudio-release', ...win, ...vstudio, ...release });
+    c.addConfig({ name: 'win-vstudio-debug', ...win, ...vstudio, ...debug });
+    c.addConfig({ name: 'macos-make-release', ...mac, ...make, ...release });
+    c.addConfig({ name: 'macos-make-debug', ...mac, ...make, ...debug });
+    c.addConfig({ name: 'macos-ninja-release', ...mac, ...ninja, ...release });
+    c.addConfig({ name: 'macos-ninja-debug', ...mac, ...ninja, ...debug });
+    c.addConfig({ name: 'macos-xcode-release', ...mac, ...xcode, ...release });
+    c.addConfig({ name: 'macos-xcode-debug', ...mac, ...xcode, ...debug });
+    c.addConfig({ name: 'macos-vscode-release', ...mac, ...vscode, ...release });
+    c.addConfig({ name: 'macos-vscode-debug', ...mac, ...vscode, ...debug });
+    c.addConfig({ name: 'linux-make-release', ...linux, ...make, ...release });
+    c.addConfig({ name: 'linux-make-debug', ...linux, ...make, ...debug});
+    c.addConfig({ name: 'linux-ninja-release', ...linux, ...ninja, ...release });
+    c.addConfig({ name: 'linux-ninja-debug', ...linux, ...ninja, ...debug });
+    c.addConfig({ name: 'linux-vscode-release', ...linux, ...vscode, ...release });
+    c.addConfig({ name: 'linux-vscode-debug', ...linux, ...vscode, ...debug })
+}

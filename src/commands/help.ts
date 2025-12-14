@@ -1,4 +1,5 @@
-import { CommandDesc, log, Project, util } from '../../index.ts';
+import { log } from '../lib/index.ts';
+import { CommandDesc, Project } from '../../index.ts';
 import { blue } from '@std/fmt/colors';
 
 export const helpCmd: CommandDesc = { name: 'help', help, run };
@@ -19,11 +20,6 @@ async function run(project: Project) {
         }
     } else {
         const cmdName = Deno.args[1];
-        const cmd = util.find(cmdName, project.commands);
-        if (cmd !== undefined) {
-            cmd.help();
-        } else {
-            log.panic(`unknown command ${cmdName} (run 'fibs help')`);
-        }
+        project.command(cmdName).help();
     }
 }

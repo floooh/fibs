@@ -1,4 +1,5 @@
-import { CommandDesc, log, Project, settings } from '../../index.ts';
+import { log, settings } from '../lib/index.ts';
+import { CommandDesc, Project } from '../types.ts';
 
 export const getCmd: CommandDesc = { name: 'get', help, run };
 

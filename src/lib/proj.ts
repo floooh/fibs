@@ -3,13 +3,9 @@ import {
     Config,
     ConfigDesc,
     ConfigDescWithImportDir,
-    Context,
     Job,
     Language,
     Project,
-    ProjectDesc,
-    StringArrayFunc,
-    StringRecordFunc,
     Target,
     TargetArrayItems,
     TargetArrayItemsDesc,
@@ -18,12 +14,8 @@ import {
     TargetRecordItems,
     TargetRecordItemsDesc,
     NamedItem,
-} from './types.ts';
-import * as settings from './settings.ts';
-import * as log from './log.ts';
-import * as imports from './imports.ts';
-import * as util from './util.ts';
-import * as host from './host.ts';
+} from '../types.ts';
+import { settings, log, imports, util, host } from '../lib/index.ts';
 
 export async function setup(
     rootDir: string,

@@ -1,4 +1,5 @@
-import { CommandDesc, Config, log, Project, util } from '../../index.ts';
+import { log, util } from '../lib/index.ts';
+import { CommandDesc, Config, Project } from '../types.ts';
 import { blue  } from '@std/fmt/colors';
 
 export const cleanCmd: CommandDesc = { name: 'clean', help, run };
@@ -13,8 +14,8 @@ async function run(project: Project) {
     const configs = parseArgs(project);
     let numDeleted = 0;
     for (const config of configs) {
-        const buildPath = util.buildDir(project, config);
-        const distPath = util.distDir(project, config);
+        const buildPath = project.buildDir(config.name);
+        const distPath = project.distDir(config.name);
         const buildExists = util.dirExists(buildPath);
         const distExists = util.dirExists(distPath);
         if (buildExists || distExists) {
@@ -55,14 +56,8 @@ function parseArgs(project: Project): Config[] {
     if (all) {
         return project.configs;
     } else if (args.length === 0) {
-        return [util.activeConfig(project)];
+        return [project.activeConfig()];
     } else {
-        return args.map((arg) => {
-            const config = util.find(arg, project.configs);
-            if (config === undefined) {
-                log.panic(`unknown config '${arg}' (run 'fibs list configs')`);
-            }
-            return config;
-        });
+        return args.map((arg) => project.config(arg));
     }
 }

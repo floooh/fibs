@@ -1,4 +1,5 @@
-import { CommandDesc, conf, Config, imports, log, proj, Project, settings, util } from '../../index.ts';
+import { conf, imports, log, proj, settings } from '../lib/index.ts';
+import { CommandDesc, Config, Project } from '../types.ts';
 
 export const configCmd: CommandDesc = { name: 'config', help, run };
 
@@ -16,7 +17,7 @@ async function run(project: Project) {
     const args = Deno.args.slice(1).filter((arg) => {
         if (arg.startsWith('--')) {
             if (arg === '--get') {
-                log.print(util.activeConfig(project).name);
+                log.print(project.activeConfig().name);
             } else {
                 log.panic(`unknown option '${arg} (run 'fibs help config')`);
             }
@@ -27,17 +28,13 @@ async function run(project: Project) {
     if (args.length > 1) {
         log.panic('too many args (run \'fibs help config\')');
     }
-    let config: Config | undefined;
+    let config: Config;
     if (args.length > 0) {
-        config = util.find(args[0], project.configs);
-        if (config === undefined) {
-            log.panic(`config '${args[0]} not found (run 'fibs list configs)`);
-        }
+        config = project.config(args[0]);
     } else {
-        config = util.activeConfig(project);
+        config = project.activeConfig();
     }
     await conf.validate(project, config, { silent: false, abortOnError: true });
     settings.set(project, 'config', config.name);
-    const adapter = util.find('cmake', project.adapters)!;
-    await proj.configure(project, config, adapter, {});
+    await proj.configure(project, config, project.adapter('cmake'), {});
 }

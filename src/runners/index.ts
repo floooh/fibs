@@ -1,5 +1,6 @@
+import { Configurer } from '../types.ts';
 import { nativeRunner } from './native.ts';
 
-export const runners = [
-    nativeRunner,
-];
+export function addDefaultRunners(c: Configurer): void {
+    c.addRunner(nativeRunner);
+}

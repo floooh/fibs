@@ -7,10 +7,10 @@ export const vstudioOpener: OpenerDesc = {
 };
 
 async function open(project: Project, config: Config) {
-    const path = `${util.buildDir(project, config)}/${project.name}.sln`;
+    const path = `${project.buildDir(config.name)}/${project.name()}.sln`;
     await util.runCmd('start', {
         args: [path],
-        cwd: project.dir,
+        cwd: project.dir(),
         showCmd: true,
         winUseCmd: true,
     });

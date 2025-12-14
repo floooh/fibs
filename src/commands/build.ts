@@ -1,4 +1,5 @@
-import { CommandDesc, conf, imports, log, proj, Project, util } from '../../index.ts';
+import { conf, imports, log, proj } from '../lib/index.ts';
+import { CommandDesc, Project } from '../types.ts';
 
 export const buildCmd: CommandDesc = { name: 'build', help, run };
 
@@ -15,8 +16,8 @@ async function run(project: Project) {
     if (imports.hasImportErrors(project)) {
         log.panic('import errors detected');
     }
-    const adapter = util.find('cmake', project.adapters)!;
-    const config = util.activeConfig(project);
+    const adapter = project.adapter('cmake');
+    const config = project.activeConfig();
     let forceRebuild;
     let buildTarget;
     for (let i = 1; i < Deno.args.length; i++) {
@@ -28,11 +29,7 @@ async function run(project: Project) {
                 log.panic(`unknown option '${arg}, type 'fibs help build'`);
             }
         } else {
-            if (util.find(arg, project.targets) !== undefined) {
-                buildTarget = arg;
-            } else {
-                log.panic(`unknown build target '${arg}`);
-            }
+            buildTarget = project.target(arg).name;
         }
     }
     await conf.validate(project, config, { silent: false, abortOnError: true });

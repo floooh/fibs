@@ -1,13 +1,7 @@
-import { host, log, proj, Project, ProjectDesc, util } from '../index.ts';
-
-import { commands } from './commands/index.ts';
-import { tools } from './tools/index.ts';
-import { adapters } from './adapters/index.ts';
-import { configs } from './configs/index.ts';
-import { runners } from './runners/index.ts';
-import { openers } from './openers/index.ts';
-
-let rootProject: Project;
+import { log, util } from './lib/index.ts';
+import { ProjectImpl } from './classes/projectimpl.ts';
+import { Project, assertFibsModule } from './types.ts';
+import { resetCmd } from './commands/reset.ts';
 
 export async function main() {
     if (Deno.args.length < 1) {
@@ -20,7 +14,7 @@ export async function main() {
     let skipCmd = false;
     if (Deno.args[0] === 'reset') {
         skipCmd = true;
-        await util.find('reset', commands)!.run(null as unknown as Project);
+        await resetCmd.run(null as unknown as Project);
     }
     try {
         // try to import a fibs.ts file from current directory
@@ -30,67 +24,17 @@ export async function main() {
         const rootModule = await import(`file://${rootPath}`);
         assertFibsModule(rootModule);
 
-        // run configure pass
-        if (typeof rootModule.configure === 'function') {
-            rootModule.configure
-        }
+        // run configure- and build-tree pass
+        const project = new ProjectImpl(cwd);
+        configure(rootModule, project);
+        build(rootModule, project);
 
-        // run build pass
-        if (typeof rootModule.build === 'function') {
-
-        }
-
-        if (rootModule.project !== undefined) {
-            // setup the root project tree
-            rootProject = await proj.setup(cwd, rootModule.project, stdDesc);
-            // lookup and run subcommand
-            const cmdName = Deno.args[0];
-            const cmd = util.find(cmdName, rootProject.commands);
-            if (cmd !== undefined) {
-                if (!skipCmd) {
-                    await cmd.run(rootProject);
-                }
-            } else {
-                log.panic(`command '${cmdName}' not found in project '${rootProject.name}', run 'fibs help'`);
-            }
-        } else {
-            log.panic('file \'fibs.ts\' in current directory has no export \'project\'');
+        const cmdName = Deno.args[0];
+        const cmd = project.command(cmdName);
+        if (!skipCmd) {
+            await cmd.run(project);
         }
     } catch (err) {
         log.panic(err);
     }
 }
-
-function hostDefaultConfig(): string {
-    switch (host.platform()) {
-        case 'macos':
-            return 'macos-make-release';
-        case 'windows':
-            return 'win-vstudio-release';
-        case 'linux':
-            return 'linux-make-release';
-    }
-}
-
-const stdDesc: ProjectDesc = {
-    name: 'std',
-    commands,
-    tools,
-    adapters,
-    configs,
-    runners,
-    openers,
-    cmakeVariables: {
-        CMAKE_C_STANDARD: '99',
-        CMAKE_CXX_STANDARD: '11',
-    },
-    settings: {
-        config: {
-            default: hostDefaultConfig(),
-            value: hostDefaultConfig(),
-            validate: (project, value) => {
-                return { valid: util.find(value, project.configs) !== undefined, hint: 'run \'fibs list configs\'' };
-            },
-        },
-    },
-};

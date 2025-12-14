@@ -1,6 +1,5 @@
-import { Config, Project } from './types.ts';
-import * as util from './util.ts';
-import * as log from './log.ts';
+import { util, log } from './index.ts';
+import { Config, Project } from '../types.ts';
 
 export async function validate(
     project: Project,
@@ -12,8 +11,6 @@ export async function validate(
         abortOnError = true,
     } = options;
     const res: Awaited<ReturnType<typeof validate>> = { valid: true, hints: [] };
-
-    const configAliasMap = util.buildConfigAliasMap(project, config);
 
     // run config validator function
     const validateFuncRes = config.validate(project);
@@ -30,13 +27,13 @@ export async function validate(
 
     // validate generators
     // TODO: more generator checks
-    if (config.generator === 'Ninja') {
-        if (!await util.find('ninja', project.tools)!.exists()) {
+    if (config.generator === 'ninja') {
+        if (!await project.tool('ninja').exists()) {
             res.valid = false;
             res.hints.push('ninja build tool not found (run \'fibs diag tools\')');
         }
-    } else if (config.generator === 'Unix Makefiles') {
-        if (!await util.find('make', project.tools)!.exists()) {
+    } else if (config.generator === 'make') {
+        if (!await project.tool('make').exists()) {
             res.valid = false;
             res.hints.push('make build tool not found (run \'fibs diag tools\')');
         }
@@ -44,10 +41,9 @@ export async function validate(
 
     // check if toolchain file exists
     if (config.toolchainFile !== undefined) {
-        const toolchainPath = util.resolveAlias(configAliasMap, config.toolchainFile);
-        if (!util.fileExists(toolchainPath)) {
+        if (!util.fileExists(config.toolchainFile)) {
             res.valid = false;
-            res.hints.push(`toolchain file not found: ${toolchainPath}`);
+            res.hints.push(`toolchain file not found: ${config.toolchainFile}`);
         }
     }
 
