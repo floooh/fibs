@@ -1,5 +1,5 @@
-import { CommandDesc, imports, log, proj, Project, TargetType, util } from '../../mod.ts';
-import { colors } from '../../deps.ts';
+import { CommandDesc, imports, log, proj, Project, TargetType, util } from '../../index.ts';
+import { brightBlue, gray, strikethrough } from '@std/fmt/colors';
 
 export const listCmd: CommandDesc = { name: 'list', help, run };
 
@@ -45,7 +45,7 @@ async function run(project: Project) {
     if (args.all || args.imports) {
         for (const imp of project.imports.toReversed()) {
             if (imports.isLinked(project, imp.name)) {
-                log.print(`${imp.name}: ${colors.brightBlue(`link => ${imp.importDir}`)}`);
+                log.print(`${imp.name}: ${brightBlue(`link => ${imp.importDir}`)}`);
             } else {
                 log.print(`${imp.name}: ${imp.importDir}`);
             }
@@ -94,7 +94,7 @@ async function run(project: Project) {
                         log.print(str);
                     } else {
                         if (args.disabled) {
-                            log.print(colors.gray(colors.strikethrough(str)));
+                            log.print(gray(strikethrough(str)));
                         }
                     }
                 }
@@ -182,13 +182,13 @@ function parseArgs(): {
                                 }
                                 break;
                             default:
-                                log.error(`unknown target type arg '${targetArg}' (run 'fibs help list')`);
+                                log.panic(`unknown target type arg '${targetArg}' (run 'fibs help list')`);
                         }
                     }
                 }
                 break;
             default:
-                log.error(`unknown filter '${filter}' (run 'fibs help list')`);
+                log.panic(`unknown filter '${filter}' (run 'fibs help list')`);
         }
     }
     return args;

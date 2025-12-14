@@ -41,7 +41,7 @@ export function load(project: Project) {
                 Deno.readTextFileSync(path),
             ) as typeof items;
         } catch (err) {
-            log.error(`failed loading settings from '${path}' with: ${err.message}`);
+            log.panic(`failed loading settings from '${path}' with: `, err);
         }
     }
     // only accept valid items, otherwise use default
@@ -75,7 +75,7 @@ export function save(project: Project) {
             JSON.stringify(kvp, null, '  '),
         );
     } catch (err) {
-        log.error(`failed saving settings to '${path}' with: ${err.message}`);
+        log.panic(`failed saving settings to '${path}' with: `, err);
     }
 }
 

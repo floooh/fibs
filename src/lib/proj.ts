@@ -75,20 +75,20 @@ function resolveConfigs(project: Project) {
             resolveInheritedConfigDesc(desc, project.configDescs);
         }
         if (desc.platform === undefined) {
-            log.error(`config '${desc.name}' requires 'platform' field`);
+            log.panic(`config '${desc.name}' requires 'platform' field`);
         }
         if (desc.buildType === undefined) {
-            log.error(`config '${desc.name}' requires 'buildType' field`);
+            log.panic(`config '${desc.name}' requires 'buildType' field`);
         }
         let runner = util.find(desc.runner ?? 'native', project.runners);
         if (runner === undefined) {
-            log.error(`config '${desc.name}' has unknown runner '${desc.runner}'`);
+            log.panic(`config '${desc.name}' has unknown runner '${desc.runner}'`);
         }
         let opener = undefined;
         if (desc.opener !== undefined) {
             opener = util.find(desc.opener, project.openers);
             if (opener === undefined) {
-                log.error(`config '${desc.name}' has unknown opener '${desc.opener}'`);
+                log.panic(`config '${desc.name}' has unknown opener '${desc.opener}'`);
             }
         }
         const config: Config = {
@@ -342,7 +342,7 @@ function resolveInheritedConfigDesc(config: ConfigDescWithImportDir, configs: Co
         if (curConfig.inherits !== undefined) {
             const nextConfig = util.find(curConfig.inherits, configs);
             if (nextConfig === undefined) {
-                log.error(`config '${curConfig.name}' tries to inherit from non-existing config '${curConfig.inherits}'`);
+                log.panic(`config '${curConfig.name}' tries to inherit from non-existing config '${curConfig.inherits}'`);
             }
             curConfig = nextConfig;
         } else {
@@ -350,7 +350,7 @@ function resolveInheritedConfigDesc(config: ConfigDescWithImportDir, configs: Co
         }
     }
     if (inheritChain.length === maxInherits) {
-        log.error(`circular dependency in config '${config.name}'?`);
+        log.panic(`circular dependency in config '${config.name}'?`);
     }
     inheritChain.forEach((src) => mergeConfigDescWithImportDir(config, src));
 }
@@ -512,7 +512,7 @@ export function validateTarget(
     if (!res.valid && !silent) {
         const msg = [`target '${target.name} not valid:\n`, ...res.hints].join('\n  ') + '\n';
         if (abortOnError) {
-            log.error(msg);
+            log.panic(msg);
         } else {
             log.warn(msg);
         }
@@ -552,7 +552,7 @@ export function resolveTargetJobs(ctx: Context): Job[] {
     return targetJobs.map((targetJob) => {
         const res = validateTargetJob(ctx.project, ctx.config, ctx.target!, targetJob);
         if (!res.valid) {
-            log.error(`failed to validate job ${targetJob.job} in target ${ctx.target!.name}:\n${res.hints.map((line) => `  ${line}\n`)}`);
+            log.panic(`failed to validate job ${targetJob.job} in target ${ctx.target!.name}:\n${res.hints.map((line) => `  ${line}\n`)}`);
         }
         return util.find(targetJob.job, ctx.project.jobs)!.builder(targetJob.args)(ctx);
     });
@@ -571,7 +571,7 @@ export async function runJobs(project: Project, config: Config, target: Target) 
         try {
             await job.func(job.inputs, job.outputs, job.args);
         } catch (err) {
-            log.error(`job '${job.name}' in target '${target.name}' failed with ${err}`);
+            log.panic(`job '${job.name}' in target '${target.name}' failed with ${err}`);
         }
     }
 }

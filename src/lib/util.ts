@@ -1,6 +1,7 @@
 import { Config, NamedItem, Project, RunOptions, RunResult, Target } from './types.ts';
 import * as log from './log.ts';
-import { fs, path } from '../../deps.ts';
+import * as fs from '@std/fs';
+import * as path from '@std/path';
 
 /**
  * Find a named item in an array of NamedItem-derived items.
@@ -345,7 +346,7 @@ export function activeConfig(project: Project): Config {
     const name = project.settings.config.value;
     const config = find(name, project.configs);
     if (config === undefined) {
-        log.error(`active config ${name} does not exist`);
+        log.panic(`active config ${name} does not exist`);
     }
     return config;
 }
@@ -477,7 +478,7 @@ export function resolveAlias(aliasMap: Record<string, string>, str: string): str
             }
         }
         // FIXME: should throw instead
-        log.error(`cannot resolve alias in '${str}`);
+        log.panic(`cannot resolve alias in '${str}`);
     }
     return str;
 }
@@ -531,31 +532,30 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
         stderr,
         winUseCmd,
     } = options;
-    let cmdLine;
+    let cmdx;
+    let argsx;
     if ((Deno.build.os === 'windows') && winUseCmd) {
-        cmdLine = ['cmd', '/c', cmd, ...args];
+        cmdx = 'cmd';
+        argsx = ['/c', cmd, ...args];
     } else {
-        cmdLine = [cmd, ...args];
+        cmdx = cmd;
+        argsx = args;
     }
     if (showCmd) {
-        log.run(cmdLine, cwd);
+        log.run([cmdx, ...argsx], cwd);
     }
     try {
-        const p = Deno.run({
-            cmd: cmdLine,
-            cwd: cwd,
-            stdout: stdout,
-            stderr: stderr,
-        });
+        const command = new Deno.Command(cmdx, { args: argsx, stdout, stderr, cwd });
+        const { code: exitCode, stdout: cmdStdout, stderr: cmdStderr } = await command.output()
         const res: RunResult = {
-            exitCode: (await p.status()).code,
-            stdout: (stdout === 'piped') ? new TextDecoder().decode(await p.output()) : '',
-            stderr: (stderr === 'piped') ? new TextDecoder().decode(await p.stderrOutput()) : '',
+            exitCode,
+            stdout: (stdout === 'piped') ? new TextDecoder().decode(cmdStdout) : '',
+            stderr: (stderr === 'piped') ? new TextDecoder().decode(cmdStderr) : '',
         };
         return res;
     } catch (err) {
         if (abortOnError) {
-            log.error(`Failed running '${cmd}' with: ${err.message}`);
+            log.panic(`Failed running '${cmd}' with: `, err);
         } else {
             throw err;
         }
@@ -600,18 +600,18 @@ export async function download(options: { url: string; dir: string; filename: st
         } else {
             const msg = `Downloading '${url} failed with: ${response.status} (${response.statusText})`;
             if (abortOnError) {
-                log.error(msg);
+                log.panic(msg);
             } else {
                 log.warn(msg);
                 return false;
             }
         }
     } catch (err) {
-        const msg = `Downloading '${url} to ${path} failed with: ${err.message}`;
+        const msg = `Downloading '${url} to ${path} failed with: `;
         if (abortOnError) {
-            log.error(msg);
+            log.panic(msg, err);
         } else {
-            log.warn(msg);
+            log.warn(msg, err);
             return false;
         }
     }

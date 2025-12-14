@@ -16,7 +16,7 @@ import {
     TargetArrayItems,
     TargetRecordItems,
     util,
-} from '../../mod.ts';
+} from '../../index.ts';
 
 export const cmakeAdapter: AdapterDesc = {
     name: 'cmake',
@@ -35,7 +35,7 @@ export async function configure(project: Project, config: Config) {
             { create: true },
         );
     } catch (err) {
-        log.error(`Failed writing ${cmakeListsPath}: ${err.message}`);
+        log.panic(`Failed writing ${cmakeListsPath}: `, err);
     }
     log.info(`writing ${cmakePresetsPath}`);
     try {
@@ -45,7 +45,7 @@ export async function configure(project: Project, config: Config) {
             { create: true },
         );
     } catch (err) {
-        log.error(`Failed writing CMakePresets.json: ${err.message}`);
+        log.panic('Failed writing CMakePresets.json: ', err);
     }
     await cmake.configure(project, config);
 }
@@ -459,7 +459,7 @@ function genConfigurePresets(project: Project, config: Config): any[] {
             environment: config.environment,
         });
     } else {
-        log.error(`config '${config.name} is not valid for platform '${host.platform()}`);
+        log.panic(`config '${config.name} is not valid for platform '${host.platform()}`);
     }
     return res;
 }

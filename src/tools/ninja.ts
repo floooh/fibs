@@ -1,4 +1,4 @@
-import { ToolDesc, util } from '../../mod.ts';
+import { ToolDesc, util } from '../../index.ts';
 
 export const ninjaTool: ToolDesc = {
     name: 'ninja',

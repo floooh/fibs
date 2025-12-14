@@ -1,4 +1,4 @@
-import { CommandDesc, log, Project, util } from '../../mod.ts';
+import { CommandDesc, log, Project, util } from '../../index.ts';
 
 export const resetCmd: CommandDesc = { name: 'reset', help, run };
 
@@ -11,7 +11,7 @@ async function run(project: Project) {
     const fibsFile = `${cwd}/fibs.ts`;
     const fibsDir = `${cwd}/.fibs`;
     if (!util.fileExists(fibsFile)) {
-        log.error('current directory is not a fibs project (no fibs.ts found)');
+        log.panic('current directory is not a fibs project (no fibs.ts found)');
     }
     if (!util.dirExists(fibsDir)) {
         log.warn('no .fibs subdirectory in current directory');

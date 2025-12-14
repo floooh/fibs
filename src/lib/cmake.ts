@@ -6,7 +6,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     try {
         return await util.runCmd('cmake', options);
     } catch (err) {
-        log.error(`Failed running cmake with: ${err.message}`);
+        log.panic('Failed running cmake with: ', err);
     }
 }
 
@@ -27,7 +27,7 @@ export async function configure(project: Project, config: Config) {
     const args = ['--preset', config.name, '-B', util.buildDir(project, config)];
     const res = await run({ args, stderr: 'piped' });
     if (res.exitCode !== 0) {
-        log.error(
+        log.panic(
             `cmake returned with exit code ${res.exitCode}, stderr:\n\n${res.stderr}`,
         );
     }
@@ -47,6 +47,6 @@ export async function build(project: Project, config: Config, options: { target?
     }
     const res = await run({ args });
     if (res.exitCode !== 0) {
-        log.error('build failed.');
+        log.panic('build failed.');
     }
 }

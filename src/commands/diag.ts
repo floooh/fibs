@@ -1,5 +1,5 @@
-import { CommandDesc, conf, host, imports, log, proj, Project } from '../../mod.ts';
-import { colors } from '../../deps.ts';
+import { CommandDesc, conf, host, imports, log, proj, Project } from '../../index.ts';
+import { green, yellow, red } from '@std/fmt/colors';
 
 export const diagCmd: CommandDesc = { name: 'diag', help, run };
 
@@ -25,7 +25,7 @@ async function run(project: Project) {
     } else {
         const arg = Deno.args[1];
         if (!all.includes(arg)) {
-            log.error(`invalid arg '${arg}', run 'fibs help diag'`);
+            log.panic(`invalid arg '${arg}', run 'fibs help diag'`);
         }
         which = [arg];
     }
@@ -56,11 +56,11 @@ async function diagTools(project: Project) {
             const exists = await tool.exists();
             let res: string;
             if (exists) {
-                res = `${colors.green('found')}`;
+                res = `${green('found')}`;
             } else if (tool.optional) {
-                res = `${colors.yellow('OPTIONAL, NOT FOUND')} (${tool.notFoundMsg})`;
+                res = `${yellow('OPTIONAL, NOT FOUND')} (${tool.notFoundMsg})`;
             } else {
-                res = `${colors.red('NOT FOUND')} (${tool.notFoundMsg})`;
+                res = `${red('NOT FOUND')} (${tool.notFoundMsg})`;
             }
             log.print(`${tool.name}:\t${res}`);
         }
@@ -72,9 +72,9 @@ async function diagConfigs(project: Project) {
         log.write(`${config.name}: `);
         const res = await conf.validate(project, config, { silent: true, abortOnError: false });
         if (res.valid) {
-            log.write(colors.green('ok\n'));
+            log.write(green('ok\n'));
         } else {
-            log.write(colors.red('FAILED\n'));
+            log.write(red('FAILED\n'));
             for (const hint of res.hints) {
                 log.info(`  ${hint}`);
             }
@@ -87,9 +87,9 @@ async function diagTargets(project: Project) {
         log.write(`${target.name} (${target.type}): `);
         const res = proj.validateTarget(project, target, { silent: true, abortOnError: false });
         if (res.valid) {
-            log.write(colors.green('ok\n'));
+            log.write(green('ok\n'));
         } else {
-            log.write(colors.red('FAILED\n'));
+            log.write(red('FAILED\n'));
             for (const hint of res.hints) {
                 log.info(`  ${hint}`);
             }
@@ -102,9 +102,9 @@ async function diagImports(project: Project) {
         log.write(`${imp.name}: `);
         const res = await imports.validate(project, imp, { silent: true, abortOnError: false });
         if (res.valid) {
-            log.write(colors.green('ok\n'));
+            log.write(green('ok\n'));
         } else {
-            log.write(colors.red('FAILED\n'));
+            log.write(red('FAILED\n'));
             for (const hint of res.hints) {
                 log.info(`  ${hint}`);
             }

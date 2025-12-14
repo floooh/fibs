@@ -1,4 +1,4 @@
-import { Config, Project, RunnerDesc, RunOptions, Target, util } from '../../mod.ts';
+import { Config, Project, RunnerDesc, RunOptions, Target, util } from '../../index.ts';
 
 export const nativeRunner: RunnerDesc = { name: 'native', run };
 

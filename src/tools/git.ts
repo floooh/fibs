@@ -1,4 +1,4 @@
-import { git, ToolDesc } from '../../mod.ts';
+import { git, ToolDesc } from '../../index.ts';
 
 export const gitTool: ToolDesc = {
     name: 'git',

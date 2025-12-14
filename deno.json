@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
         "strict": true,
-        "allowJs": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noUnusedLocals": true,
@@ -18,7 +17,12 @@
     "lint": {
         "rules": {
             "tags": [],
-            "include": ["recommended", "eqeqeq", "camelcase", "no-extra-semi"]
+            "include": ["eqeqeq", "camelcase"]
         }
+    },
+    "imports": {
+        "@std/fmt": "jsr:@std/fmt@^1.0.8",
+        "@std/fs": "jsr:@std/fs@^1.0.20",
+        "@std/path": "jsr:@std/path@^1.1.3"
     }
 }

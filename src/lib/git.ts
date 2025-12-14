@@ -1,13 +1,14 @@
 import { RunOptions, RunResult } from './types.ts';
 import * as util from './util.ts';
 import * as log from './log.ts';
-import { fs, path } from '../../deps.ts';
+import * as fs from '@std/fs';
+import * as path from '@std/path';
 
 export async function run(options: RunOptions): Promise<RunResult> {
     try {
         return await util.runCmd('git', options);
     } catch (err) {
-        log.error(`Failed running git with: ${err.message}`);
+        log.panic('Failed running git with', err);
     }
 }
 
@@ -39,7 +40,7 @@ export async function clone(options: { url: string; dir: string; ref?: string; s
     } = options;
     let repoDir = getDir(dir, url, ref);
     if (util.dirExists(repoDir)) {
-        log.error(`git clone directory ${repoDir} already exists!`);
+        log.panic(`git clone directory ${repoDir} already exists!`);
     }
     fs.ensureDirSync(repoDir);
     if ((await run({ args: ['init', '-q'], cwd: repoDir, showCmd })).exitCode !== 0) {

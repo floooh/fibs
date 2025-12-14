@@ -1,4 +1,4 @@
-import { Config, OpenerDesc, Project, util } from '../../mod.ts';
+import { Config, OpenerDesc, Project, util } from '../../index.ts';
 
 export const vstudioOpener: OpenerDesc = {
     name: 'vstudio',

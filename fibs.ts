@@ -1,2 +1,2 @@
-import { main } from './mod.ts';
+import { main } from './index.ts';
 main();

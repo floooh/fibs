@@ -1,4 +1,4 @@
-import { host, log, proj, Project, ProjectDesc, util } from '../mod.ts';
+import { host, log, proj, Project, ProjectDesc, util } from '../index.ts';
 
 import { commands } from './commands/index.ts';
 import { tools } from './tools/index.ts';
@@ -25,7 +25,7 @@ export async function main() {
     try {
         // try to import a fibs.ts file from current directory
         if (!util.fileExists(rootPath)) {
-            log.error('current directory is not a fibs project (no fibs.ts found)');
+            log.panic('current directory is not a fibs project (no fibs.ts found)');
         }
         const rootModule = await import(`file://${rootPath}`);
         if (rootModule.project !== undefined) {
@@ -39,13 +39,13 @@ export async function main() {
                     await cmd.run(rootProject);
                 }
             } else {
-                log.error(`command '${cmdName}' not found in project '${rootProject.name}', run 'fibs help'`);
+                log.panic(`command '${cmdName}' not found in project '${rootProject.name}', run 'fibs help'`);
             }
         } else {
-            log.error('file \'fibs.ts\' in current directory has no export \'project\'');
+            log.panic('file \'fibs.ts\' in current directory has no export \'project\'');
         }
     } catch (err) {
-        log.error(err);
+        log.panic(err);
     }
 }
 

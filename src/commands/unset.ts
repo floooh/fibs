@@ -1,4 +1,4 @@
-import { CommandDesc, log, Project, settings } from '../../mod.ts';
+import { CommandDesc, log, Project, settings } from '../../index.ts';
 
 export const unsetCmd: CommandDesc = { name: 'unset', help, run };
 
@@ -13,7 +13,7 @@ function help() {
 
 async function run(project: Project) {
     if (Deno.args.length !== 2) {
-        log.error('expected [key] arg');
+        log.panic('expected [key] arg');
     }
     const key = Deno.args[1];
     settings.unset(project, key);

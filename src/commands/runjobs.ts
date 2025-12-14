@@ -1,4 +1,4 @@
-import { CommandDesc, log, proj, Project, util } from '../../mod.ts';
+import { CommandDesc, log, proj, Project, util } from '../../index.ts';
 
 export const runjobsCmd: CommandDesc = { name: 'runjobs', help, run };
 

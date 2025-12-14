@@ -1,4 +1,4 @@
-import { CommandDesc, conf, imports, log, proj, Project, util } from '../../mod.ts';
+import { CommandDesc, conf, imports, log, proj, Project, util } from '../../index.ts';
 
 export const buildCmd: CommandDesc = { name: 'build', help, run };
 
@@ -13,7 +13,7 @@ function help() {
 
 async function run(project: Project) {
     if (imports.hasImportErrors(project)) {
-        log.error('import errors detected');
+        log.panic('import errors detected');
     }
     const adapter = util.find('cmake', project.adapters)!;
     const config = util.activeConfig(project);
@@ -25,13 +25,13 @@ async function run(project: Project) {
             if (arg === '--rebuild') {
                 forceRebuild = true;
             } else {
-                log.error(`unknown option '${arg}, type 'fibs help build'`);
+                log.panic(`unknown option '${arg}, type 'fibs help build'`);
             }
         } else {
             if (util.find(arg, project.targets) !== undefined) {
                 buildTarget = arg;
             } else {
-                log.error(`unknown build target '${arg}`);
+                log.panic(`unknown build target '${arg}`);
             }
         }
     }

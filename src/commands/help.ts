@@ -1,5 +1,5 @@
-import { CommandDesc, log, Project, util } from '../../mod.ts';
-import { colors } from '../../deps.ts';
+import { CommandDesc, log, Project, util } from '../../index.ts';
+import { blue } from '@std/fmt/colors';
 
 export const helpCmd: CommandDesc = { name: 'help', help, run };
 
@@ -12,7 +12,7 @@ function help() {
 
 async function run(project: Project) {
     if (Deno.args.length === 1) {
-        log.print(`${colors.blue('Floh\'s Infernal Build System!')}`);
+        log.print(`${blue('Floh\'s Infernal Build System!')}`);
         log.print('https://github.com/floooh/fibs\n');
         for (const cmd of project.commands) {
             cmd.help();
@@ -23,7 +23,7 @@ async function run(project: Project) {
         if (cmd !== undefined) {
             cmd.help();
         } else {
-            log.error(`unknown command ${cmdName} (run 'fibs help')`);
+            log.panic(`unknown command ${cmdName} (run 'fibs help')`);
         }
     }
 }

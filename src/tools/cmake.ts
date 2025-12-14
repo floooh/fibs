@@ -1,4 +1,4 @@
-import { cmake, ToolDesc } from '../../mod.ts';
+import { cmake, ToolDesc } from '../../index.ts';
 
 export const cmakeTool: ToolDesc = {
     name: 'cmake',

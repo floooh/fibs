@@ -1,6 +1,6 @@
-import { Config, host, log, OpenerDesc, Project, util } from '../../mod.ts';
+import { Config, host, log, OpenerDesc, Project, util } from '../../index.ts';
 import { run } from '../tools/vscode.ts';
-import { fs } from '../../deps.ts';
+import * as fs from '@std/fs';
 
 export const vscodeOpener: OpenerDesc = { name: 'vscode', configure, open };
 
@@ -43,7 +43,7 @@ function writeWorkspaceFile(project: Project, config: Config, vscodeDir: string)
     try {
         Deno.writeTextFileSync(path, JSON.stringify(ws, null, '  '));
     } catch (err) {
-        log.error(`Failed writing ${path} with: ${err.message}`);
+        log.panic(`Failed writing ${path} with: `, err);
     }
 }
 
@@ -71,12 +71,19 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
         type: getType(),
         MIMode: getMIMode(),
     };
-    const stopAtEntryLaunchConfig = structuredClone(launchConfig);
-    stopAtEntryLaunchConfig.name = 'Debug Current Target (Stop at Entry)';
-    if (stopAtEntryLaunchConfig.type === 'lldb') {
-        stopAtEntryLaunchConfig.stopOnEntry = true;
+    let stopAtEntryLaunchConfig;
+    if (launchConfig.type === 'lldb') {
+        stopAtEntryLaunchConfig = {
+            ...launchConfig,
+            name: 'Debug Current Target (Stop at Entry)',
+            stopOnEntry: true
+        };
     } else {
-        stopAtEntryLaunchConfig.stopAtEntry = true;
+        stopAtEntryLaunchConfig = {
+            ...launchConfig,
+            name: 'Debug Current Target (Stop at Entry)',
+            stopAtEntry: true
+        };
     }
 
     const launch = {
@@ -89,6 +96,6 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
     try {
         Deno.writeTextFileSync(path, JSON.stringify(launch, null, '  '));
     } catch (err) {
-        log.error(`Failed writing ${path} with: ${err.message}`);
+        log.panic(`Failed writing ${path} with: `, err);
     }
 }
