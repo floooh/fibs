@@ -1,7 +1,6 @@
 import { Config, NamedItem, Project, RunOptions, RunResult } from '../types.ts';
-import * as log from './log.ts';
-import * as fs from '@std/fs';
-import * as path from '@std/path';
+import { log } from './index.ts';
+import { fs, path } from '../../deps.ts';
 
 /**
  * Find a named item in an array of NamedItem-derived items.

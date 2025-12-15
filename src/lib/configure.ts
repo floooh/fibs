@@ -6,6 +6,7 @@ import { builtinConfigs } from '../configs/index.ts';
 import { builtinOpeners } from '../openers/index.ts';
 import { builtinRunners } from '../runners/index.ts';
 import { builtinTools } from '../tools/index.ts';
+import { builtinCommands} from '../commands/index.ts';
 import { fetchImport, importModulesFromDir } from './imports.ts';
 
 type Node = {
@@ -24,6 +25,7 @@ export async function configure(module: FibsModule, project: ProjectImpl): Promi
     };
 
     // add builtin config items
+    builtinCommands.forEach((command) => root.configurer.addCommand(command));
     builtinAdapters.forEach((adapter) => root.configurer.addAdapter(adapter));
     builtinConfigs.forEach((config) => root.configurer.addConfig(config));
     builtinOpeners.forEach((opener) => root.configurer.addOpener(opener));

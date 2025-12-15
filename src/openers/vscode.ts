@@ -1,7 +1,7 @@
 import { host, log } from '../lib/index.ts';
 import { Config, OpenerDesc, Project } from '../types.ts';
 import { run } from '../tools/vscode.ts';
-import * as fs from '@std/fs';
+import { fs } from '../../deps.ts';
 
 export const vscodeOpener: OpenerDesc = { name: 'vscode', configure, open };
 

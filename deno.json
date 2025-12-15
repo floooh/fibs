@@ -19,10 +19,5 @@
             "tags": [],
             "include": ["eqeqeq", "camelcase"]
         }
-    },
-    "imports": {
-        "@std/fmt": "jsr:@std/fmt@^1.0.8",
-        "@std/fs": "jsr:@std/fs@^1.0.20",
-        "@std/path": "jsr:@std/path@^1.1.3"
     }
 }
