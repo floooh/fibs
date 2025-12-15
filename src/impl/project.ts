@@ -29,7 +29,7 @@ function hostDefaultConfig(): string {
 }
 
 export class ProjectImpl implements Project {
-    _name: string = 'project';
+    _name: string | null = null;
     _rootDir: string;
     _compiler: Compiler = 'unknown-compiler';
     cmakeVariables: Record<string, string | boolean> = {
@@ -62,6 +62,9 @@ export class ProjectImpl implements Project {
     }
 
     name(): string {
+        if (this._name === null) {
+            log.panic('Project name is not set');
+        }
         return this._name;
     }
 

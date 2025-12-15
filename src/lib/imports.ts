@@ -1,12 +1,13 @@
 import { util, git, log } from './index.ts';
-import { Import, ImportDesc, Project } from '../types.ts';
+import { Import, ImportDesc, Project, FibsModule, assertFibsModule } from '../types.ts';
 
-export async function fetch(
+export async function fetchImport(
     project: Project,
-    options: { name: string; url: string; ref?: string },
+    importDesc: ImportDesc,
 ): Promise<{ valid: boolean; dir: string }> {
+    const { name, url, ref } = importDesc;
     const links = loadImportLinks(project);
-    const linkDir = links[options.name];
+    const linkDir = links[name];
     if (linkDir !== undefined) {
         // override link
         const res = {
@@ -20,8 +21,7 @@ export async function fetch(
     } else {
         // regular import
         const importsDir = util.ensureImportsDir(project);
-        const repoDir = git.getDir(importsDir, options.url, options.ref);
-
+        const repoDir = git.getDir(importsDir, url, ref);
         const res = {
             valid: false,
             dir: repoDir,
@@ -30,8 +30,8 @@ export async function fetch(
             res.valid = true;
             return res;
         } else {
-            if (!await git.clone({ url: options.url, dir: importsDir, ref: options.ref })) {
-                log.warn(`Failed to clone ${options.url} into ${res.dir}`);
+            if (!await git.clone({ url, dir: importsDir, ref })) {
+                log.warn(`Failed to clone ${url} into ${res.dir}`);
                 return res;
             }
             res.valid = true;
@@ -40,33 +40,34 @@ export async function fetch(
     }
 }
 
-export async function importProjects(
-    fromDir: string,
+export async function importModulesFromDir(
+    dir: string,
     importDesc: ImportDesc,
-): Promise<{ importErrors: Error[]; projectDescs: ProjectDesc[] }> {
-    const res: Awaited<ReturnType<typeof importProjects>> = {
+): Promise<{ importErrors: unknown[]; modules: FibsModule[] }> {
+    const res: Awaited<ReturnType<typeof importModulesFromDir>> = {
         importErrors: [],
-        projectDescs: [],
+        modules: [],
     };
-    if (importDesc.project) {
-        res.projectDescs.push(importDesc.project);
-    }
-    if (importDesc.import) {
-        for (const file of importDesc.import) {
+    const files = importDesc.files ? importDesc.files : ['fibs.ts'];
+    const settledResults = await Promise.allSettled<FibsModule>(files.map((file) => {
+        return import(`file://${dir}/${file}`);
+    }));
+    settledResults.forEach((settledResult) => {
+        if (settledResult.status === 'fulfilled') {
+            const module = settledResult.value;
             try {
-                const module = await import(`file://${fromDir}/${file}`);
-                res.projectDescs.push(module.project);
+                assertFibsModule(module);
+                res.modules.push(module);
             } catch (err) {
                 log.warn('importing module failed with:', err);
                 res.importErrors.push(err);
             }
+        } else {
+            log.warn('importing module failed with:', settledResult.reason);
+            res.importErrors.push(settledResult.reason);
         }
-    }
+    });
     return res;
-}
-
-export function hasImportErrors(project: Project): boolean {
-    return project.imports.some((imp) => (imp.importErrors.length > 0));
 }
 
 export async function validate(

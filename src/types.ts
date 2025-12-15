@@ -9,7 +9,7 @@ export type Configurer = {
     addOpener(opener: OpenerDesc): void;
     addConfig(config: ConfigDesc): void;
     addAdapter(adapter: AdapterDesc): void;
-    addSetting(key: string, value: string, deflt: string): void;
+    addSetting(key: string, item: SettingsItem): void;
 
     hostPlatform(): Platform;
     hostArch(): Arch;
@@ -84,6 +84,9 @@ export function assertFibsModule(val: unknown): asserts val is FibsModule {
     if (obj.build !== undefined && typeof obj.build !== 'function') {
         throw new Error('exported build property must be a function!');
     }
+    if ((obj.configure === undefined) && (obj.build === undefined)) {
+        throw new Error(`fibs modules must have at least a configure() or build() function`);
+    }
 }
 
 export type Arch = 'x86_64' | 'arm64' | 'wasm32';
@@ -99,8 +102,6 @@ export type Language = 'c' | 'cxx';
 export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll' | 'interface';
 
 export type BuildMode = 'release' | 'debug';
-
-export type ConfigDescWithImportDir = ConfigDesc & { importDir: string };
 
 export type Project = ProjectInfo & {
     settings: Record<string, SettingsItem>;
@@ -132,6 +133,7 @@ export type NamedItem = {
 
 export type ImportedItem = {
     importDir: string;
+    importModule: FibsModule;
 }
 
 export type ConfigDesc = NamedItem & {
@@ -154,13 +156,13 @@ export type ConfigDesc = NamedItem & {
     validate?(project: Project): { valid: boolean; hints: string[] };
 }
 
-export type Config = ImportedItem & NamedItem & {
+export type Config = NamedItem & ImportedItem & {
     platform: Platform;
-    runner: Runner;
-    opener?: Opener;
     buildMode: BuildMode;
-    generator: Generator;
-    arch: Arch;
+    runner: string;
+    opener?: string;
+    generator?: Generator;
+    arch?: Arch;
     toolchainFile?: string;
     cmakeIncludes: string[];
     cmakeVariables: Record<string, string | boolean>;
@@ -181,7 +183,6 @@ export type ImportDesc = NamedItem & {
 }
 
 export type Import = NamedItem & ImportedItem & {
-    importErrors: Error[];
     url: string;
     ref: string | undefined;
 }

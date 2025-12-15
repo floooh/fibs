@@ -1,7 +1,8 @@
 import { log, util } from './lib/index.ts';
-import { ProjectImpl } from './classes/projectimpl.ts';
+import { ProjectImpl } from './impl/project.ts';
 import { Project, assertFibsModule } from './types.ts';
 import { resetCmd } from './commands/reset.ts';
+import { configure } from './lib/configure.ts';
 
 export async function main() {
     if (Deno.args.length < 1) {
@@ -26,8 +27,8 @@ export async function main() {
 
         // run configure- and build-tree pass
         const project = new ProjectImpl(cwd);
-        configure(rootModule, project);
-        build(rootModule, project);
+        await configure(rootModule, project);
+        //await build(rootModule, project);
 
         const cmdName = Deno.args[0];
         const cmd = project.command(cmdName);
