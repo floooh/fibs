@@ -50,7 +50,11 @@ export async function configure(project: Project, config: Config) {
     await cmake.configure(project, config);
 }
 
-export async function build(project: Project, config: Config, options: { buildTarget?: string; forceRebuild?: boolean }) {
+export async function build(
+    project: Project,
+    config: Config,
+    options: { buildTarget?: string; forceRebuild?: boolean },
+) {
     if (!util.fileExists(`${util.buildDir(project, config)}/CMakeCache.txt`)) {
         await configure(project, config);
     }
@@ -139,7 +143,9 @@ function genGlobalArrayItemsLanguageCompiler(
     useConfigAliases: boolean,
 ): string {
     let str = '';
-    const aliasMap = useConfigAliases ? util.buildConfigAliasMap(project, config) : util.buildProjectAliasMap(project, config);
+    const aliasMap = useConfigAliases
+        ? util.buildConfigAliasMap(project, config)
+        : util.buildProjectAliasMap(project, config);
     for (const language of languages()) {
         for (const compiler of config.compilers) {
             const ctx: Context = {
@@ -168,7 +174,9 @@ function genGlobalRecordItemsLanguageCompiler(
     useConfigAliases: boolean,
 ): string {
     let str = '';
-    const aliasMap = useConfigAliases ? util.buildConfigAliasMap(project, config) : util.buildProjectAliasMap(project, config);
+    const aliasMap = useConfigAliases
+        ? util.buildConfigAliasMap(project, config)
+        : util.buildProjectAliasMap(project, config);
     for (const language of languages()) {
         for (const compiler of config.compilers) {
             const ctx: Context = {
@@ -182,7 +190,9 @@ function genGlobalRecordItemsLanguageCompiler(
             const resolvedItems = proj.resolveProjectStringRecord(items, ctx, itemsAreFilePaths);
             if (Object.keys(resolvedItems).length > 0) {
                 const resolvedItemsString = Object.entries(resolvedItems).map(([key, val]) => `${key}=${val}`);
-                str += `${statement}(${generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)})\n`;
+                str += `${statement}(${
+                    generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
+                })\n`;
             }
         }
     }
@@ -191,22 +201,64 @@ function genGlobalRecordItemsLanguageCompiler(
 
 function genIncludeDirectories(project: Project, config: Config): string {
     let str = '';
-    str += genGlobalArrayItemsLanguageCompiler(project, config, 'include_directories', project.includeDirectories, true, false);
-    str += genGlobalArrayItemsLanguageCompiler(project, config, 'include_directories', config.includeDirectories, true, true);
+    str += genGlobalArrayItemsLanguageCompiler(
+        project,
+        config,
+        'include_directories',
+        project.includeDirectories,
+        true,
+        false,
+    );
+    str += genGlobalArrayItemsLanguageCompiler(
+        project,
+        config,
+        'include_directories',
+        config.includeDirectories,
+        true,
+        true,
+    );
     return str;
 }
 
 function genCompileDefinitions(project: Project, config: Config): string {
     let str = '';
-    str += genGlobalRecordItemsLanguageCompiler(project, config, 'add_compile_definitions', project.compileDefinitions, false, false);
-    str += genGlobalRecordItemsLanguageCompiler(project, config, 'add_compile_definitions', config.compileDefinitions, false, true);
+    str += genGlobalRecordItemsLanguageCompiler(
+        project,
+        config,
+        'add_compile_definitions',
+        project.compileDefinitions,
+        false,
+        false,
+    );
+    str += genGlobalRecordItemsLanguageCompiler(
+        project,
+        config,
+        'add_compile_definitions',
+        config.compileDefinitions,
+        false,
+        true,
+    );
     return str;
 }
 
 function genCompileOptions(project: Project, config: Config): string {
     let str = '';
-    str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_compile_options', project.compileOptions, false, false);
-    str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_compile_options', config.compileOptions, false, true);
+    str += genGlobalArrayItemsLanguageCompiler(
+        project,
+        config,
+        'add_compile_options',
+        project.compileOptions,
+        false,
+        false,
+    );
+    str += genGlobalArrayItemsLanguageCompiler(
+        project,
+        config,
+        'add_compile_options',
+        config.compileOptions,
+        false,
+        true,
+    );
     return str;
 }
 
@@ -268,7 +320,9 @@ function genTarget(project: Project, config: Config, target: Target): string {
             break;
     }
     const aliasMap = util.buildTargetAliasMap(project, config, target);
-    str += `source_group(TREE ${util.resolvePath(aliasMap, target.importDir, target.dir)} FILES ${sources.join(' ')})\n`;
+    str += `source_group(TREE ${util.resolvePath(aliasMap, target.importDir, target.dir)} FILES ${
+        sources.join(' ')
+    })\n`;
     if (jobOutputs.length > 0) {
         str += `source_group(gen FILES ${jobOutputs.join(' ')})\n`;
     }
@@ -367,7 +421,9 @@ function genTargetRecordItems(
             };
             const resolvedItems = proj.resolveTargetRecordItems(items, ctx, itemsAreFilePaths);
             if (Object.keys(resolvedItems.interface).length > 0) {
-                const resolvedItemsString = Object.entries(resolvedItems.interface).map(([key, val]) => `${key}=${val}`);
+                const resolvedItemsString = Object.entries(resolvedItems.interface).map(([key, val]) =>
+                    `${key}=${val}`
+                );
                 str += `${statement}(${target.name} INTERFACE ${
                     generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
                 })\n`;
@@ -394,7 +450,14 @@ function genTargetIncludeDirectories(project: Project, config: Config, target: T
 }
 
 function genTargetCompileDefinitions(project: Project, config: Config, target: Target): string {
-    return genTargetRecordItems(project, config, target, 'target_compile_definitions', target.compileDefinitions, false);
+    return genTargetRecordItems(
+        project,
+        config,
+        target,
+        'target_compile_definitions',
+        target.compileDefinitions,
+        false,
+    );
 }
 
 function genTargetCompileOptions(project: Project, config: Config, target: Target): string {
@@ -454,7 +517,9 @@ function genConfigurePresets(project: Project, config: Config): any[] {
             displayName: config.name,
             binaryDir: util.buildDir(project, config),
             generator: config.generator,
-            toolchainFile: (config.toolchainFile !== undefined) ? util.resolveAlias(aliasMap, config.toolchainFile) : undefined,
+            toolchainFile: (config.toolchainFile !== undefined)
+                ? util.resolveAlias(aliasMap, config.toolchainFile)
+                : undefined,
             cacheVariables: genCacheVariables(project, config),
             environment: config.environment,
         });

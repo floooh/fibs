@@ -13,7 +13,7 @@ export type Configurer = {
 
     hostPlatform(): Platform;
     hostArch(): Arch;
-}
+};
 
 export type ProjectInfo = {
     name(): string;
@@ -61,7 +61,7 @@ export type ProjectInfo = {
     isBuildMode(buildMode: BuildMode): boolean;
     isDebug(): boolean;
     isRelease(): boolean;
-}
+};
 
 export type Builder = ProjectInfo & {
     addTarget(name: string, desc: TargetDesc): void;
@@ -69,12 +69,12 @@ export type Builder = ProjectInfo & {
     addCompileDefinition(key: string, value?: string): void;
     addCompileOption(opt: string): void;
     addLinkOption(opt: string): void;
-}
+};
 
 export type FibsModule = {
     configure?(c: Configurer): void;
     build?(b: Builder): void;
-}
+};
 
 export function assertFibsModule(val: unknown): asserts val is FibsModule {
     const obj = val as Record<string, unknown>;
@@ -119,22 +119,22 @@ export type Project = ProjectInfo & {
     openers: Opener[];
     configs: Config[];
     adapters: Adapter[];
-}
+};
 
 export type SettingsItem = {
     default: string;
     value: string;
     validate(project: Project, value: string): { valid: boolean; hint: string };
-}
+};
 
 export type NamedItem = {
     name: string;
-}
+};
 
 export type ImportedItem = {
     importDir: string;
     importModule: FibsModule;
-}
+};
 
 export type ConfigDesc = NamedItem & {
     platform: Platform;
@@ -154,7 +154,7 @@ export type ConfigDesc = NamedItem & {
     linkOptions?: string[];
     compilers?: Compiler[];
     validate?(project: Project): { valid: boolean; hints: string[] };
-}
+};
 
 export type Config = NamedItem & ImportedItem & {
     platform: Platform;
@@ -174,18 +174,18 @@ export type Config = NamedItem & ImportedItem & {
     linkOptions: string[];
     compilers: Compiler[];
     validate(project: Project): { valid: boolean; hints: string[] };
-}
+};
 
 export type ImportDesc = NamedItem & {
     url: string;
     ref?: string;
     files?: string[];
-}
+};
 
 export type Import = NamedItem & ImportedItem & {
     url: string;
     ref: string | undefined;
-}
+};
 
 export type TargetArrayItemsDesc = {
     interface?: string[];
@@ -219,7 +219,7 @@ export type TargetDesc = NamedItem & {
     compileOptions?: TargetArrayItemsDesc;
     linkOptions?: TargetArrayItemsDesc;
     jobs?: TargetJob[];
-}
+};
 
 export type Target = NamedItem & ImportedItem & {
     type: TargetType;
@@ -232,7 +232,7 @@ export type Target = NamedItem & ImportedItem & {
     compileOptions: TargetArrayItems;
     linkOptions: TargetArrayItems;
     jobs: TargetJob[];
-}
+};
 
 export type JobFunc = (project: Project) => Job;
 
@@ -240,7 +240,7 @@ export type JobBuilderDesc = NamedItem & {
     help(): void;
     validate(args: any): { valid: boolean; hints: string[] };
     build(args: any): JobFunc;
-}
+};
 
 export type JobBuilder = ImportedItem & JobBuilderDesc;
 
@@ -250,24 +250,24 @@ export type Job = NamedItem & {
     addOutputsToTargetSources: boolean;
     args: any;
     func: (inputs: string[], output: string[], args: any) => Promise<void>;
-}
+};
 
 export type CommandDesc = NamedItem & {
     help(): void;
     run(project: Project): Promise<void>;
-}
+};
 export type Command = ImportedItem & Required<CommandDesc>;
 
 export type RunnerDesc = NamedItem & {
     run(project: Project, config: Config, target: Target, options: RunOptions): Promise<void>;
-}
+};
 export type Runner = ImportedItem & Required<RunnerDesc>;
 
 export type OpenerDesc = NamedItem & {
     configure(project: Project, config: Config): Promise<void>;
     open(project: Project, config: Config): Promise<void>;
-}
-export type Opener = ImportedItem & Required<OpenerDesc>
+};
+export type Opener = ImportedItem & Required<OpenerDesc>;
 
 /** options for running a command line tool */
 export type RunOptions = {
@@ -302,7 +302,7 @@ export type ToolDesc = NamedItem & {
     optional: boolean;
     notFoundMsg: string;
     exists(): Promise<boolean>;
-}
+};
 export type Tool = ImportedItem & Required<ToolDesc>;
 
 export type AdapterOptions = {
@@ -312,5 +312,5 @@ export type AdapterOptions = {
 export type AdapterDesc = NamedItem & {
     configure(project: Project, config: Config, options: AdapterOptions): Promise<void>;
     build(project: Project, config: Config, options: AdapterOptions): Promise<void>;
-}
+};
 export type Adapter = ImportedItem & Required<AdapterDesc>;

@@ -218,7 +218,7 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
     }
     try {
         const command = new Deno.Command(cmdx, { args: argsx, stdout, stderr, cwd });
-        const { code: exitCode, stdout: cmdStdout, stderr: cmdStderr } = await command.output()
+        const { code: exitCode, stdout: cmdStdout, stderr: cmdStderr } = await command.output();
         const res: RunResult = {
             exitCode,
             stdout: (stdout === 'piped') ? new TextDecoder().decode(cmdStdout) : '',
@@ -243,7 +243,9 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
  * @param options.abortOnError - whether to abort on an error (default is true)
  * @returns true if download succeeded
  */
-export async function download(options: { url: string; dir: string; filename: string; abortOnError?: boolean }): Promise<boolean> {
+export async function download(
+    options: { url: string; dir: string; filename: string; abortOnError?: boolean },
+): Promise<boolean> {
     const {
         url,
         dir,
@@ -353,7 +355,10 @@ export function isBooleanArray(val: unknown): val is boolean[] {
  */
 export function validateArgs(
     args: object,
-    expected: Record<string, { type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]'; optional: boolean }>,
+    expected: Record<
+        string,
+        { type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]'; optional: boolean }
+    >,
 ): { valid: boolean; hints: string[] } {
     const res: ReturnType<typeof validateArgs> = { valid: true, hints: [] };
     for (const [key, value] of Object.entries(expected)) {

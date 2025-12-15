@@ -1,4 +1,4 @@
-import { util, log } from './index.ts';
+import { log, util } from './index.ts';
 import { Config, Project } from '../types.ts';
 
 export async function validate(
@@ -22,7 +22,7 @@ export async function validate(
     // check for 'unknown-compiler'
     if (config.compilers.includes('unknown-compiler')) {
         res.valid = false;
-        res.hints.push('config doesn\'t define valid compilers');
+        res.hints.push("config doesn't define valid compilers");
     }
 
     // validate generators
@@ -30,12 +30,12 @@ export async function validate(
     if (config.generator === 'ninja') {
         if (!await project.tool('ninja').exists()) {
             res.valid = false;
-            res.hints.push('ninja build tool not found (run \'fibs diag tools\')');
+            res.hints.push("ninja build tool not found (run 'fibs diag tools')");
         }
     } else if (config.generator === 'make') {
         if (!await project.tool('make').exists()) {
             res.valid = false;
-            res.hints.push('make build tool not found (run \'fibs diag tools\')');
+            res.hints.push("make build tool not found (run 'fibs diag tools')");
         }
     }
 

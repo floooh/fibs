@@ -1,4 +1,4 @@
-import { yellow, green, red, brightBlue, bold, brightRed } from '@std/fmt/colors';
+import { bold, brightBlue, brightRed, green, red, yellow } from '@std/fmt/colors';
 
 const textEncoder = new TextEncoder();
 

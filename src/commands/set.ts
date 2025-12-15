@@ -8,7 +8,7 @@ function help() {
         'set [key] [value]',
     ], [
         'set a project settings key/value item',
-        'run \'fibs list settings\' to get list of valid keys',
+        "run 'fibs list settings' to get list of valid keys",
     ]);
 }
 

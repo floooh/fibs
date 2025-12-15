@@ -12,7 +12,7 @@ function help() {
 
 async function run(project: Project) {
     if (Deno.args.length <= 1) {
-        log.panic('no target provided (run \'fibs help run\')');
+        log.panic("no target provided (run 'fibs help run')");
     }
     const name = Deno.args[1];
     const target = project.target(name);

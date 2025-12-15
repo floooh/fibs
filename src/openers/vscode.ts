@@ -77,13 +77,13 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
         stopAtEntryLaunchConfig = {
             ...launchConfig,
             name: 'Debug Current Target (Stop at Entry)',
-            stopOnEntry: true
+            stopOnEntry: true,
         };
     } else {
         stopAtEntryLaunchConfig = {
             ...launchConfig,
             name: 'Debug Current Target (Stop at Entry)',
-            stopAtEntry: true
+            stopAtEntry: true,
         };
     }
 

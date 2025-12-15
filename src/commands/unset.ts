@@ -8,7 +8,7 @@ function help() {
         'unset [key]',
     ], [
         'unset a settings item to its default value',
-        'run \'fibs list settings\' to get list of valid keys',
+        "run 'fibs list settings' to get list of valid keys",
     ]);
 }
 

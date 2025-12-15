@@ -26,7 +26,7 @@ async function run(project: Project) {
         return true;
     });
     if (args.length > 1) {
-        log.panic('too many args (run \'fibs help config\')');
+        log.panic("too many args (run 'fibs help config')");
     }
     let config: Config;
     if (args.length > 0) {

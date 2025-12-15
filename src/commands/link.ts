@@ -12,7 +12,7 @@ function help() {
 
 async function run(project: Project) {
     if (Deno.args.length !== 3) {
-        log.panic('expected args [import] and [directory] (run \'fibs help link\')');
+        log.panic("expected args [import] and [directory] (run 'fibs help link')");
     }
     const imp = Deno.args[1];
     const dir = path.resolve(Deno.args[2]);

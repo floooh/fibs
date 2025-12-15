@@ -96,7 +96,7 @@ function resolveAll(root: Node, project: ProjectImpl): void {
     resolveImports(root, project);
     resolveCommands(root, project);
     resolveJobs(root, project);
-    resolveTools(root, project)
+    resolveTools(root, project);
     resolveRunners(root, project);
     resolveOpeners(root, project);
     resolveConfigs(root, project);

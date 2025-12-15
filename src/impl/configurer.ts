@@ -1,16 +1,16 @@
 import {
+    AdapterDesc,
     Arch,
     CommandDesc,
+    ConfigDesc,
     Configurer,
     ImportDesc,
     JobBuilderDesc,
     OpenerDesc,
     Platform,
     RunnerDesc,
-    ToolDesc,
-    ConfigDesc,
-    AdapterDesc,
     SettingsItem,
+    ToolDesc,
 } from '../types.ts';
 import { host, log, util } from '../lib/index.ts';
 

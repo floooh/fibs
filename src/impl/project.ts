@@ -54,7 +54,7 @@ export class ProjectImpl implements Project {
             default: hostDefaultConfig(),
             value: hostDefaultConfig(),
             validate: () => ({ valid: true, hint: '' }),
-        }
+        },
     };
 
     constructor(rootDir: string) {

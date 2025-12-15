@@ -1,5 +1,5 @@
-import { util, git, log } from './index.ts';
-import { Import, ImportDesc, Project, FibsModule, assertFibsModule } from '../types.ts';
+import { git, log, util } from './index.ts';
+import { assertFibsModule, FibsModule, Import, ImportDesc, Project } from '../types.ts';
 
 export async function fetchImport(
     project: Project,

@@ -1,6 +1,6 @@
 import { log, util } from '../lib/index.ts';
 import { CommandDesc, Config, Project } from '../types.ts';
-import { blue  } from '@std/fmt/colors';
+import { blue } from '@std/fmt/colors';
 
 export const cleanCmd: CommandDesc = { name: 'clean', help, run };
 

@@ -8,7 +8,7 @@ function help() {
         'get [key]',
     ], [
         'get settings value by key',
-        'run \'fibs list settings\' to get list of valid keys',
+        "run 'fibs list settings' to get list of valid keys",
     ]);
 }
 

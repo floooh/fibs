@@ -1,4 +1,4 @@
-import { util, log } from './index.ts';
+import { log, util } from './index.ts';
 import { Config, Project, RunOptions, RunResult } from '../types.ts';
 
 export async function run(options: RunOptions): Promise<RunResult> {

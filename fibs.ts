@@ -1,4 +1,4 @@
-import { main, log, Configurer, Builder } from './index.ts';
+import { Builder, Configurer, log, main } from './index.ts';
 if (import.meta.main) main();
 
 // FIXME: remove those

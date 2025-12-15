@@ -13,7 +13,7 @@ function help() {
 
 async function run(project: Project) {
     if (Deno.args.length === 1) {
-        log.print(`${blue('Floh\'s Infernal Build System!')}`);
+        log.print(`${blue("Floh's Infernal Build System!")}`);
         log.print('https://github.com/floooh/fibs\n');
         for (const cmd of project.commands) {
             cmd.help();

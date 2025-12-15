@@ -1,4 +1,4 @@
-import { util, log } from './index.ts';
+import { log, util } from './index.ts';
 import { Project } from '../types.ts';
 
 export function set(project: Project, key: string, value: string) {

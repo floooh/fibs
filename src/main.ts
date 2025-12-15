@@ -1,12 +1,12 @@
 import { log, util } from './lib/index.ts';
 import { ProjectImpl } from './impl/project.ts';
-import { Project, assertFibsModule } from './types.ts';
+import { assertFibsModule, Project } from './types.ts';
 import { resetCmd } from './commands/reset.ts';
 import { configure } from './lib/configure.ts';
 
 export async function main() {
     if (Deno.args.length < 1) {
-        log.print('run \'fibs help\' for more info');
+        log.print("run 'fibs help' for more info");
         Deno.exit(10);
     }
     // special 'reset' command to wipe .fibs directory (useful when imports are broken)

@@ -5,6 +5,7 @@ import {
     ConfigDescWithImportDir,
     Job,
     Language,
+    NamedItem,
     Project,
     Target,
     TargetArrayItems,
@@ -13,9 +14,8 @@ import {
     TargetJob,
     TargetRecordItems,
     TargetRecordItemsDesc,
-    NamedItem,
 } from '../types.ts';
-import { settings, log, imports, util, host } from '../lib/index.ts';
+import { host, imports, log, settings, util } from '../lib/index.ts';
 
 export async function setup(
     rootDir: string,
@@ -334,7 +334,9 @@ function resolveInheritedConfigDesc(config: ConfigDescWithImportDir, configs: Co
         if (curConfig.inherits !== undefined) {
             const nextConfig = util.find(curConfig.inherits, configs);
             if (nextConfig === undefined) {
-                log.panic(`config '${curConfig.name}' tries to inherit from non-existing config '${curConfig.inherits}'`);
+                log.panic(
+                    `config '${curConfig.name}' tries to inherit from non-existing config '${curConfig.inherits}'`,
+                );
             }
             curConfig = nextConfig;
         } else {
@@ -544,7 +546,11 @@ export function resolveTargetJobs(ctx: Context): Job[] {
     return targetJobs.map((targetJob) => {
         const res = validateTargetJob(ctx.project, ctx.config, ctx.target!, targetJob);
         if (!res.valid) {
-            log.panic(`failed to validate job ${targetJob.job} in target ${ctx.target!.name}:\n${res.hints.map((line) => `  ${line}\n`)}`);
+            log.panic(
+                `failed to validate job ${targetJob.job} in target ${ctx.target!.name}:\n${
+                    res.hints.map((line) => `  ${line}\n`)
+                }`,
+            );
         }
         return util.find(targetJob.job, ctx.project.jobs)!.builder(targetJob.args)(ctx);
     });
@@ -582,7 +588,11 @@ function resolveAliasOrPath(
     }
 }
 
-export function resolveProjectStringArray(array: StringArrayFunc[] | string[], ctx: Context, itemsAreFilePaths: boolean): string[] {
+export function resolveProjectStringArray(
+    array: StringArrayFunc[] | string[],
+    ctx: Context,
+    itemsAreFilePaths: boolean,
+): string[] {
     const baseDir = ctx.project.dir;
     const subDir = undefined;
     return array.flatMap((funcOrString) => {
@@ -591,7 +601,9 @@ export function resolveProjectStringArray(array: StringArrayFunc[] | string[], c
                 resolveAliasOrPath(item!, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths)
             );
         } else {
-            return funcOrString ? [resolveAliasOrPath(funcOrString, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths)] : [];
+            return funcOrString
+                ? [resolveAliasOrPath(funcOrString, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths)]
+                : [];
         }
     }) as string[];
 }
@@ -627,7 +639,11 @@ export function resolveTargetStringArray(array: StringArrayFunc[], ctx: Context,
     });
 }
 
-export function resolveTargetStringRecord(record: StringRecordFunc[], ctx: Context, itemsAreFilePaths: boolean): Record<string, string> {
+export function resolveTargetStringRecord(
+    record: StringRecordFunc[],
+    ctx: Context,
+    itemsAreFilePaths: boolean,
+): Record<string, string> {
     const baseDir = ctx.target!.importDir;
     const subDir = ctx.target!.dir;
     const result: Record<string, string> = {};
