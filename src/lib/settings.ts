@@ -1,34 +1,31 @@
 import { log, util } from './index.ts';
-import { Project } from '../types.ts';
+import { Project, Setting } from '../types.ts';
 
-export function set(project: Project, key: string, value: string) {
-    if (validate(project, key, value)) {
-        project.settings[key].value = value;
-        save(project);
+function setting(project: Project, key: string): Setting {
+    const s = util.find(key, project.settings);
+    if (s === undefined) {
+        log.panic(`Unknown setting key: ${key}`);
     }
+    return s;
 }
 
-export function unset(project: Project, key: string) {
-    if (validKey(project, key)) {
-        project.settings[key].value = project.settings[key].default;
-    }
+export function set(project: Project, key: string, value: string) {
+    setting(project, key).value = value;
     save(project);
 }
 
-export function get(project: Project, key: string): string | undefined {
-    if (validKey(project, key)) {
-        return project.settings[key].value;
-    } else {
-        return undefined;
-    }
+export function unset(project: Project, key: string) {
+    const s = setting(project, key);
+    s.value = s.default;
+    save(project);
 }
 
-export function getDefault(project: Project, key: string): string | undefined {
-    if (validKey(project, key)) {
-        return project.settings[key].default;
-    } else {
-        return undefined;
-    }
+export function get(project: Project, key: string): string {
+    return setting(project, key).value;
+}
+
+export function getDefault(project: Project, key: string): string {
+    return setting(project, key).default;
 }
 
 export function load(project: Project) {
@@ -48,7 +45,7 @@ export function load(project: Project) {
     for (const key in items) {
         const value = items[key];
         if (validate(project, key, value)) {
-            project.settings[key].value = value;
+            set(project, key, value);
         } else {
             hasInvalidKeys = true;
         }
@@ -66,8 +63,8 @@ export function save(project: Project) {
     const path = util.ensureFibsDir(project) + '/settings.json';
     try {
         const kvp: Record<string, string> = {};
-        for (const key in project.settings) {
-            kvp[key] = project.settings[key].value;
+        for (const s of project.settings) {
+            kvp[s.name] = s.value;
         }
         Deno.writeTextFileSync(
             path,
@@ -78,20 +75,13 @@ export function save(project: Project) {
     }
 }
 
-export function validKey(project: Project, key: string): boolean {
-    if (project.settings[key].default !== undefined) {
-        return true;
-    } else {
+export function validate(project: Project, key: string, value: string): boolean {
+    const s = util.find(key, project.settings);
+    if (s === undefined) {
         log.warn(`unknown settings item '${key} (run 'fibs list settings')`);
         return false;
     }
-}
-
-export function validate(project: Project, key: string, value: string): boolean {
-    if (!validKey(project, key)) {
-        return false;
-    }
-    const res = project.settings[key].validate(project, value);
+    const res = s.validate(project, value);
     if (!res.valid) {
         log.warn(`invalid value '${value}' for settings item '${key}' (${res.hint})`);
         return false;

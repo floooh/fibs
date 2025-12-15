@@ -1,15 +1,25 @@
+export type ArgOrFunc<T> = T | (() => T);
+
+export function getArg<T>(arg: ArgOrFunc<T>): T {
+    if (typeof arg === 'function') {
+        return (arg as () => T)();
+    } else {
+        return arg;
+    }
+}
+
 export type Configurer = {
     setProjectName(name: string): void;
-    addCmakeVariable(key: string, value: string | boolean): void;
-    addImport(imp: ImportDesc): void;
-    addCommand(cmd: CommandDesc): void;
-    addJob(job: JobBuilderDesc): void;
-    addTool(tool: ToolDesc): void;
-    addRunner(runner: RunnerDesc): void;
-    addOpener(opener: OpenerDesc): void;
-    addConfig(config: ConfigDesc): void;
-    addAdapter(adapter: AdapterDesc): void;
-    addSetting(key: string, item: SettingsItem): void;
+    addCmakeVariable(name: string, value: string | boolean): void;
+    addImport(imp: ArgOrFunc<ImportDesc>): void;
+    addCommand(cmd: ArgOrFunc<CommandDesc>): void;
+    addJob(job: ArgOrFunc<JobBuilderDesc>): void;
+    addTool(tool: ArgOrFunc<ToolDesc>): void;
+    addRunner(runner: ArgOrFunc<RunnerDesc>): void;
+    addOpener(opener: ArgOrFunc<OpenerDesc>): void;
+    addConfig(config: ArgOrFunc<ConfigDesc>): void;
+    addAdapter(adapter: ArgOrFunc<AdapterDesc>): void;
+    addSetting(setting: ArgOrFunc<SettingDesc>): void;
 
     hostPlatform(): Platform;
     hostArch(): Arch;
@@ -64,7 +74,7 @@ export type ProjectInfo = {
 };
 
 export type Builder = ProjectInfo & {
-    addTarget(name: string, desc: TargetDesc): void;
+    addTarget(target: ArgOrFunc<TargetDesc>): void;
     addIncludeDirectory(dir: string): void;
     addCompileDefinition(key: string, value?: string): void;
     addCompileOption(opt: string): void;
@@ -89,7 +99,7 @@ export function assertFibsModule(val: unknown): asserts val is FibsModule {
     }
 }
 
-export type Arch = 'x86_64' | 'arm64' | 'wasm32';
+export type Arch = 'x86_64' | 'arm64' | 'wasm32' | 'unknown-arch';
 
 export type Platform = 'windows' | 'macos' | 'linux' | 'ios' | 'android' | 'emscripten' | 'wasi';
 
@@ -104,8 +114,8 @@ export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll' | 'interfa
 export type BuildMode = 'release' | 'debug';
 
 export type Project = ProjectInfo & {
-    settings: Record<string, SettingsItem>;
-    cmakeVariables: Record<string, string | boolean>;
+    settings: Setting[];
+    cmakeVariables: CmakeVariable[];
     includeDirectories: string[];
     compileDefinitions: Record<string, string>;
     compileOptions: string[];
@@ -121,12 +131,6 @@ export type Project = ProjectInfo & {
     adapters: Adapter[];
 };
 
-export type SettingsItem = {
-    default: string;
-    value: string;
-    validate(project: Project, value: string): { valid: boolean; hint: string };
-};
-
 export type NamedItem = {
     name: string;
 };
@@ -134,6 +138,20 @@ export type NamedItem = {
 export type ImportedItem = {
     importDir: string;
     importModule: FibsModule;
+};
+
+export type CmakeVariableDesc = NamedItem & {
+    value: string | boolean;
+};
+export type CmakeVariable = ImportedItem & CmakeVariableDesc;
+
+export type SettingDesc = NamedItem & {
+    default: string;
+    validate(project: Project, value: string): { valid: boolean; hint: string };
+};
+
+export type Setting = NamedItem & SettingDesc & {
+    value: string;
 };
 
 export type ConfigDesc = NamedItem & {
@@ -185,6 +203,7 @@ export type ImportDesc = NamedItem & {
 export type Import = NamedItem & ImportedItem & {
     url: string;
     ref: string | undefined;
+    importErrors: unknown[];
 };
 
 export type TargetArrayItemsDesc = {
@@ -256,18 +275,18 @@ export type CommandDesc = NamedItem & {
     help(): void;
     run(project: Project): Promise<void>;
 };
-export type Command = ImportedItem & Required<CommandDesc>;
+export type Command = ImportedItem & CommandDesc;
 
 export type RunnerDesc = NamedItem & {
     run(project: Project, config: Config, target: Target, options: RunOptions): Promise<void>;
 };
-export type Runner = ImportedItem & Required<RunnerDesc>;
+export type Runner = ImportedItem & RunnerDesc;
 
 export type OpenerDesc = NamedItem & {
     configure(project: Project, config: Config): Promise<void>;
     open(project: Project, config: Config): Promise<void>;
 };
-export type Opener = ImportedItem & Required<OpenerDesc>;
+export type Opener = ImportedItem & OpenerDesc;
 
 /** options for running a command line tool */
 export type RunOptions = {
@@ -303,7 +322,7 @@ export type ToolDesc = NamedItem & {
     notFoundMsg: string;
     exists(): Promise<boolean>;
 };
-export type Tool = ImportedItem & Required<ToolDesc>;
+export type Tool = ImportedItem & ToolDesc;
 
 export type AdapterOptions = {
     buildTarget?: string;
@@ -313,4 +332,4 @@ export type AdapterDesc = NamedItem & {
     configure(project: Project, config: Config, options: AdapterOptions): Promise<void>;
     build(project: Project, config: Config, options: AdapterOptions): Promise<void>;
 };
-export type Adapter = ImportedItem & Required<AdapterDesc>;
+export type Adapter = ImportedItem & AdapterDesc;

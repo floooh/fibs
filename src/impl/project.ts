@@ -2,6 +2,7 @@ import {
     Adapter,
     Arch,
     BuildMode,
+    CmakeVariable,
     Command,
     Compiler,
     Config,
@@ -11,31 +12,18 @@ import {
     Platform,
     Project,
     Runner,
-    SettingsItem,
+    Setting,
     Target,
     Tool,
 } from '../types.ts';
-import { host, log, util } from '../lib/index.ts';
-
-function hostDefaultConfig(): string {
-    switch (host.platform()) {
-        case 'macos':
-            return 'macos-make-release';
-        case 'windows':
-            return 'win-vstudio-release';
-        case 'linux':
-            return 'linux-make-release';
-    }
-}
+import { host, log, settings, util } from '../lib/index.ts';
 
 export class ProjectImpl implements Project {
     _name: string | null = null;
     _rootDir: string;
+    _arch: Arch = 'unknown-arch';
     _compiler: Compiler = 'unknown-compiler';
-    cmakeVariables: Record<string, string | boolean> = {
-        CMAKE_C_STANDARD: '99',
-        CMAKE_CXX_STANDARD: '11',
-    };
+    cmakeVariables: CmakeVariable[] = [];
     includeDirectories: string[] = [];
     compileDefinitions: Record<string, string> = {};
     compileOptions: string[] = [];
@@ -49,13 +37,7 @@ export class ProjectImpl implements Project {
     openers: Opener[] = [];
     configs: Config[] = [];
     adapters: Adapter[] = [];
-    settings: Record<string, SettingsItem> = {
-        config: {
-            default: hostDefaultConfig(),
-            value: hostDefaultConfig(),
-            validate: () => ({ valid: true, hint: '' }),
-        },
-    };
+    settings: Setting[] = [];
 
     constructor(rootDir: string) {
         this._rootDir = rootDir;
@@ -69,12 +51,7 @@ export class ProjectImpl implements Project {
     }
 
     activeConfig(): Config {
-        const name = this.settings.config.value;
-        const config = util.find(name, this.configs);
-        if (config === undefined) {
-            log.panic(`active config ${name} does not exist`);
-        }
-        return config;
+        return this.config(settings.get(this, 'config'));
     }
 
     config(configName: string): Config {
@@ -126,7 +103,7 @@ export class ProjectImpl implements Project {
     }
 
     arch(): Arch {
-        return this.activeConfig().arch;
+        return this._arch;
     }
 
     platform(): Platform {

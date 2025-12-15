@@ -1,4 +1,4 @@
-import { conf, imports, log, proj, settings } from '../lib/index.ts';
+import { conf, imports, log, settings } from '../lib/index.ts';
 import { CommandDesc, Config, Project } from '../types.ts';
 
 export const configCmd: CommandDesc = { name: 'config', help, run };
@@ -36,5 +36,6 @@ async function run(project: Project) {
     }
     await conf.validate(project, config, { silent: false, abortOnError: true });
     settings.set(project, 'config', config.name);
-    await proj.configure(project, config, project.adapter('cmake'), {});
+    // FIXME!
+    //await proj.configure(project, config, project.adapter('cmake'), {});
 }

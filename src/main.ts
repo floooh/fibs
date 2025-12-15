@@ -28,6 +28,7 @@ export async function main() {
         // run configure- and build-tree pass
         const project = new ProjectImpl(cwd);
         await configure(rootModule, project);
+
         //await build(rootModule, project);
 
         const cmdName = Deno.args[0];

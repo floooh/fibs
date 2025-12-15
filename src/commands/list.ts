@@ -24,65 +24,57 @@ async function run(project: Project) {
         log.section('settings');
     }
     if (args.all || args.settings) {
-        for (const [key, val] of Object.entries(project.settings)) {
-            const def = val.default;
-            log.print(`${key}: ${val.value} (default: ${def})`);
-        }
+        project.settings.forEach((s) => {
+            log.print(`${s.name}: ${s.value} (default: ${s.default})`);
+        });
     }
     if (args.all) {
         log.print();
         log.section('configs');
     }
     if (args.all || args.configs) {
-        for (const config of project.configs) {
-            log.print(config.name);
-        }
+        project.configs.forEach((c) => log.print(c.name));
     }
     if (args.all) {
         log.print();
         log.section('imports');
     }
     if (args.all || args.imports) {
-        for (const imp of project.imports.toReversed()) {
-            if (imports.isLinked(project, imp.name)) {
-                log.print(`${imp.name}: ${colors.brightBlue(`link => ${imp.importDir}`)}`);
+        project.imports.toReversed().forEach((i) => {
+            if (imports.isLinked(project, i.name)) {
+                log.print(`${i.name}: ${colors.brightBlue(`link => ${i.importDir}`)}`);
             } else {
-                log.print(`${imp.name}: ${imp.importDir}`);
+                log.print(`${i.name}: ${i.importDir}`);
             }
-        }
+        });
     }
     if (args.all) {
         log.print();
         log.section('runners');
     }
     if (args.all || args.runners) {
-        for (const runner of project.runners) {
-            log.print(runner.name);
-        }
+        project.runners.forEach((r) => log.print(r.name));
     }
     if (args.all) {
         log.print();
         log.section('openers');
     }
     if (args.all || args.openers) {
-        for (const opener of project.openers) {
-            log.print(opener.name);
-        }
+        project.openers.forEach((o) => log.print(o.name));
     }
     if (args.all) {
         log.print();
         log.section('jobs');
     }
     if (args.all || args.jobs) {
-        for (const job of project.jobs) {
-            job.help();
-        }
+        project.jobs.forEach((j) => j.help());
     }
     if (args.all) {
         log.print();
         log.section('targets');
     }
     if (args.all || (args.targetTypes.length > 0)) {
+        // FIXME FIXME FIXME
         const types = allTargetTypes;
         const targets = project.targets;
         const config = project.activeConfig();

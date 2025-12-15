@@ -8,10 +8,7 @@ import { fs, path } from '../../deps.ts';
  * @param items - an array of NamedItem-derived items
  * @returns found item, or undefined if not found
  */
-export function find<T extends NamedItem>(name: string | undefined, items: T[] | undefined): T | undefined {
-    if ((name === undefined) || (items === undefined)) {
-        return undefined;
-    }
+export function find<T extends NamedItem>(name: string, items: T[]): T | undefined {
     return items.find((elm) => elm.name === name);
 }
 
@@ -21,10 +18,7 @@ export function find<T extends NamedItem>(name: string | undefined, items: T[] |
  * @param items - an array of NamedItem-derived items
  * @returns index of found item, or undefined if not found
  */
-export function findIndex<T extends NamedItem>(name: string | undefined, items: T[] | undefined): number | undefined {
-    if ((name === undefined) || (items === undefined)) {
-        return undefined;
-    }
+export function findIndex<T extends NamedItem>(name: string, items: T[]): number | undefined {
     const index = items.findIndex((elm) => elm.name === name);
     return (index === -1) ? undefined : index;
 }

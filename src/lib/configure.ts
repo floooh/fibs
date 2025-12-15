@@ -6,25 +6,37 @@ import { builtinConfigs } from '../configs/index.ts';
 import { builtinOpeners } from '../openers/index.ts';
 import { builtinRunners } from '../runners/index.ts';
 import { builtinTools } from '../tools/index.ts';
-import { builtinCommands} from '../commands/index.ts';
+import { builtinCommands } from '../commands/index.ts';
 import { fetchImport, importModulesFromDir } from './imports.ts';
+import { host, settings, util } from './index.ts';
 
 type Node = {
     configurer: ConfigurerImpl;
     module: FibsModule;
     importDir: string;
+    importErrors: unknown[];
     children: Node[];
 };
+
+type Resolved<T> = T & ImportedItem & { importErrors: unknown[] };
 
 export async function configure(module: FibsModule, project: ProjectImpl): Promise<void> {
     const root: Node = {
         configurer: new ConfigurerImpl(),
         module,
         importDir: project.dir(),
+        importErrors: [],
         children: [],
     };
 
-    // add builtin config items
+    // add builtin and default config items
+    root.configurer.addSetting({
+        name: 'config',
+        default: host.defaultConfig(),
+        validate: () => ({ valid: true, hint: '' }),
+    });
+    root.configurer.addCmakeVariable('CMAKE_C_STANDARD', '99');
+    root.configurer.addCmakeVariable('CMAKE_CXX_STANDARD', '14');
     builtinCommands.forEach((command) => root.configurer.addCommand(command));
     builtinAdapters.forEach((adapter) => root.configurer.addAdapter(adapter));
     builtinConfigs.forEach((config) => root.configurer.addConfig(config));
@@ -42,6 +54,11 @@ export async function configure(module: FibsModule, project: ProjectImpl): Promi
 
     // resolve the configuration into project
     resolveAll(root, project);
+
+    // load persistent settings
+    settings.load(project);
+
+    // FIXME: do a cmake dummy run to obtain runtime config values
 }
 
 // FIXME: detect import cycles!
@@ -50,12 +67,13 @@ async function recurseImports(node: Node, project: ProjectImpl): Promise<void> {
         const { name, url, ref } = importDesc;
         const { valid, dir } = await fetchImport(project, { name, url, ref });
         if (valid) {
-            const { modules } = await importModulesFromDir(dir, importDesc);
+            const { modules, importErrors } = await importModulesFromDir(dir, importDesc);
             for (const module of modules) {
                 const child: Node = {
                     configurer: new ConfigurerImpl(),
                     module,
                     importDir: dir,
+                    importErrors,
                     children: [],
                 };
                 node.children.push(child);
@@ -68,11 +86,20 @@ async function recurseImports(node: Node, project: ProjectImpl): Promise<void> {
     }
 }
 
-function flatten<T extends NamedItem>(node: Node, extract: (node: Node) => T[]): (T & ImportedItem)[] {
-    // flatten  depth-first
-    const res: (T & ImportedItem)[] = [];
+function flatten<T extends NamedItem>(
+    node: Node,
+    extract: (node: Node) => T[],
+): Resolved<T>[] {
+    const res: (T & ImportedItem & { importErrors: unknown[] })[] = [];
     const extractRes = extract(node);
-    res.push(...extractRes.map((item) => ({ ...item, importDir: node.importDir, importModule: node.module })));
+    res.push(
+        ...extractRes.map((item) => ({
+            ...item,
+            importDir: node.importDir,
+            importModule: node.module,
+            importErrors: node.importErrors,
+        })),
+    );
     for (const child of node.children) {
         res.push(...flatten(child, extract));
     }
@@ -80,21 +107,21 @@ function flatten<T extends NamedItem>(node: Node, extract: (node: Node) => T[]):
 }
 
 function deduplicate<T extends NamedItem>(items: T[]): T[] {
-    // later item wins
-    const map = new Map<string, T>();
+    const res: T[] = [];
     for (const item of items) {
-        map.set(item.name, item);
+        util.addOrReplace(res, item);
     }
-    return Array.from(map.values());
+    return res;
 }
 
-function flattenUnique<T extends NamedItem>(node: Node, extract: (node: Node) => T[]): (T & ImportedItem)[] {
+function flattenUnique<T extends NamedItem>(node: Node, extract: (node: Node) => T[]): Resolved<T>[] {
     return deduplicate(flatten(node, extract));
 }
 
 function resolveAll(root: Node, project: ProjectImpl): void {
     project._name = root.configurer.name;
-    //resolveCmakeVariables(root, project);
+    resolveCmakeVariables(root, project);
+    resolveSettings(root, project);
     resolveImports(root, project);
     resolveCommands(root, project);
     resolveJobs(root, project);
@@ -103,7 +130,26 @@ function resolveAll(root: Node, project: ProjectImpl): void {
     resolveOpeners(root, project);
     resolveConfigs(root, project);
     resolveAdapters(root, project);
-    //resolveSettings(root, project);
+}
+
+function resolveCmakeVariables(root: Node, project: ProjectImpl): void {
+    project.cmakeVariables = flattenUnique(root, (n) => n.configurer.cmakeVariables).map((v) => ({
+        name: v.name,
+        importDir: v.importDir,
+        importModule: v.importModule,
+        value: v.value,
+    }));
+}
+
+function resolveSettings(root: Node, project: ProjectImpl): void {
+    project.settings = flattenUnique(root, (n) => n.configurer.settings).map((s) => ({
+        name: s.name,
+        importDir: s.importDir,
+        importModule: s.importModule,
+        default: s.default,
+        value: s.default, // not a bug
+        validate: s.validate,
+    }));
 }
 
 function resolveImports(root: Node, project: ProjectImpl): void {
@@ -111,6 +157,7 @@ function resolveImports(root: Node, project: ProjectImpl): void {
         name: i.name,
         importDir: i.importDir,
         importModule: i.importModule,
+        importErrors: i.importErrors,
         url: i.url,
         ref: i.ref,
     }));

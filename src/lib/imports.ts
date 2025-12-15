@@ -70,6 +70,10 @@ export async function importModulesFromDir(
     return res;
 }
 
+export function hasImportErrors(project: Project): boolean {
+    return project.imports.some((imp) => (imp.importErrors.length > 0));
+}
+
 export async function validate(
     project: Project,
     imp: Import,

@@ -19,3 +19,14 @@ export function arch(): Arch {
             return 'arm64';
     }
 }
+
+export function defaultConfig(): string {
+    switch (platform()) {
+        case 'macos':
+            return 'macos-make-release';
+        case 'windows':
+            return 'win-vstudio-release';
+        case 'linux':
+            return 'linux-make-release';
+    }
+}
