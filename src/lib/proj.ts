@@ -2,6 +2,7 @@ import { host, log, settings, util } from './index.ts';
 import { FibsModule, ImportedItem, NamedItem, Project, Target } from '../types.ts';
 import { ProjectImpl } from '../impl/project.ts';
 import { ConfigurerImpl } from '../impl/configurer.ts';
+import { BuilderImpl } from '../impl/builder.ts';
 import { builtinAdapters } from '../adapters/index.ts';
 import { builtinConfigs } from '../configs/index.ts';
 import { builtinOpeners } from '../openers/index.ts';
@@ -13,7 +14,7 @@ import { fetchImport, importModulesFromDir } from './imports.ts';
 let projectImpl: ProjectImpl;
 
 export async function configure(rootModule: FibsModule, rootDir: string): Promise<Project> {
-    projectImpl = new ProjectImpl(rootDir);
+    projectImpl = new ProjectImpl(rootModule, rootDir);
     await doConfigure(rootModule, projectImpl);
     return projectImpl;
 }
@@ -24,6 +25,7 @@ export async function generate(): Promise<void> {
     const config = projectImpl.activeConfig();
     const configRes = await adapter.configure(projectImpl, config);
     projectImpl._compiler = configRes.compiler;
+    await doBuildSetup(projectImpl);
     await adapter.generate(projectImpl, config);
 }
 
@@ -61,7 +63,17 @@ export async function runJobs(target: Target) {
     */
 }
 
-function flatten<T extends NamedItem>(
+type Node = {
+    configurer: ConfigurerImpl;
+    module: FibsModule;
+    importDir: string;
+    importErrors: unknown[];
+    children: Node[];
+};
+
+type Resolved<T> = T & ImportedItem & { importErrors: unknown[] };
+
+function flatten<T extends NamedItem, N>(
     node: Node,
     extract: (node: Node) => T[],
 ): Resolved<T>[] {
@@ -93,16 +105,6 @@ function flattenUnique<T extends NamedItem>(node: Node, extract: (node: Node) =>
     return deduplicate(flatten(node, extract));
 }
 
-type Node = {
-    configurer: ConfigurerImpl;
-    module: FibsModule;
-    importDir: string;
-    importErrors: unknown[];
-    children: Node[];
-};
-
-type Resolved<T> = T & ImportedItem & { importErrors: unknown[] };
-
 async function doConfigure(module: FibsModule, project: ProjectImpl): Promise<void> {
     const root: Node = {
         configurer: new ConfigurerImpl(project.dir()),
@@ -129,13 +131,13 @@ async function doConfigure(module: FibsModule, project: ProjectImpl): Promise<vo
     if (root.module.configure) {
         root.module.configure(root.configurer);
     }
-    await recurseImports(root, project);
+    await configureRecurseImports(root, project);
     resolveConfigureItems(root, project);
     settings.load(project);
 }
 
 // FIXME: detect import cycles!
-async function recurseImports(node: Node, project: ProjectImpl): Promise<void> {
+async function configureRecurseImports(node: Node, project: ProjectImpl): Promise<void> {
     for (const importDesc of node.configurer.imports) {
         const { name, url, ref } = importDesc;
         const { valid, dir } = await fetchImport(project, { name, url, ref });
@@ -153,10 +155,23 @@ async function recurseImports(node: Node, project: ProjectImpl): Promise<void> {
                 if (child.module.configure) {
                     child.module.configure(child.configurer);
                 }
-                recurseImports(child, project);
+                configureRecurseImports(child, project);
             }
         }
     }
+}
+
+async function doBuildSetup(project: ProjectImpl): Promise<void> {
+    const builder = new BuilderImpl(projectImpl);
+    for (const imp of projectImpl.imports()) {
+        if (imp.importModule.build) {
+            imp.importModule.build(builder);
+        }
+    }
+    if (projectImpl._rootModule.build) {
+        projectImpl._rootModule.build(builder);
+    }
+    // FIXME: resolve into project
 }
 
 function resolveConfigureItems(root: Node, project: ProjectImpl): void {

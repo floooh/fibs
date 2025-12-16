@@ -114,7 +114,7 @@ export type Project = {
 export type Builder = Project & {
     addTarget(target: ArgOrFunc<TargetDesc>): void;
     addIncludeDirectory(dir: string): void;
-    addCompileDefinition(key: string, value?: string): void;
+    addCompileDefinition(key: string, value: string): void;
     addCompileOption(opt: string): void;
     addLinkOption(opt: string): void;
 };

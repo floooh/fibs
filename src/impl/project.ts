@@ -15,11 +15,13 @@ import {
     Setting,
     Target,
     Tool,
+    FibsModule,
 } from '../types.ts';
 import { host, log, settings, util } from '../lib/index.ts';
 
 export class ProjectImpl implements Project {
     _name: string | null = null;
+    _rootModule: FibsModule;
     _rootDir: string;
     _compiler: Compiler = 'unknown-compiler';
     _cmakeVariables: CmakeVariable[] = [];
@@ -38,7 +40,8 @@ export class ProjectImpl implements Project {
     _adapters: Adapter[] = [];
     _settings: Setting[] = [];
 
-    constructor(rootDir: string) {
+    constructor(rootModule: FibsModule, rootDir: string) {
+        this._rootModule = rootModule;
         this._rootDir = rootDir;
     }
 
