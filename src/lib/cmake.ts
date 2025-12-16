@@ -19,9 +19,9 @@ export async function exists(): Promise<boolean> {
     }
 }
 
-export async function configure(project: Project, config: Config) {
+export async function generate(project: Project, config: Config) {
     if (config.opener !== undefined) {
-        await config.opener.configure(project, config);
+        await config.opener.generate(project, config);
     }
     const args = ['--preset', config.name, '-B', project.buildDir(config.name)];
     const res = await run({ args, stderr: 'piped' });

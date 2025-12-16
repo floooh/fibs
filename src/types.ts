@@ -28,7 +28,6 @@ export type Configurer = {
 export type Project = {
     name(): string;
     activeConfig(): Config;
-    arch(): Arch;
     platform(): Platform;
     compiler(): Compiler;
     buildMode(): BuildMode;
@@ -38,6 +37,7 @@ export type Project = {
     dir(): string;
     fibsDir(): string;
     sdkDir(): string;
+    configDir(configName?: string): string;
     buildDir(configName?: string): string;
     distDir(configName?: string): string;
     importsDir(): string;
@@ -83,7 +83,6 @@ export type Project = {
     findOpener(name: string | undefined): Opener | undefined;
     opener(name: string): Opener;
 
-    isArch(arch: Arch): boolean;
     isPlatform(platform: Platform): boolean;
     isWindows(): boolean;
     isLinux(): boolean;
@@ -135,11 +134,11 @@ export function assertFibsModule(val: unknown): asserts val is FibsModule {
 
 export type Arch = 'x86_64' | 'arm64' | 'wasm32' | 'unknown-arch';
 
-export type Platform = 'windows' | 'macos' | 'linux' | 'ios' | 'android' | 'emscripten' | 'wasi';
+export type Platform = 'windows' | 'macos' | 'linux' | 'ios' | 'android' | 'emscripten' | 'wasi' | 'unknown-platform';
 
 export type Compiler = 'msvc' | 'gcc' | 'clang' | 'appleclang' | 'unknown-compiler';
 
-export type Generator = 'vstudio' | 'xcode' | 'ninja' | 'make';
+export type Generator = 'vstudio' | 'xcode' | 'ninja' | 'ninja-multi-config' | 'make';
 
 export type Language = 'c' | 'cxx';
 
@@ -299,7 +298,7 @@ export type RunnerDesc = NamedItem & {
 export type Runner = ImportedItem & RunnerDesc;
 
 export type OpenerDesc = NamedItem & {
-    configure(project: Project, config: Config): Promise<void>;
+    generate(project: Project, config: Config): Promise<void>;
     open(project: Project, config: Config): Promise<void>;
 };
 export type Opener = ImportedItem & OpenerDesc;
@@ -340,12 +339,19 @@ export type ToolDesc = NamedItem & {
 };
 export type Tool = ImportedItem & ToolDesc;
 
-export type AdapterOptions = {
+export type AdapterConfigureResult = {
+    platform: Platform;
+    compiler: Compiler;
+};
+
+export type AdapterBuildOptions = {
     buildTarget?: string;
     forceRebuild?: boolean;
 };
+
 export type AdapterDesc = NamedItem & {
-    configure(project: Project, config: Config, options: AdapterOptions): Promise<void>;
-    build(project: Project, config: Config, options: AdapterOptions): Promise<void>;
+    configure(project: Project, config: Config): Promise<AdapterConfigureResult>;
+    generate(project: Project, config: Config): Promise<void>;
+    build(project: Project, config: Config, options: AdapterBuildOptions): Promise<void>;
 };
 export type Adapter = ImportedItem & AdapterDesc;

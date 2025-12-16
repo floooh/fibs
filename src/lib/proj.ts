@@ -20,6 +20,17 @@ export async function configure(rootModule: FibsModule, rootDir: string): Promis
 
 export async function generate(): Promise<void> {
     log.info(`proj.generate called!`);
+
+    const adapter = projectImpl.adapter('cmake');
+    const config = projectImpl.activeConfig();
+
+    // obtain runtime config properties
+    const configRes = await adapter.configure(projectImpl, config);
+    projectImpl._compiler = configRes.compiler;
+    projectImpl._platform = configRes.platform;
+
+    // generate build files
+    await adapter.generate(projectImpl, config);
 }
 
 export async function build(options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void> {
@@ -246,7 +257,7 @@ function resolveOpeners(root: Node, project: ProjectImpl): void {
         name: o.name,
         importDir: o.importDir,
         importModule: o.importModule,
-        configure: o.configure,
+        generate: o.generate,
         open: o.open,
     }));
 }
@@ -256,6 +267,7 @@ function resolveAdapters(root: Node, project: ProjectImpl): void {
         name: a.name,
         importDir: a.importDir,
         importModule: a.importModule,
+        generate: a.generate,
         configure: a.configure,
         build: a.build,
     }));

@@ -21,7 +21,7 @@ import { host, log, settings, util } from '../lib/index.ts';
 export class ProjectImpl implements Project {
     _name: string | null = null;
     _rootDir: string;
-    _arch: Arch = 'unknown-arch';
+    _platform: Platform = 'unknown-platform';
     _compiler: Compiler = 'unknown-compiler';
     _cmakeVariables: CmakeVariable[] = [];
     _includeDirectories: string[] = [];
@@ -54,12 +54,8 @@ export class ProjectImpl implements Project {
         return this.config(settings.get(this, 'config'));
     }
 
-    arch(): Arch {
-        return this._arch;
-    }
-
     platform(): Platform {
-        return this.activeConfig().platform;
+        return this._platform;
     }
 
     compiler(): Compiler {
@@ -92,6 +88,13 @@ export class ProjectImpl implements Project {
 
     importsDir(): string {
         return `${this.fibsDir()}/imports`;
+    }
+
+    configDir(configName?: string): string {
+        if (configName === undefined) {
+            configName = this.activeConfig().name;
+        }
+        return `${this.fibsDir()}/config/${configName}`;
     }
 
     buildDir(configName?: string): string {
@@ -289,10 +292,6 @@ export class ProjectImpl implements Project {
             log.panic(`unknown opener ${name} (run 'fibs list openers)`);
         }
         return opener;
-    }
-
-    isArch(arch: Arch): boolean {
-        return this.arch() === arch;
     }
 
     isPlatform(platform: Platform): boolean {

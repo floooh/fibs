@@ -3,9 +3,9 @@ import { Config, OpenerDesc, Project } from '../types.ts';
 import { run } from '../tools/vscode.ts';
 import { fs } from '../../deps.ts';
 
-export const vscodeOpener: OpenerDesc = { name: 'vscode', configure, open };
+export const vscodeOpener: OpenerDesc = { name: 'vscode', generate, open };
 
-async function configure(project: Project, config: Config) {
+async function generate(project: Project, config: Config) {
     const vscodeDir = `${project.dir()}/.vscode`;
     fs.ensureDirSync(vscodeDir);
     writeWorkspaceFile(project, config, vscodeDir);
