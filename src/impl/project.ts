@@ -21,7 +21,6 @@ import { host, log, settings, util } from '../lib/index.ts';
 export class ProjectImpl implements Project {
     _name: string | null = null;
     _rootDir: string;
-    _platform: Platform = 'unknown-platform';
     _compiler: Compiler = 'unknown-compiler';
     _cmakeVariables: CmakeVariable[] = [];
     _includeDirectories: string[] = [];
@@ -54,12 +53,12 @@ export class ProjectImpl implements Project {
         return this.config(settings.get(this, 'config'));
     }
 
-    platform(): Platform {
-        return this._platform;
-    }
-
     compiler(): Compiler {
         return this._compiler;
+    }
+
+    platform(): Platform {
+        return this.activeConfig().platform;
     }
 
     buildMode(): BuildMode {
@@ -79,67 +78,55 @@ export class ProjectImpl implements Project {
     }
 
     fibsDir(): string {
-        return `${this.dir()}/.fibs`;
+        return util.fibsDir(this._rootDir);
     }
 
     sdkDir(): string {
-        return `${this.fibsDir()}/sdks}`;
+        return util.sdkDir(this._rootDir);
     }
 
     importsDir(): string {
-        return `${this.fibsDir()}/imports`;
+        return util.importsDir(this._rootDir);
     }
 
     configDir(configName?: string): string {
         if (configName === undefined) {
             configName = this.activeConfig().name;
         }
-        return `${this.fibsDir()}/config/${configName}`;
+        return util.configDir(this._rootDir, configName);
     }
 
     buildDir(configName?: string): string {
         if (configName === undefined) {
             configName = this.activeConfig().name;
         }
-        return `${this.fibsDir()}/build/${configName}`;
+        return util.buildDir(this._rootDir, configName);
     }
 
     distDir(configName?: string): string {
         if (configName === undefined) {
             configName = this.activeConfig().name;
         }
-        return `${this.fibsDir()}/dist/${configName}`;
+        return util.distDir(this._rootDir, configName);
     }
 
     targetBuildDir(targetName: string, configName?: string): string {
         if (configName === undefined) {
             configName = this.activeConfig().name;
         }
-        return `${this.buildDir(configName)}/${targetName}`;
+        return util.targetBuildDir(this._rootDir, configName, targetName);
     }
 
     targetDistDir(targetName: string, configName?: string): string {
         const config = (configName === undefined) ? this.activeConfig() : this.config(configName);
         const target = this.target(targetName);
-        if (config.platform === 'macos' && target.type === 'windowed-exe') {
-            return `${this.distDir(configName)}/${target.name}.app/Contents.MacOS`;
-        } else if (config.platform === 'ios' && target.type === 'windowed-exe') {
-            return `${this.distDir(configName)}/${target.name}.app`;
-        } else {
-            return this.distDir(configName);
-        }
+        return util.targetDistDir(this._rootDir, config.name, targetName, config.platform, target.type);
     }
 
     targetAssetsDir(targetName: string, configName?: string): string {
         const config = (configName === undefined) ? this.activeConfig() : this.config(configName);
         const target = this.target(targetName);
-        if (config.platform === 'macos' && target.type === 'windowed-exe') {
-            return `${this.distDir(configName)}/${target.name}.app/Contents/Resources`;
-        } else if (config.platform === 'ios' && target.type === 'windowed-exe') {
-            return `${this.distDir(configName)}/${target.name}.app`;
-        } else {
-            return this.distDir(configName);
-        }
+        return util.targetAssetDir(this._rootDir, config.name, targetName, config.platform, target.type);
     }
 
     settings(): Setting[] {
@@ -184,6 +171,22 @@ export class ProjectImpl implements Project {
 
     openers(): Opener[] {
         return this._openers;
+    }
+
+    includeDirectories(): string[] {
+        return this._includeDirectories;
+    }
+
+    compileDefinitions(): Record<string, string> {
+        return this._compileDefinitions;
+    }
+
+    compileOptions(): string[] {
+        return this._compileOptions;
+    }
+
+    linkOptions(): string[] {
+        return this._linkOptions;
     }
 
     findSetting(name: string | undefined): Setting | undefined {

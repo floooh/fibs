@@ -3,7 +3,7 @@ import { Config, OpenerDesc, Project } from '../types.ts';
 
 export const xcodeOpener: OpenerDesc = {
     name: 'xcode',
-    configure: async (): Promise<void> => {},
+    generate: async (): Promise<void> => {},
     open,
 };
 

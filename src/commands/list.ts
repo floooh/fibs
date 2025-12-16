@@ -57,7 +57,7 @@ async function run(project: Project) {
     }
     if (args.all || args.runners) {
         for (const r of project.runners()) {
-            log.print(r.name)
+            log.print(r.name);
         }
     }
     if (args.all) {
@@ -66,7 +66,7 @@ async function run(project: Project) {
     }
     if (args.all || args.openers) {
         for (const o of project.openers()) {
-            log.print(o.name)
+            log.print(o.name);
         }
     }
     if (args.all) {
@@ -75,7 +75,7 @@ async function run(project: Project) {
     }
     if (args.all || args.jobs) {
         for (const j of project.jobs()) {
-            j.help()
+            j.help();
         }
     }
     if (args.all) {

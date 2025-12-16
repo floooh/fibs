@@ -20,16 +20,10 @@ export async function configure(rootModule: FibsModule, rootDir: string): Promis
 
 export async function generate(): Promise<void> {
     log.info(`proj.generate called!`);
-
     const adapter = projectImpl.adapter('cmake');
     const config = projectImpl.activeConfig();
-
-    // obtain runtime config properties
     const configRes = await adapter.configure(projectImpl, config);
     projectImpl._compiler = configRes.compiler;
-    projectImpl._platform = configRes.platform;
-
-    // generate build files
     await adapter.generate(projectImpl, config);
 }
 
@@ -111,7 +105,7 @@ type Resolved<T> = T & ImportedItem & { importErrors: unknown[] };
 
 async function doConfigure(module: FibsModule, project: ProjectImpl): Promise<void> {
     const root: Node = {
-        configurer: new ConfigurerImpl(),
+        configurer: new ConfigurerImpl(project.dir()),
         module,
         importDir: project.dir(),
         importErrors: [],
@@ -149,7 +143,7 @@ async function recurseImports(node: Node, project: ProjectImpl): Promise<void> {
             const { modules, importErrors } = await importModulesFromDir(dir, importDesc);
             for (const module of modules) {
                 const child: Node = {
-                    configurer: new ConfigurerImpl(),
+                    configurer: new ConfigurerImpl(project._rootDir),
                     module,
                     importDir: dir,
                     importErrors,
@@ -166,7 +160,7 @@ async function recurseImports(node: Node, project: ProjectImpl): Promise<void> {
 }
 
 function resolveConfigureItems(root: Node, project: ProjectImpl): void {
-    project._name = root.configurer.name;
+    project._name = root.configurer.projectName;
     resolveCmakeVariables(root, project);
     resolveSettings(root, project);
     resolveImports(root, project);

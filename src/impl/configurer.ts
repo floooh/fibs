@@ -18,7 +18,8 @@ import {
 import { host, log, util } from '../lib/index.ts';
 
 export class ConfigurerImpl implements Configurer {
-    name: string | null = null;
+    projectName: string | null = null;
+    rootDir: string;
     cmakeVariables: CmakeVariableDesc[] = [];
     imports: ImportDesc[] = [];
     commands: CommandDesc[] = [];
@@ -30,6 +31,10 @@ export class ConfigurerImpl implements Configurer {
     adapters: AdapterDesc[] = [];
     settings: SettingDesc[] = [];
 
+    constructor(rootDir: string) {
+        this.rootDir = rootDir;
+    }
+
     hostPlatform(): Platform {
         return host.platform();
     }
@@ -38,8 +43,36 @@ export class ConfigurerImpl implements Configurer {
         return host.arch();
     }
 
+    projectDir(): string {
+        return this.rootDir;
+    }
+
+    fibsDir(): string {
+        return util.fibsDir(this.rootDir);
+    }
+
+    sdkDir(): string {
+        return util.sdkDir(this.rootDir);
+    }
+
+    importsDir(): string {
+        return util.importsDir(this.rootDir);
+    }
+
+    configDir(configName: string): string {
+        return util.configDir(this.rootDir, configName);
+    }
+
+    buildDir(configName: string): string {
+        return util.buildDir(this.rootDir, configName);
+    }
+
+    distDir(configName: string): string {
+        return util.distDir(this.rootDir, configName);
+    }
+
     setProjectName(name: string): void {
-        this.name = name;
+        this.projectName = name;
     }
 
     addCmakeVariable(name: string, value: string | boolean): void {

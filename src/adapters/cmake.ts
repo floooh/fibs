@@ -1,6 +1,14 @@
-import { log, util, cmake } from '../lib/index.ts';
+import { cmake, log, util } from '../lib/index.ts';
 import { fs } from '../../deps.ts';
-import { Project, Config, AdapterDesc, AdapterConfigureResult, AdapterBuildOptions, BuildMode } from '../types.ts';
+import {
+    AdapterBuildOptions,
+    AdapterConfigureResult,
+    AdapterDesc,
+    BuildMode,
+    Compiler,
+    Config,
+    Project,
+} from '../types.ts';
 
 export const cmakeAdapter: AdapterDesc = {
     name: 'cmake',
@@ -25,9 +33,8 @@ file(WRITE cmake_config.json "{\\"CMAKE_C_COMPILER_ID\\":\\"\${CMAKE_C_COMPILER_
 `;
 
 export async function configure(project: Project, config: Config): Promise<AdapterConfigureResult> {
-    log.info('cmake.configure() called!');
     const configDir = project.configDir(config.name);
-    const configPath = `${configDir}/cmake_config.ini`;
+    const configPath = `${configDir}/cmake_config.json`;
     if (!util.fileExists(configPath)) {
         fs.ensureDirSync(configDir);
         // run a dummy cmake generator to obtain runtime config params
@@ -41,22 +48,42 @@ export async function configure(project: Project, config: Config): Promise<Adapt
         const cmakePresetsSource = genCMakePresetsJson(project, config, configDir, configDir);
         Deno.writeTextFileSync(cmakePresetsPath, cmakePresetsSource, { create: true });
 
-        const res = await cmake.run({ cwd: configDir, args: [ '--preset', config.name ], stderr: 'piped'});
+        const res = await cmake.run({ cwd: configDir, args: ['--preset', config.name], stderr: 'piped' });
         if (res.exitCode !== 0) {
             log.panic(`cmake returned with exit code ${res.exitCode}, stderr: \n\n${res.stderr}`);
         }
     }
 
-    // FIXME!
+    const configJson = (await import(configPath, { with: { type: 'json' } })).default;
     return {
-        arch: 'unknown-arch',
-        platform: 'unknown-platform',
-        compiler: 'unknown-compiler',
+        compiler: fromCmakeCompiler(configJson.CMAKE_C_COMPILER_ID),
     };
 }
 
 export async function generate(project: Project, config: Config): Promise<void> {
-    log.info('cmake.generate() called!');
+    const cmakeListsPath = `${project.dir()}/CMakeLists.txt`;
+    const cmakePresetsPath = `${project.dir()}/CMakePresets.json`;
+    log.info(`writing ${cmakeListsPath}`);
+    try {
+        Deno.writeTextFileSync(
+            cmakeListsPath,
+            genCMakeListsTxt(project, config),
+            { create: true },
+        );
+    } catch (err) {
+        log.panic(`Failed writing ${cmakeListsPath}: `, err);
+    }
+    log.info(`writing ${cmakePresetsPath}`);
+    try {
+        Deno.writeTextFileSync(
+            cmakePresetsPath,
+            genCMakePresetsJson(project, config, project.buildDir(), project.distDir()),
+            { create: true },
+        );
+    } catch (err) {
+        log.panic('Failed writing CMakePresets.json: ', err);
+    }
+    await cmake.generate(project, config);
 }
 
 export async function build(project: Project, config: Config, options: AdapterBuildOptions): Promise<void> {
@@ -77,17 +104,36 @@ function genCMakePresetsJson(project: Project, config: Config, buildDir: string,
     return JSON.stringify(preset, null, 2);
 }
 
-function cmakeGenerator(config: Config): string | undefined {
-    switch (config.generator) {
-        case 'make': return 'Unix Makefiles';
-        case 'ninja': return 'Ninja';
-        case 'ninja-multi-config': return 'Ninja Multi-Config';
-        case 'xcode': return 'Xcode';
-        default: return undefined;
+function fromCmakeCompiler(str: string): Compiler {
+    if (str === 'AppleClang') {
+        return 'appleclang';
+    } else if (str === 'Clang') {
+        return 'clang';
+    } else if (str === 'GNU') {
+        return 'gcc';
+    } else if (str === 'MSVC') {
+        return 'msvc';
+    } else {
+        return 'unknown-compiler';
     }
 }
 
-function cmakeBuildMode(buildMode: BuildMode): string {
+function asCmakeGenerator(config: Config): string | undefined {
+    switch (config.generator) {
+        case 'make':
+            return 'Unix Makefiles';
+        case 'ninja':
+            return 'Ninja';
+        case 'ninja-multi-config':
+            return 'Ninja Multi-Config';
+        case 'xcode':
+            return 'Xcode';
+        default:
+            return undefined;
+    }
+}
+
+function asCmakeBuildMode(buildMode: BuildMode): string {
     if (buildMode === 'debug') {
         return 'Debug';
     } else {
@@ -127,7 +173,7 @@ function genConfigurePresets(project: Project, config: Config, buildDir: string,
             name: config.name,
             displayName: config.name,
             binaryDir: buildDir,
-            generator: cmakeGenerator(config),
+            generator: asCmakeGenerator(config),
             toolchainFile: config.toolchainFile,
             cacheVariables: genCacheVariables(project, config, distDir),
             environment: config.environment,
@@ -141,7 +187,7 @@ function genConfigurePresets(project: Project, config: Config, buildDir: string,
 function genCacheVariables(project: Project, config: Config, distDir: string): Record<string, unknown> {
     let res: Record<string, any> = {};
     if (!isMultiConfigGenerator(config)) {
-        res.CMAKE_BUILD_TYPE = cmakeBuildMode(config.buildMode);
+        res.CMAKE_BUILD_TYPE = asCmakeBuildMode(config.buildMode);
     }
     if (config.platform !== 'android') {
         res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = distDir;
@@ -158,51 +204,13 @@ function genCacheVariables(project: Project, config: Config, distDir: string): R
 function genBuildPresets(config: Config): unknown[] {
     if (isMultiConfigGenerator(config)) {
         return [
-            { name: 'default', configurePreset: config.name, configuration: cmakeBuildMode(config.buildMode) },
-            { name: 'debug', configurePreset: config.name, configuration: cmakeBuildMode('debug') },
-            { name: 'release', configurePreset: config.name, configuration: cmakeBuildMode('release') },
+            { name: 'default', configurePreset: config.name, configuration: asCmakeBuildMode(config.buildMode) },
+            { name: 'debug', configurePreset: config.name, configuration: asCmakeBuildMode('debug') },
+            { name: 'release', configurePreset: config.name, configuration: asCmakeBuildMode('release') },
         ];
     } else {
         return [{ name: 'default', configurePreset: config.name }];
     }
-}
-
-/*
-export async function generate(project: Project, config: Config) {
-    const cmakeListsPath = `${project.dir}/CMakeLists.txt`;
-    const cmakePresetsPath = `${project.dir}/CMakePresets.json`;
-    log.info(`writing ${cmakeListsPath}`);
-    try {
-        Deno.writeTextFileSync(
-            cmakeListsPath,
-            genCMakeListsTxt(project, config),
-            { create: true },
-        );
-    } catch (err) {
-        log.panic(`Failed writing ${cmakeListsPath}: `, err);
-    }
-    log.info(`writing ${cmakePresetsPath}`);
-    try {
-        Deno.writeTextFileSync(
-            cmakePresetsPath,
-            genCMakePresetsJson(project, config),
-            { create: true },
-        );
-    } catch (err) {
-        log.panic('Failed writing CMakePresets.json: ', err);
-    }
-    await cmake.configure(project, config);
-}
-
-export async function build(
-    project: Project,
-    config: Config,
-    options: { buildTarget?: string; forceRebuild?: boolean },
-) {
-    if (!util.fileExists(`${util.buildDir(project, config)}/CMakeCache.txt`)) {
-        await configure(project, config);
-    }
-    await cmake.build(project, config, options);
 }
 
 function genCMakeListsTxt(project: Project, config: Config): string {
@@ -213,33 +221,107 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genCompileOptions(project, config);
     str += genLinkOptions(project, config);
     str += genAllJobsTarget(project, config);
-    for (const target of project.targets) {
-        if (proj.isTargetEnabled(project, config, target)) {
-            str += genTarget(project, config, target);
-            str += genTargetDependencies(project, config, target);
-            str += genTargetIncludeDirectories(project, config, target);
-            str += genTargetCompileDefinitions(project, config, target);
-            str += genTargetCompileOptions(project, config, target);
-            str += genTargetLinkOptions(project, config, target);
-            str += genTargetJobDependencies(project, config, target);
-        }
+    /* FIXME
+    for (const target of project.targets()) {
+        str += genTarget(project, config, target);
+        str += genTargetDependencies(project, config, target);
+        str += genTargetIncludeDirectories(project, config, target);
+        str += genTargetCompileDefinitions(project, config, target);
+        str += genTargetCompileOptions(project, config, target);
+        str += genTargetLinkOptions(project, config, target);
+        str += genTargetJobDependencies(project, config, target);
     }
+    */
     return str;
 }
 
 function genProlog(project: Project, config: Config): string {
     let str = '';
-    str += 'cmake_minimum_required(VERSION 3.20)\n';
-    str += `project(${project.name} C CXX)\n`;
+    str += 'cmake_minimum_required(VERSION 4.0)\n';
+    str += `project(${project.name()} C CXX)\n`;
     str += 'set(GLOBAL PROPERTY USE_FOLDERS ON)\n';
     str += 'set(CMAKE_CONFIGURATION_TYPES Debug Release)\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
-    const aliasMap = util.buildConfigAliasMap(project, config);
-    for (const includePath of config.cmakeIncludes) {
-        str += `include("${util.resolvePath(aliasMap, includePath)}")\n`;
+    for (const includeDir of config.cmakeIncludes) {
+        str += `include("${includeDir}")\n`;
     }
     return str;
+}
+
+function genIncludeDirectories(project: Project, config: Config): string {
+    let str = '';
+    const dirs = [...project.includeDirectories(), ...config.includeDirectories];
+    if (dirs.length > 0) {
+        str += 'include_directories(';
+        dirs.forEach((dir) => str += `\n"  ${dir}"`);
+        str += ')\n';
+    }
+    return str;
+}
+
+function genCompileDefinitions(project: Project, config: Config): string {
+    let str = '';
+    const defs = { ...project.compileDefinitions(), ...config.compileDefinitions };
+    const items = Object.entries<string>(defs);
+    if (items.length > 0) {
+        str += 'add_compile_definitions(';
+        items.forEach(([key, val]) => `\n  ${key}=${val}`);
+        str += ')\n';
+    }
+    return str;
+}
+
+function genCompileOptions(project: Project, config: Config): string {
+    let str = '';
+    const opts = [...project.compileOptions(), ...config.compileOptions];
+    if (opts.length > 0) {
+        str += 'add_compile_options(';
+        opts.forEach((opt) => str += `\n  ${opt}`);
+        str += ')\n';
+    }
+    return str;
+}
+
+function genLinkOptions(project: Project, config: Config): string {
+    let str = '';
+    const opts = [...project.linkOptions(), ...config.linkOptions];
+    if (opts.length > 0) {
+        str += 'add_link_options(';
+        opts.forEach((opt) => str += `\n  ${opt}`);
+        str += ')\n';
+    }
+    return str;
+}
+
+function genAllJobsTarget(project: Project, config: Config): string {
+    let str = '';
+    // first check if there are any jobs
+    let hasJobs: boolean = false;
+    for (const target of project.targets()) {
+        if (target.jobs.length > 0) {
+            hasJobs = true;
+            break;
+        }
+    }
+    if (hasJobs) {
+        str += `find_program(DENO deno REQUIRED)\n`;
+        str +=
+            `add_custom_target(ALL_JOBS COMMAND \${DENO} run --allow-all --no-config fibs.ts runjobs WORKING_DIRECTORY ${project.dir()})\n`;
+    }
+    return str;
+}
+
+/*
+export async function build(
+    project: Project,
+    config: Config,
+    options: { buildTarget?: string; forceRebuild?: boolean },
+) {
+    if (!util.fileExists(`${util.buildDir(project, config)}/CMakeCache.txt`)) {
+        await configure(project, config);
+    }
+    await cmake.build(project, config, options);
 }
 
 function compilerId(compiler: Compiler): string {
@@ -340,48 +422,6 @@ function genGlobalRecordItemsLanguageCompiler(
             }
         }
     }
-    return str;
-}
-
-function genIncludeDirectories(project: Project, config: Config): string {
-    let str = '';
-    str += genGlobalArrayItemsLanguageCompiler(
-        project,
-        config,
-        'include_directories',
-        project.includeDirectories,
-        true,
-        false,
-    );
-    str += genGlobalArrayItemsLanguageCompiler(
-        project,
-        config,
-        'include_directories',
-        config.includeDirectories,
-        true,
-        true,
-    );
-    return str;
-}
-
-function genCompileDefinitions(project: Project, config: Config): string {
-    let str = '';
-    str += genGlobalRecordItemsLanguageCompiler(
-        project,
-        config,
-        'add_compile_definitions',
-        project.compileDefinitions,
-        false,
-        false,
-    );
-    str += genGlobalRecordItemsLanguageCompiler(
-        project,
-        config,
-        'add_compile_definitions',
-        config.compileDefinitions,
-        false,
-        true,
-    );
     return str;
 }
 
@@ -610,24 +650,6 @@ function genTargetCompileOptions(project: Project, config: Config, target: Targe
 
 function genTargetLinkOptions(project: Project, config: Config, target: Target): string {
     return genTargetArrayItems(project, config, target, 'target_link_options', target.linkOptions, false);
-}
-
-function genAllJobsTarget(project: Project, config: Config): string {
-    let str = '';
-    // first check if there are any jobs
-    let hasJobs: boolean = false;
-    for (const target of project.targets) {
-        if (target.jobs.length > 0) {
-            hasJobs = true;
-            break;
-        }
-    }
-    if (hasJobs) {
-        str += `find_program(DENO deno REQUIRED)\n`;
-        str +=
-            `add_custom_target(ALL_JOBS COMMAND \${DENO} run --allow-all --no-config fibs.ts runjobs WORKING_DIRECTORY ${project.dir})\n`;
-    }
-    return str;
 }
 
 function genTargetJobDependencies(project: Project, config: Config, target: Target) {

@@ -1,13 +1,7 @@
-import { Config, NamedItem, Project, RunOptions, RunResult } from '../types.ts';
+import { Config, NamedItem, Platform, Project, RunOptions, RunResult, TargetType } from '../types.ts';
 import { log } from './index.ts';
 import { fs, path } from '../../deps.ts';
 
-/**
- * Find a named item in an array of NamedItem-derived items.
- * @param name - the name to search for
- * @param items - an array of NamedItem-derived items
- * @returns found item, or undefined if not found
- */
 export function find<T extends NamedItem>(name: string | undefined, items: T[]): T | undefined {
     if (name === undefined) {
         return undefined;
@@ -15,23 +9,11 @@ export function find<T extends NamedItem>(name: string | undefined, items: T[]):
     return items.find((elm) => elm.name === name);
 }
 
-/**
- * Find index of a named item in an array of NamedItem-derived items.
- * @param name - the name to search for
- * @param items - an array of NamedItem-derived items
- * @returns index of found item, or undefined if not found
- */
 export function findIndex<T extends NamedItem>(name: string, items: T[]): number | undefined {
     const index = items.findIndex((elm) => elm.name === name);
     return (index === -1) ? undefined : index;
 }
 
-/**
- * Searches for item with the same name in an array of named items.
- * If item exists, replace it, otherwise append it to the array.
- * @param items - array NamedItem-derived items
- * @param item - Named-item derived item to add or replace
- */
 export function addOrReplace<T extends NamedItem>(items: T[], item: T) {
     const index = findIndex(item.name, items);
     if (index === undefined) {
@@ -41,11 +23,6 @@ export function addOrReplace<T extends NamedItem>(items: T[], item: T) {
     }
 }
 
-/**
- * Test if a path exists as file.
- * @param path absolute or cwd-relative path
- * @returns true if path exists and is a file, otherwise false
- */
 export function fileExists(path: string): boolean {
     try {
         const res = Deno.statSync(path);
@@ -55,11 +32,6 @@ export function fileExists(path: string): boolean {
     }
 }
 
-/**
- * Tests if a path exists as directory.
- * @param path absolute or cwd-relative path
- * @returns true if path exists and is a directory, otherwise false
- */
 export function dirExists(path: string): boolean {
     try {
         const res = Deno.statSync(path);
@@ -69,11 +41,66 @@ export function dirExists(path: string): boolean {
     }
 }
 
-/**
- * Ensures that a file and its directory exists. If not,
- * creates directory and an empty text file.
- * @param filePath absolute or cwd-relative file path
- */
+export function fibsDir(rootDir: string): string {
+    return `${rootDir}/.fibs`;
+}
+
+export function sdkDir(rootDir: string): string {
+    return `${fibsDir(rootDir)}/sdks`;
+}
+
+export function importsDir(rootDir: string): string {
+    return `${fibsDir(rootDir)}/imports`;
+}
+
+export function configDir(rootDir: string, configName: string): string {
+    return `${fibsDir(rootDir)}/config/${configName}`;
+}
+
+export function buildDir(rootDir: string, configName: string): string {
+    return `${fibsDir(rootDir)}/build/${configName}`;
+}
+
+export function distDir(rootDir: string, configName: string): string {
+    return `${fibsDir(rootDir)}/dist/${configName}}`;
+}
+
+export function targetBuildDir(rootDir: string, configName: string, targetName: string): string {
+    return `${buildDir(rootDir, configName)}/${targetName}`;
+}
+
+export function targetDistDir(
+    rootDir: string,
+    configName: string,
+    targetName: string,
+    platform: Platform,
+    targetType: TargetType,
+): string {
+    if (platform === 'macos' && targetType === 'windowed-exe') {
+        return `${distDir(rootDir, configName)}/${targetName}.app/Contents/MacOS`;
+    } else if (platform === 'ios' && targetType === 'windowed-exe') {
+        return `${distDir(rootDir, configName)}/${targetName}.app`;
+    } else {
+        return distDir(rootDir, configName);
+    }
+}
+
+export function targetAssetDir(
+    rootDir: string,
+    configName: string,
+    targetName: string,
+    platform: Platform,
+    targetType: TargetType,
+): string {
+    if (platform === 'macos' && targetType === 'windowed-exe') {
+        return `${distDir(rootDir, configName)}/${targetName}.app/Contents/Resources`;
+    } else if (platform === 'ios' && targetType === 'windowed-exe') {
+        return `${distDir(rootDir, configName)}/${targetName}.app`;
+    } else {
+        return distDir(rootDir, configName);
+    }
+}
+
 export function ensureFile(filePath: string) {
     if (!fileExists(filePath)) {
         fs.ensureDirSync(path.dirname(filePath));
@@ -129,50 +156,24 @@ export function dirty(inputs: string[], outputs: string[]): boolean {
     return false;
 }
 
-/**
- * Ensures that the project's .fibs/ subdirectory exists and returns
- * its absolute path.
- * @param project - a valid Project object
- * @returns absolute path to project's .fibs/ subdirectory
- */
 export function ensureFibsDir(project: Project): string {
     const path = project.fibsDir();
     fs.ensureDirSync(path);
     return path;
 }
 
-/**
- * Ensures that the dist directory for a project and build config exists
- * under `[project]/.fibs/dist/[config]` and returns its absolute path.
- * @param project - a valid Project object
- * @param configName - either a config name or undefined for the currently active config
- * @returns absolute path to dist directory
- */
 export function ensureDistDir(project: Project, configName?: string): string {
     const path = project.distDir(configName);
     fs.ensureDirSync(path);
     return path;
 }
 
-/**
- * Ensures that the imports directory for a project exists
- * under `[project]/.fibs/imports/` and returns its absolute path.
- * @param project - a valid Project object
- * @returns absolute path to imports directory
- */
 export function ensureImportsDir(project: Project): string {
     const path = project.importsDir();
     fs.ensureDirSync(path);
     return path;
 }
 
-/**
- * Returns true if the provided build config is compatible with
- * the provided platform (cross-compilation configs are always valid).
- * @param config - a valid Config object
- * @param platform - a platform name
- * @returns true if config is compatible with platform
- */
 export function validConfigForPlatform(config: Config, platform: string): boolean {
     // cross-compilation configs are valid on all platforms
     // FIXME: how to deal with cmake's integrated cross-platform support
@@ -288,56 +289,26 @@ export async function download(
     return true;
 }
 
-/**
- * Returns true if 'val' is a (potentially empty) string and coerce to string.
- * @param val - an object of unknown type
- * @returns true if val is a string
- */
 export function isString(val: unknown): val is string {
     return typeof val === 'string';
 }
 
-/**
- * Returns true if 'val' is a Number and coerce to Number.
- * @param val - an object of unknown type
- * @returns true if val is a number
- */
 export function isNumber(val: unknown): val is Number {
     return typeof val === 'number';
 }
 
-/**
- * Returns true if 'val' is a boolean and coerce to boolean.
- * @param val - an object of unknown type
- * @returns true if val is a boolean
- */
 export function isBoolean(val: unknown): val is boolean {
     return typeof val === 'boolean';
 }
 
-/**
- * Returns true if 'val' is a string array and coerces to a string array.
- * @param val - an object of unknown type
- * @returns true if val is a string array
- */
 export function isStringArray(val: unknown): val is string[] {
     return Array.isArray(val) && val.every((item) => isString(item));
 }
 
-/**
- * Returns true if 'val' is a Number array and coerces to a number array
- * @param val - an object of unknown type
- * @returns true if val is a Number array
- */
 export function isNumberArray(val: unknown): val is Number[] {
     return Array.isArray(val) && val.every((item) => isNumber(item));
 }
 
-/**
- * Returns true if 'val' is a boolean array and coerves to a boolean array.
- * @param val - an object of unknown type
- * @returns trye if val is a boolean array
- */
 export function isBooleanArray(val: unknown): val is boolean[] {
     return Array.isArray(val) && val.every((item) => isBoolean(item));
 }

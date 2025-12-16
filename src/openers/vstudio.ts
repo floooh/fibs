@@ -3,7 +3,7 @@ import { Config, OpenerDesc, Project } from '../types.ts';
 
 export const vstudioOpener: OpenerDesc = {
     name: 'vstudio',
-    configure: async (): Promise<void> => {},
+    generate: async (): Promise<void> => {},
     open,
 };
 

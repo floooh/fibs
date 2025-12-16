@@ -23,6 +23,13 @@ export type Configurer = {
 
     hostPlatform(): Platform;
     hostArch(): Arch;
+    projectDir(): string;
+    fibsDir(): string;
+    sdkDir(): string;
+    importsDir(): string;
+    configDir(configName: string): string;
+    buildDir(configName: string): string;
+    distDir(configName: string): string;
 };
 
 export type Project = {
@@ -57,12 +64,10 @@ export type Project = {
     runners(): Runner[];
     openers(): Opener[];
 
-    /* FIXME
-    includeDirectories: string[];
-    compileDefinitions: Record<string, string>;
-    compileOptions: string[];
-    linkOptions: string[];
-    */
+    includeDirectories(): string[];
+    compileDefinitions(): Record<string, string>;
+    compileOptions(): string[];
+    linkOptions(): string[];
 
     findSetting(name: string | undefined): Setting | undefined;
     setting(name: string): Setting;
@@ -340,7 +345,6 @@ export type ToolDesc = NamedItem & {
 export type Tool = ImportedItem & ToolDesc;
 
 export type AdapterConfigureResult = {
-    platform: Platform;
     compiler: Compiler;
 };
 
