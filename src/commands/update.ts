@@ -30,7 +30,7 @@ async function run(project: Project) {
             if (log.ask(`delete and clone ${repoDir}`, false)) {
                 log.info(`  deleting ${repoDir}`);
                 Deno.removeSync(repoDir, { recursive: true });
-                await imports.fetch(project, { name: imp.name, url: imp.url, ref: imp.ref });
+                await imports.fetchImport(project, { name: imp.name, url: imp.url, ref: imp.ref });
             } else {
                 log.info(`  skipping ${repoDir}`);
             }
@@ -57,7 +57,7 @@ function parseArgs(project: Project): { clean: boolean; items: string[] } {
         return true;
     });
     if (res.items.length === 0) {
-        res.items = project.imports.toReversed().map((imp) => imp.name);
+        res.items = project.imports().toReversed().map((imp) => imp.name);
     }
     return res;
 }

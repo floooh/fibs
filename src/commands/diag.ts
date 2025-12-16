@@ -52,7 +52,7 @@ async function diagFibs() {
 }
 
 async function diagTools(project: Project) {
-    for (const tool of project.tools) {
+    for (const tool of project.tools()) {
         if (tool.platforms.includes(host.platform())) {
             const exists = await tool.exists();
             let res: string;
@@ -69,7 +69,7 @@ async function diagTools(project: Project) {
 }
 
 async function diagConfigs(project: Project) {
-    for (const config of project.configs) {
+    for (const config of project.configs()) {
         log.write(`${config.name}: `);
         const res = await conf.validate(project, config, { silent: true, abortOnError: false });
         if (res.valid) {
@@ -84,9 +84,9 @@ async function diagConfigs(project: Project) {
 }
 
 async function diagTargets(project: Project) {
-    for (const target of project.targets) {
+    for (const target of project.targets()) {
         log.write(`${target.name} (${target.type}): `);
-        const res = proj.validateTarget(project, target, { silent: true, abortOnError: false });
+        const res = proj.validateTarget(target, { silent: true, abortOnError: false });
         if (res.valid) {
             log.write(colors.green('ok\n'));
         } else {
@@ -99,7 +99,7 @@ async function diagTargets(project: Project) {
 }
 
 async function diagImports(project: Project) {
-    for (const imp of project.imports) {
+    for (const imp of project.imports()) {
         log.write(`${imp.name}: `);
         const res = await imports.validate(project, imp, { silent: true, abortOnError: false });
         if (res.valid) {

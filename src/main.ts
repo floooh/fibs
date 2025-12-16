@@ -1,8 +1,7 @@
 import { log, util } from './lib/index.ts';
-import { ProjectImpl } from './impl/project.ts';
 import { assertFibsModule, Project } from './types.ts';
 import { resetCmd } from './commands/reset.ts';
-import { configure } from './lib/configure.ts';
+import { configure } from './lib/proj.ts';
 
 export async function main() {
     if (Deno.args.length < 1) {
@@ -10,8 +9,8 @@ export async function main() {
         Deno.exit(10);
     }
     // special 'reset' command to wipe .fibs directory (useful when imports are broken)
-    const cwd = Deno.cwd().replaceAll('\\', '/');
-    const rootPath = `${cwd}/fibs.ts`;
+    const rootDir = Deno.cwd().replaceAll('\\', '/');
+    const rootPath = `${rootDir}/fibs.ts`;
     let skipCmd = false;
     if (Deno.args[0] === 'reset') {
         skipCmd = true;
@@ -25,12 +24,10 @@ export async function main() {
         const rootModule = await import(`file://${rootPath}`);
         assertFibsModule(rootModule);
 
-        // run configure- and build-tree pass
-        const project = new ProjectImpl(cwd);
-        await configure(rootModule, project);
+        // run configure-pass
+        const project = await configure(rootModule, rootDir);
 
-        //await build(rootModule, project);
-
+        // invoke the requested command
         const cmdName = Deno.args[0];
         const cmd = project.command(cmdName);
         if (!skipCmd) {

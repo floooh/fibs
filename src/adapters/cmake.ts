@@ -8,7 +8,6 @@ import {
     host,
     Language,
     log,
-    proj,
     Project,
     StringArrayFunc,
     StringRecordFunc,

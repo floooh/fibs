@@ -23,7 +23,7 @@ function writeWorkspaceFile(project: Project, config: Config, vscodeDir: string)
     const ws = {
         folders: [
             { path: project.dir },
-            ...project.imports.map((imp) => {
+            ...project.imports().map((imp) => {
                 return { path: imp.importDir };
             }),
         ],

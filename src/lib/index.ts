@@ -4,6 +4,6 @@ export * as git from './git.ts';
 export * as host from './host.ts';
 export * as imports from './imports.ts';
 export * as log from './log.ts';
-export * as proj from './proj.ts';
 export * as settings from './settings.ts';
 export * as util from './util.ts';
+export * as proj from './proj.ts';

@@ -1,31 +1,23 @@
 import { log, util } from './index.ts';
-import { Project, Setting } from '../types.ts';
-
-function setting(project: Project, key: string): Setting {
-    const s = util.find(key, project.settings);
-    if (s === undefined) {
-        log.panic(`Unknown setting key: ${key}`);
-    }
-    return s;
-}
+import { Project } from '../types.ts';
 
 export function set(project: Project, key: string, value: string) {
-    setting(project, key).value = value;
+    project.setting(key).value = value;
     save(project);
 }
 
 export function unset(project: Project, key: string) {
-    const s = setting(project, key);
+    const s = project.setting(key);
     s.value = s.default;
     save(project);
 }
 
 export function get(project: Project, key: string): string {
-    return setting(project, key).value;
+    return project.setting(key).value;
 }
 
 export function getDefault(project: Project, key: string): string {
-    return setting(project, key).default;
+    return project.setting(key).default;
 }
 
 export function load(project: Project) {
@@ -63,7 +55,7 @@ export function save(project: Project) {
     const path = util.ensureFibsDir(project) + '/settings.json';
     try {
         const kvp: Record<string, string> = {};
-        for (const s of project.settings) {
+        for (const s of project.settings()) {
             kvp[s.name] = s.value;
         }
         Deno.writeTextFileSync(
@@ -76,7 +68,7 @@ export function save(project: Project) {
 }
 
 export function validate(project: Project, key: string, value: string): boolean {
-    const s = util.find(key, project.settings);
+    const s = project.findSetting(key);
     if (s === undefined) {
         log.warn(`unknown settings item '${key} (run 'fibs list settings')`);
         return false;

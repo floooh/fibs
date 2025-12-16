@@ -1,201 +1,292 @@
-import {
-    Adapter,
-    Config,
-    ConfigDesc,
-    ConfigDescWithImportDir,
-    Job,
-    Language,
-    NamedItem,
-    Project,
-    Target,
-    TargetArrayItems,
-    TargetArrayItemsDesc,
-    TargetDesc,
-    TargetJob,
-    TargetRecordItems,
-    TargetRecordItemsDesc,
-} from '../types.ts';
-import { host, imports, log, settings, util } from '../lib/index.ts';
+import { host, log, settings, util } from './index.ts';
+import { FibsModule, ImportedItem, NamedItem, Project, Target } from '../types.ts';
+import { ProjectImpl } from '../impl/project.ts';
+import { ConfigurerImpl } from '../impl/configurer.ts';
+import { builtinAdapters } from '../adapters/index.ts';
+import { builtinConfigs } from '../configs/index.ts';
+import { builtinOpeners } from '../openers/index.ts';
+import { builtinRunners } from '../runners/index.ts';
+import { builtinTools } from '../tools/index.ts';
+import { builtinCommands } from '../commands/index.ts';
+import { fetchImport, importModulesFromDir } from './imports.ts';
 
-export async function setup(
-    rootDir: string,
-    rootDesc: ProjectDesc,
-    stdDesc: ProjectDesc,
-): Promise<Project> {
-    const project: Project = {
-        name: rootDesc.name ?? 'project',
-        dir: rootDir,
-        settings: {},
-        cmakeVariables: {},
-        includeDirectories: [],
-        compileDefinitions: [],
-        compileOptions: [],
-        linkOptions: [],
-        imports: [],
-        targets: [],
-        commands: [],
-        tools: [],
-        jobs: [],
-        runners: [],
-        openers: [],
-        configs: [],
-        configDescs: [],
-        adapters: [],
+let projectImpl: ProjectImpl;
+
+export async function configure(rootModule: FibsModule, rootDir: string): Promise<Project> {
+    projectImpl = new ProjectImpl(rootDir);
+    await doConfigure(rootModule, projectImpl);
+    return projectImpl;
+}
+
+export async function generate(): Promise<void> {
+    log.info(`proj.generate called!`);
+}
+
+export async function build(options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void> {
+    const { buildTarget, forceRebuild } = options;
+    log.info(`proj.build called (buildTarget: ${buildTarget}, forceRebuild: ${forceRebuild})`);
+}
+
+export function validateTarget(
+    target: Target,
+    options: { silent?: boolean; abortOnError?: boolean },
+): { valid: boolean; hints: string[] } {
+    log.info(`proj.validateTarget() called`);
+    return { valid: true, hints: [] };
+}
+
+export async function runJobs(target: Target) {
+    log.info(`proj.runJobs() called`);
+    /* FIXME
+    const ctx: Context = {
+        project,
+        config,
+        target,
+        aliasMap: util.buildTargetAliasMap(project, config, target),
+        host: { platform: host.platform(), arch: host.arch() },
+    };
+    const jobs = resolveTargetJobs(ctx);
+    for (const job of jobs) {
+        try {
+            await job.func(job.inputs, job.outputs, job.args);
+        } catch (err) {
+            log.panic(`job '${job.name}' in target '${target.name}' failed with ${err}`);
+        }
+    }
+    */
+}
+
+function flatten<T extends NamedItem>(
+    node: Node,
+    extract: (node: Node) => T[],
+): Resolved<T>[] {
+    const res: (T & ImportedItem & { importErrors: unknown[] })[] = [];
+    const extractRes = extract(node);
+    res.push(
+        ...extractRes.map((item) => ({
+            ...item,
+            importDir: node.importDir,
+            importModule: node.module,
+            importErrors: node.importErrors,
+        })),
+    );
+    for (const child of node.children) {
+        res.push(...flatten(child, extract));
+    }
+    return res;
+}
+
+function deduplicate<T extends NamedItem>(items: T[]): T[] {
+    const res: T[] = [];
+    for (const item of items) {
+        util.addOrReplace(res, item);
+    }
+    return res;
+}
+
+function flattenUnique<T extends NamedItem>(node: Node, extract: (node: Node) => T[]): Resolved<T>[] {
+    return deduplicate(flatten(node, extract));
+}
+
+type Node = {
+    configurer: ConfigurerImpl;
+    module: FibsModule;
+    importDir: string;
+    importErrors: unknown[];
+    children: Node[];
+};
+
+type Resolved<T> = T & ImportedItem & { importErrors: unknown[] };
+
+async function doConfigure(module: FibsModule, project: ProjectImpl): Promise<void> {
+    const root: Node = {
+        configurer: new ConfigurerImpl(),
+        module,
+        importDir: project.dir(),
+        importErrors: [],
+        children: [],
     };
 
-    // first integrate std project properties (tools, commands, ...)
-    await integrateProjectDesc(project, stdDesc, rootDir);
-    // followed by the root project properties
-    await integrateProjectDesc(project, rootDesc, rootDir);
-    // build resulting config list (happens as a post-step because configs can be inherited)
-    resolveConfigs(project);
+    root.configurer.addSetting({
+        name: 'config',
+        default: host.defaultConfig(),
+        validate: () => ({ valid: true, hint: '' }),
+    });
+    root.configurer.addCmakeVariable('CMAKE_C_STANDARD', '99');
+    root.configurer.addCmakeVariable('CMAKE_CXX_STANDARD', '14');
+    builtinCommands.forEach((command) => root.configurer.addCommand(command));
+    builtinAdapters.forEach((adapter) => root.configurer.addAdapter(adapter));
+    builtinConfigs.forEach((config) => root.configurer.addConfig(config));
+    builtinOpeners.forEach((opener) => root.configurer.addOpener(opener));
+    builtinRunners.forEach((runner) => root.configurer.addRunner(runner));
+    builtinTools.forEach((tool) => root.configurer.addTool(tool));
 
+    if (root.module.configure) {
+        root.module.configure(root.configurer);
+    }
+    await recurseImports(root, project);
+    resolveConfigureItems(root, project);
     settings.load(project);
-
-    // FIXME: validate the resulting project (esp target dependencies)
-
-    return project;
 }
 
-function resolveConfigs(project: Project) {
-    project.configs = [];
-    for (const desc of project.configDescs) {
-        if (desc.ignore) {
-            continue;
-        }
-        if (desc.inherits !== undefined) {
-            resolveInheritedConfigDesc(desc, project.configDescs);
-        }
-        if (desc.platform === undefined) {
-            log.panic(`config '${desc.name}' requires 'platform' field`);
-        }
-        if (desc.buildType === undefined) {
-            log.panic(`config '${desc.name}' requires 'buildType' field`);
-        }
-        let runner = util.find(desc.runner ?? 'native', project.runners);
-        if (runner === undefined) {
-            log.panic(`config '${desc.name}' has unknown runner '${desc.runner}'`);
-        }
-        let opener = undefined;
-        if (desc.opener !== undefined) {
-            opener = util.find(desc.opener, project.openers);
-            if (opener === undefined) {
-                log.panic(`config '${desc.name}' has unknown opener '${desc.opener}'`);
+// FIXME: detect import cycles!
+async function recurseImports(node: Node, project: ProjectImpl): Promise<void> {
+    for (const importDesc of node.configurer.imports) {
+        const { name, url, ref } = importDesc;
+        const { valid, dir } = await fetchImport(project, { name, url, ref });
+        if (valid) {
+            const { modules, importErrors } = await importModulesFromDir(dir, importDesc);
+            for (const module of modules) {
+                const child: Node = {
+                    configurer: new ConfigurerImpl(),
+                    module,
+                    importDir: dir,
+                    importErrors,
+                    children: [],
+                };
+                node.children.push(child);
+                if (child.module.configure) {
+                    child.module.configure(child.configurer);
+                }
+                recurseImports(child, project);
             }
         }
-        const config: Config = {
-            name: desc.name,
-            importDir: desc.importDir,
-            platform: desc.platform,
-            runner: runner,
-            opener: opener,
-            buildType: desc.buildType,
-            generator: desc.generator,
-            arch: desc.arch ?? undefined,
-            toolchainFile: desc.toolchainFile,
-            cmakeIncludes: desc.cmakeIncludes ?? [],
-            cmakeVariables: desc.cmakeVariables ?? {},
-            environment: desc.environment ?? {},
-            options: desc.options ?? {},
-            includeDirectories: desc.includeDirectories ?? [],
-            compileDefinitions: desc.compileDefinitions ?? {},
-            compileOptions: desc.compileOptions ?? [],
-            linkOptions: desc.linkOptions ?? [],
-            compilers: desc.compilers ?? ['unknown-compiler'],
-            validate: desc.validate ?? (() => ({ valid: false, hints: ['no validate function set on config!'] })),
-        };
-        util.addOrReplace(project.configs, config);
     }
 }
 
-function optionalToArray<T>(val: T | undefined): T[] {
-    return (val === undefined) ? [] : [val];
+function resolveConfigureItems(root: Node, project: ProjectImpl): void {
+    project._name = root.configurer.name;
+    resolveCmakeVariables(root, project);
+    resolveSettings(root, project);
+    resolveImports(root, project);
+    resolveCommands(root, project);
+    resolveJobs(root, project);
+    resolveTools(root, project);
+    resolveRunners(root, project);
+    resolveOpeners(root, project);
+    resolveAdapters(root, project);
+    resolveConfigs(root, project);
 }
 
-function assignMaybeUndefined<T>(into: T | undefined, src: T | undefined): T | undefined {
-    return (src === undefined) ? into : src;
+function resolveCmakeVariables(root: Node, project: ProjectImpl): void {
+    project._cmakeVariables = flattenUnique(root, (n) => n.configurer.cmakeVariables).map((v) => ({
+        name: v.name,
+        importDir: v.importDir,
+        importModule: v.importModule,
+        value: v.value,
+    }));
 }
 
-function assign<T>(into: T, src: T | undefined): T {
-    return (src === undefined) ? into : src;
+function resolveSettings(root: Node, project: ProjectImpl): void {
+    project._settings = flattenUnique(root, (n) => n.configurer.settings).map((s) => ({
+        name: s.name,
+        importDir: s.importDir,
+        importModule: s.importModule,
+        default: s.default,
+        value: s.default, // not a bug
+        validate: s.validate,
+    }));
 }
 
-function mergeRecordsMaybeUndefined<T>(
-    into: Record<string, T> | undefined,
-    src: Record<string, T> | undefined,
-): Record<string, T> | undefined {
-    if ((into === undefined) && (src === undefined)) {
-        return undefined;
-    }
-    if (into === undefined) {
-        return structuredClone(src);
-    }
-    if (src === undefined) {
-        return into;
-    }
-    return Object.assign(into, src);
+function resolveImports(root: Node, project: ProjectImpl): void {
+    project._imports = flattenUnique(root, (n) => n.configurer.imports).map((i) => ({
+        name: i.name,
+        importDir: i.importDir,
+        importModule: i.importModule,
+        importErrors: i.importErrors,
+        url: i.url,
+        ref: i.ref,
+    }));
 }
 
-function mergeRecords<T>(into: Record<string, T>, src: Record<string, T> | undefined): Record<string, T> {
-    if (src === undefined) {
-        return into;
-    }
-    return Object.assign(into, src);
+function resolveCommands(root: Node, project: ProjectImpl): void {
+    project._commands = flattenUnique(root, (n) => n.configurer.commands).map((c) => ({
+        name: c.name,
+        importDir: c.importDir,
+        importModule: c.importModule,
+        help: c.help,
+        run: c.run,
+    }));
 }
 
-function mergeArraysMaybeUndefined<T>(into: T[] | undefined, src: T[] | undefined): T[] | undefined {
-    if ((into === undefined) && (src === undefined)) {
-        return undefined;
-    }
-    if (into === undefined) {
-        return structuredClone(src);
-    }
-    if (src === undefined) {
-        return into;
-    }
-    // remove duplicates
-    return [...new Set([...into, ...src])];
+function resolveJobs(root: Node, project: ProjectImpl): void {
+    project._jobs = flattenUnique(root, (n) => n.configurer.jobs).map((j) => ({
+        name: j.name,
+        importDir: j.importDir,
+        importModule: j.importModule,
+        help: j.help,
+        validate: j.validate,
+        build: j.build,
+    }));
 }
 
-function mergeArrays<T>(into: T[], src: T[]): T[] {
-    if (src === undefined) {
-        return into;
-    }
-    // remove duplicates
-    return [...new Set([...into, ...src])];
+function resolveTools(root: Node, project: ProjectImpl): void {
+    project._tools = flattenUnique(root, (n) => n.configurer.tools).map((t) => ({
+        name: t.name,
+        importDir: t.importDir,
+        importModule: t.importModule,
+        platforms: t.platforms,
+        optional: t.optional,
+        notFoundMsg: t.notFoundMsg,
+        exists: t.exists,
+    }));
 }
 
-function cleanupUndefinedProperties<T>(obj: T) {
-    for (let key in obj) {
-        if (obj[key] === undefined) {
-            delete obj[key];
-        }
-    }
+function resolveRunners(root: Node, project: ProjectImpl): void {
+    project._runners = flattenUnique(root, (n) => n.configurer.runners).map((r) => ({
+        name: r.name,
+        importDir: r.importDir,
+        importModule: r.importModule,
+        run: r.run,
+    }));
 }
 
-function mergeConfigDescWithImportDir(into: ConfigDescWithImportDir, from: ConfigDescWithImportDir) {
-    into.ignore = assignMaybeUndefined(into.ignore, from.ignore);
-    into.inherits = assignMaybeUndefined(into.inherits, from.inherits);
-    into.platform = assignMaybeUndefined(into.platform, from.platform);
-    into.runner = assignMaybeUndefined(into.runner, from.runner);
-    into.opener = assignMaybeUndefined(into.opener, from.opener);
-    into.buildType = assignMaybeUndefined(into.buildType, from.buildType);
-    into.generator = assignMaybeUndefined(into.generator, from.generator);
-    into.arch = assignMaybeUndefined(into.arch, from.arch);
-    into.toolchainFile = assignMaybeUndefined(into.toolchainFile, from.toolchainFile);
-    into.cmakeIncludes = mergeArraysMaybeUndefined(into.cmakeIncludes, from.cmakeIncludes);
-    into.cmakeVariables = mergeRecordsMaybeUndefined(into.cmakeVariables, from.cmakeVariables);
-    into.environment = mergeRecordsMaybeUndefined(into.environment, from.environment);
-    into.options = mergeRecordsMaybeUndefined(into.options, from.options);
-    into.includeDirectories = mergeArraysMaybeUndefined(into.includeDirectories, from.includeDirectories);
-    into.compileDefinitions = mergeRecordsMaybeUndefined(into.compileDefinitions, from.compileDefinitions);
-    into.compileOptions = mergeArraysMaybeUndefined(into.compileOptions, from.compileOptions);
-    into.linkOptions = mergeArraysMaybeUndefined(into.linkOptions, from.linkOptions);
-    into.compilers = assignMaybeUndefined(into.compilers, from.compilers);
-    into.validate = assignMaybeUndefined(into.validate, from.validate);
-    cleanupUndefinedProperties(into);
+function resolveOpeners(root: Node, project: ProjectImpl): void {
+    project._openers = flattenUnique(root, (n) => n.configurer.openers).map((o) => ({
+        name: o.name,
+        importDir: o.importDir,
+        importModule: o.importModule,
+        configure: o.configure,
+        open: o.open,
+    }));
 }
 
+function resolveAdapters(root: Node, project: ProjectImpl): void {
+    project._adapters = flattenUnique(root, (n) => n.configurer.adapters).map((a) => ({
+        name: a.name,
+        importDir: a.importDir,
+        importModule: a.importModule,
+        configure: a.configure,
+        build: a.build,
+    }));
+}
+
+function resolveConfigs(root: Node, project: ProjectImpl): void {
+    project._configs = flattenUnique(root, (n) => n.configurer.configs).map((c) => ({
+        name: c.name,
+        importDir: c.importDir,
+        importModule: c.importModule,
+        platform: c.platform,
+        buildMode: c.buildMode,
+        runner: project.findRunner(c.runner) ?? project.runner('native'),
+        opener: project.findOpener(c.opener),
+        generator: c.generator,
+        arch: c.arch,
+        toolchainFile: c.toolchainFile,
+        cmakeIncludes: c.cmakeIncludes ?? [],
+        cmakeVariables: c.cmakeVariables ?? {},
+        environment: c.environment ?? {},
+        options: c.options ?? {},
+        includeDirectories: c.includeDirectories ?? [],
+        compileDefinitions: c.compileDefinitions ?? {},
+        compileOptions: c.compileOptions ?? [],
+        linkOptions: c.linkOptions ?? [],
+        compilers: c.compilers ?? [],
+        validate: c.validate ?? (() => ({ valid: true, hints: [] })),
+    }));
+}
+
+/*
 function mergeTransformArray<T0, T1>(
     into: T0[],
     from: T1[] | undefined,
@@ -556,24 +647,6 @@ export function resolveTargetJobs(ctx: Context): Job[] {
     });
 }
 
-export async function runJobs(project: Project, config: Config, target: Target) {
-    const ctx: Context = {
-        project,
-        config,
-        target,
-        aliasMap: util.buildTargetAliasMap(project, config, target),
-        host: { platform: host.platform(), arch: host.arch() },
-    };
-    const jobs = resolveTargetJobs(ctx);
-    for (const job of jobs) {
-        try {
-            await job.func(job.inputs, job.outputs, job.args);
-        } catch (err) {
-            log.panic(`job '${job.name}' in target '${target.name}' failed with ${err}`);
-        }
-    }
-}
-
 function resolveAliasOrPath(
     item: string,
     baseDir: string,
@@ -689,3 +762,4 @@ export function isTargetEnabled(project: Project, config: Config, target: Target
         host: { platform: host.platform(), arch: host.arch() },
     });
 }
+*/

@@ -8,7 +8,10 @@ import { fs, path } from '../../deps.ts';
  * @param items - an array of NamedItem-derived items
  * @returns found item, or undefined if not found
  */
-export function find<T extends NamedItem>(name: string, items: T[]): T | undefined {
+export function find<T extends NamedItem>(name: string | undefined, items: T[]): T | undefined {
+    if (name === undefined) {
+        return undefined;
+    }
     return items.find((elm) => elm.name === name);
 }
 

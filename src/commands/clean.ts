@@ -54,7 +54,7 @@ function parseArgs(project: Project): Config[] {
         return true;
     });
     if (all) {
-        return project.configs;
+        return project.configs();
     } else if (args.length === 0) {
         return [project.activeConfig()];
     } else {

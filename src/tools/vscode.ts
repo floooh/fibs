@@ -1,4 +1,5 @@
-import { log, RunOptions, RunResult, ToolDesc, util } from '../../index.ts';
+import { log, util } from '../lib/index.ts';
+import { RunOptions, RunResult, ToolDesc } from '../types.ts';
 
 export const vscodeTool: ToolDesc = {
     name: 'vscode',

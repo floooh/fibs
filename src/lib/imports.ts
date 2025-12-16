@@ -71,7 +71,7 @@ export async function importModulesFromDir(
 }
 
 export function hasImportErrors(project: Project): boolean {
-    return project.imports.some((imp) => (imp.importErrors.length > 0));
+    return project.imports().some((imp) => (imp.importErrors.length > 0));
 }
 
 export async function validate(
@@ -124,7 +124,7 @@ function saveImportLinks(project: Project, links: Record<string, string | undefi
 }
 
 function linkUnlink(project: Project, importName: string, path: string | undefined): string | undefined {
-    if (!util.find(importName, project.imports)) {
+    if (!project.findImport(importName)) {
         log.panic(`import '${importName}' not found (run 'fibs list imports')`);
     }
     if (path !== undefined) {

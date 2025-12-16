@@ -16,7 +16,6 @@ async function run(project: Project) {
     if (imports.hasImportErrors(project)) {
         log.panic('import errors detected');
     }
-    const adapter = project.adapter('cmake');
     const config = project.activeConfig();
     let forceRebuild;
     let buildTarget;
@@ -33,5 +32,5 @@ async function run(project: Project) {
         }
     }
     await conf.validate(project, config, { silent: false, abortOnError: true });
-    await proj.build(project, config, adapter, { forceRebuild, buildTarget });
+    await proj.build({ forceRebuild, buildTarget });
 }

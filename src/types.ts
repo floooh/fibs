@@ -25,14 +25,8 @@ export type Configurer = {
     hostArch(): Arch;
 };
 
-export type ProjectInfo = {
+export type Project = {
     name(): string;
-    config(configName: string): Config;
-    target(targetName: string): Target;
-    adapter(adapterName: string): Adapter;
-    command(commandName: string): Command;
-    import(importName: string): Import;
-    tool(toolName: string): Tool;
     activeConfig(): Config;
     arch(): Arch;
     platform(): Platform;
@@ -40,6 +34,7 @@ export type ProjectInfo = {
     buildMode(): BuildMode;
     hostPlatform(): Platform;
     hostArch(): Arch;
+
     dir(): string;
     fibsDir(): string;
     sdkDir(): string;
@@ -49,6 +44,45 @@ export type ProjectInfo = {
     targetBuildDir(targetName: string, configName?: string): string;
     targetDistDir(targetName: string, configName?: string): string;
     targetAssetsDir(targetName: string, configName?: string): string;
+
+    settings(): Setting[];
+    cmakeVariables(): CmakeVariable[];
+    configs(): Config[];
+    targets(): Target[];
+    adapters(): Adapter[];
+    commands(): Command[];
+    imports(): Import[];
+    tools(): Tool[];
+    jobs(): JobBuilder[];
+    runners(): Runner[];
+    openers(): Opener[];
+
+    /* FIXME
+    includeDirectories: string[];
+    compileDefinitions: Record<string, string>;
+    compileOptions: string[];
+    linkOptions: string[];
+    */
+
+    findSetting(name: string | undefined): Setting | undefined;
+    setting(name: string): Setting;
+    findConfig(name: string | undefined): Config | undefined;
+    config(name: string): Config;
+    findTarget(name: string | undefined): Target | undefined;
+    target(name: string): Target;
+    findAdapter(name: string | undefined): Adapter | undefined;
+    adapter(name: string): Adapter;
+    findCommand(name: string | undefined): Command | undefined;
+    command(name: string): Command;
+    findImport(name: string | undefined): Import | undefined;
+    import(name: string): Import;
+    findTool(name: string | undefined): Tool | undefined;
+    tool(name: string): Tool;
+    findRunner(name: string | undefined): Runner | undefined;
+    runner(name: string): Runner;
+    findOpener(name: string | undefined): Opener | undefined;
+    opener(name: string): Opener;
+
     isArch(arch: Arch): boolean;
     isPlatform(platform: Platform): boolean;
     isWindows(): boolean;
@@ -73,7 +107,7 @@ export type ProjectInfo = {
     isRelease(): boolean;
 };
 
-export type Builder = ProjectInfo & {
+export type Builder = Project & {
     addTarget(target: ArgOrFunc<TargetDesc>): void;
     addIncludeDirectory(dir: string): void;
     addCompileDefinition(key: string, value?: string): void;
@@ -112,24 +146,6 @@ export type Language = 'c' | 'cxx';
 export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll' | 'interface';
 
 export type BuildMode = 'release' | 'debug';
-
-export type Project = ProjectInfo & {
-    settings: Setting[];
-    cmakeVariables: CmakeVariable[];
-    includeDirectories: string[];
-    compileDefinitions: Record<string, string>;
-    compileOptions: string[];
-    linkOptions: string[];
-    imports: Import[];
-    targets: Target[];
-    commands: Command[];
-    tools: Tool[];
-    jobs: JobBuilder[];
-    runners: Runner[];
-    openers: Opener[];
-    configs: Config[];
-    adapters: Adapter[];
-};
 
 export type NamedItem = {
     name: string;
@@ -177,8 +193,8 @@ export type ConfigDesc = NamedItem & {
 export type Config = NamedItem & ImportedItem & {
     platform: Platform;
     buildMode: BuildMode;
-    runner: string;
-    opener?: string;
+    runner: Runner;
+    opener?: Opener;
     generator?: Generator;
     arch?: Arch;
     toolchainFile?: string;

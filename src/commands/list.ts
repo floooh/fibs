@@ -1,4 +1,5 @@
-import { CommandDesc, imports, log, proj, Project, TargetType } from '../../index.ts';
+import { imports, log } from '../lib/index.ts';
+import { CommandDesc, Project, TargetType } from '../types.ts';
 import { colors } from '../../deps.ts';
 
 export const listCmd: CommandDesc = { name: 'list', help, run };
@@ -24,50 +25,58 @@ async function run(project: Project) {
         log.section('settings');
     }
     if (args.all || args.settings) {
-        project.settings.forEach((s) => {
+        for (const s of project.settings()) {
             log.print(`${s.name}: ${s.value} (default: ${s.default})`);
-        });
+        }
     }
     if (args.all) {
         log.print();
         log.section('configs');
     }
     if (args.all || args.configs) {
-        project.configs.forEach((c) => log.print(c.name));
+        for (const c of project.configs()) {
+            log.print(c.name);
+        }
     }
     if (args.all) {
         log.print();
         log.section('imports');
     }
     if (args.all || args.imports) {
-        project.imports.toReversed().forEach((i) => {
+        for (const i of project.imports().toReversed()) {
             if (imports.isLinked(project, i.name)) {
                 log.print(`${i.name}: ${colors.brightBlue(`link => ${i.importDir}`)}`);
             } else {
                 log.print(`${i.name}: ${i.importDir}`);
             }
-        });
+        }
     }
     if (args.all) {
         log.print();
         log.section('runners');
     }
     if (args.all || args.runners) {
-        project.runners.forEach((r) => log.print(r.name));
+        for (const r of project.runners()) {
+            log.print(r.name)
+        }
     }
     if (args.all) {
         log.print();
         log.section('openers');
     }
     if (args.all || args.openers) {
-        project.openers.forEach((o) => log.print(o.name));
+        for (const o of project.openers()) {
+            log.print(o.name)
+        }
     }
     if (args.all) {
         log.print();
         log.section('jobs');
     }
     if (args.all || args.jobs) {
-        project.jobs.forEach((j) => j.help());
+        for (const j of project.jobs()) {
+            j.help()
+        }
     }
     if (args.all) {
         log.print();
@@ -76,19 +85,11 @@ async function run(project: Project) {
     if (args.all || (args.targetTypes.length > 0)) {
         // FIXME FIXME FIXME
         const types = allTargetTypes;
-        const targets = project.targets;
-        const config = project.activeConfig();
         for (const type of types) {
-            for (const target of targets) {
+            for (const target of project.targets()) {
                 if ((target.type === type) && (args.targetTypes.includes(type))) {
                     const str = `${target.name} (${target.type})`;
-                    if (proj.isTargetEnabled(project, config, target)) {
-                        log.print(str);
-                    } else {
-                        if (args.disabled) {
-                            log.print(colors.gray(colors.strikethrough(str)));
-                        }
-                    }
+                    log.print(str);
                 }
             }
         }

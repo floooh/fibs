@@ -22,8 +22,7 @@ async function run(project: Project) {
         log.panic(`don't know how to open config '${config.name}' (config has undefined runner)`);
     }
     if (!util.dirExists(project.buildDir(config.name))) {
-        const adapter = project.adapter('cmake');
-        await proj.configure(project, config, adapter, {});
+        await proj.generate();
     }
     await config.opener.open(project, config);
 }

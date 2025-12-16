@@ -23,21 +23,21 @@ export class ProjectImpl implements Project {
     _rootDir: string;
     _arch: Arch = 'unknown-arch';
     _compiler: Compiler = 'unknown-compiler';
-    cmakeVariables: CmakeVariable[] = [];
-    includeDirectories: string[] = [];
-    compileDefinitions: Record<string, string> = {};
-    compileOptions: string[] = [];
-    linkOptions: string[] = [];
-    imports: Import[] = [];
-    targets: Target[] = [];
-    commands: Command[] = [];
-    tools: Tool[] = [];
-    jobs: JobBuilder[] = [];
-    runners: Runner[] = [];
-    openers: Opener[] = [];
-    configs: Config[] = [];
-    adapters: Adapter[] = [];
-    settings: Setting[] = [];
+    _cmakeVariables: CmakeVariable[] = [];
+    _includeDirectories: string[] = [];
+    _compileDefinitions: Record<string, string> = {};
+    _compileOptions: string[] = [];
+    _linkOptions: string[] = [];
+    _imports: Import[] = [];
+    _targets: Target[] = [];
+    _commands: Command[] = [];
+    _tools: Tool[] = [];
+    _jobs: JobBuilder[] = [];
+    _runners: Runner[] = [];
+    _openers: Opener[] = [];
+    _configs: Config[] = [];
+    _adapters: Adapter[] = [];
+    _settings: Setting[] = [];
 
     constructor(rootDir: string) {
         this._rootDir = rootDir;
@@ -52,54 +52,6 @@ export class ProjectImpl implements Project {
 
     activeConfig(): Config {
         return this.config(settings.get(this, 'config'));
-    }
-
-    config(configName: string): Config {
-        const config = util.find(configName, this.configs);
-        if (config === undefined) {
-            log.panic(`unknown config ${configName} (run 'fibs list configs)`);
-        }
-        return config;
-    }
-
-    target(targetName: string): Target {
-        const target = util.find(targetName, this.targets);
-        if (target === undefined) {
-            log.panic(`unknown target ${targetName} (run 'fibs list targets)`);
-        }
-        return target;
-    }
-
-    adapter(adapterName: string): Adapter {
-        const adapter = util.find(adapterName, this.adapters);
-        if (adapter === undefined) {
-            log.panic(`unknown adapter ${adapterName} (run 'fibs list adapters)`);
-        }
-        return adapter;
-    }
-
-    command(commandName: string): Command {
-        const command = util.find(commandName, this.commands);
-        if (command === undefined) {
-            log.panic(`unknown command ${commandName} (run 'fibs list commands)`);
-        }
-        return command;
-    }
-
-    import(importName: string): Import {
-        const imp = util.find(importName, this.imports);
-        if (imp === undefined) {
-            log.panic(`unknown import ${importName} (run 'fibs list imports)`);
-        }
-        return imp;
-    }
-
-    tool(toolName: string): Tool {
-        const tool = util.find(toolName, this.tools);
-        if (tool === undefined) {
-            log.panic(`unknown tool ${toolName} (run 'fibs list tools)`);
-        }
-        return tool;
     }
 
     arch(): Arch {
@@ -185,6 +137,158 @@ export class ProjectImpl implements Project {
         } else {
             return this.distDir(configName);
         }
+    }
+
+    settings(): Setting[] {
+        return this._settings;
+    }
+
+    cmakeVariables(): CmakeVariable[] {
+        return this._cmakeVariables;
+    }
+
+    configs(): Config[] {
+        return this._configs;
+    }
+
+    targets(): Target[] {
+        return this._targets;
+    }
+
+    adapters(): Adapter[] {
+        return this._adapters;
+    }
+
+    commands(): Command[] {
+        return this._commands;
+    }
+
+    imports(): Import[] {
+        return this._imports;
+    }
+
+    tools(): Tool[] {
+        return this._tools;
+    }
+
+    jobs(): JobBuilder[] {
+        return this._jobs;
+    }
+
+    runners(): Runner[] {
+        return this._runners;
+    }
+
+    openers(): Opener[] {
+        return this._openers;
+    }
+
+    findSetting(name: string | undefined): Setting | undefined {
+        return util.find(name, this._settings);
+    }
+
+    setting(name: string): Setting {
+        const setting = this.findSetting(name);
+        if (setting === undefined) {
+            log.panic(`unknown setting ${name} (run 'fibs list settings')`);
+        }
+        return setting;
+    }
+
+    findConfig(name: string | undefined): Config | undefined {
+        return util.find(name, this._configs);
+    }
+
+    config(name: string): Config {
+        const config = this.findConfig(name);
+        if (config === undefined) {
+            log.panic(`unknown config ${name} (run 'fibs list configs)`);
+        }
+        return config;
+    }
+
+    findTarget(name: string | undefined): Target | undefined {
+        return util.find(name, this._targets);
+    }
+
+    target(name: string): Target {
+        const target = this.findTarget(name);
+        if (target === undefined) {
+            log.panic(`unknown target ${name} (run 'fibs list targets)`);
+        }
+        return target;
+    }
+
+    findAdapter(name: string | undefined): Adapter | undefined {
+        return util.find(name, this._adapters);
+    }
+
+    adapter(name: string): Adapter {
+        const adapter = this.findAdapter(name);
+        if (adapter === undefined) {
+            log.panic(`unknown adapter ${name} (run 'fibs list adapters)`);
+        }
+        return adapter;
+    }
+
+    findCommand(name: string | undefined): Command | undefined {
+        return util.find(name, this._commands);
+    }
+
+    command(name: string): Command {
+        const command = this.findCommand(name);
+        if (command === undefined) {
+            log.panic(`unknown command ${name} (run 'fibs list commands)`);
+        }
+        return command;
+    }
+
+    findImport(name: string | undefined): Import | undefined {
+        return util.find(name, this._imports);
+    }
+
+    import(name: string): Import {
+        const imp = this.findImport(name);
+        if (imp === undefined) {
+            log.panic(`unknown import ${name} (run 'fibs list imports)`);
+        }
+        return imp;
+    }
+
+    findTool(name: string | undefined): Tool | undefined {
+        return util.find(name, this._tools);
+    }
+
+    tool(name: string): Tool {
+        const tool = this.findTool(name);
+        if (tool === undefined) {
+            log.panic(`unknown tool ${name} (run 'fibs list tools)`);
+        }
+        return tool;
+    }
+
+    findRunner(name: string | undefined): Runner | undefined {
+        return util.find(name, this._runners);
+    }
+
+    runner(name: string): Runner {
+        const runner = this.findRunner(name);
+        if (runner === undefined) {
+            log.panic(`unknown runner ${name} (run 'fibs list runners)`);
+        }
+        return runner;
+    }
+
+    findOpener(name: string | undefined): Opener | undefined {
+        return util.find(name, this._openers);
+    }
+
+    opener(name: string): Opener {
+        const opener = this.findOpener(name);
+        if (opener === undefined) {
+            log.panic(`unknown opener ${name} (run 'fibs list openers)`);
+        }
+        return opener;
     }
 
     isArch(arch: Arch): boolean {
