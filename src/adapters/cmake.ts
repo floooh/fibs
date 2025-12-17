@@ -7,6 +7,7 @@ import {
     BuildMode,
     Compiler,
     Config,
+    Language,
     Project,
 } from '../types.ts';
 
@@ -247,23 +248,34 @@ function genProlog(project: Project, config: Config): string {
     return str;
 }
 
+function expr(l: Language | undefined, str: string): string {
+    switch (l) {
+        case 'c':
+            return `$<$<COMPILE_LANGUAGE:C>:${str}>`;
+        case 'cxx':
+            return `$<$<COMPILE_LANGUAGE:CXX>:${str}>`;
+        default:
+            return str;
+    }
+}
+
 function genIncludeDirectories(project: Project, config: Config): string {
     let str = '';
-    const dirs = [...project.includeDirectories(), ...config.includeDirectories];
-    if (dirs.length > 0) {
-        str += 'include_directories(';
-        dirs.forEach((dir) => str += `\n"  ${dir}"`);
-        str += ')\n';
-    }
+    const items = [...project.includeDirectories(), ...config.includeDirectories];
+    items.forEach((item) =>
+        str += `include_directories(${item.system ? 'SYSTEM' : ''} ${expr(item.language, item.dir)})\n`
+    );
     return str;
 }
 
 function genCompileDefinitions(project: Project, config: Config): string {
     let str = '';
-    const defs = { ...project.compileDefinitions(), ...config.compileDefinitions };
-    if (defs.length > 0) {
+    const items = [...project.compileDefinitions(), ...config.compileDefinitions];
+    if (items.length > 0) {
         str += 'add_compile_definitions(';
-        defs.forEach((def) => `\n  ${def.key}=${def.val}`);
+        items.forEach((item) => {
+            str += `\n  ${expr(item.language, `${item.key}=${item.val}`)}`;
+        });
         str += ')\n';
     }
     return str;
@@ -271,10 +283,12 @@ function genCompileDefinitions(project: Project, config: Config): string {
 
 function genCompileOptions(project: Project, config: Config): string {
     let str = '';
-    const opts = [...project.compileOptions(), ...config.compileOptions];
-    if (opts.length > 0) {
+    const items = [...project.compileOptions(), ...config.compileOptions];
+    if (items.length > 0) {
         str += 'add_compile_options(';
-        opts.forEach((opt) => str += `\n  ${opt}`);
+        items.forEach((item) => {
+            str += `\n  ${expr(item.language, item.opt)}`;
+        });
         str += ')\n';
     }
     return str;
@@ -282,10 +296,10 @@ function genCompileOptions(project: Project, config: Config): string {
 
 function genLinkOptions(project: Project, config: Config): string {
     let str = '';
-    const opts = [...project.linkOptions(), ...config.linkOptions];
-    if (opts.length > 0) {
+    const items = [...project.linkOptions(), ...config.linkOptions];
+    if (items.length > 0) {
         str += 'add_link_options(';
-        opts.forEach((opt) => str += `\n  ${opt}`);
+        items.forEach((item) => str += `\n  ${item.opt}`);
         str += ')\n';
     }
     return str;

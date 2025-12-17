@@ -206,12 +206,10 @@ export type CompileOption = ImportedItem & {
 export type LinkOptionsDesc = {
     opts: string[];
     scope?: Scope;
-    language?: Language;
 };
 export type LinkOption = ImportedItem & {
     opt: string;
     scope?: Scope;
-    language?: Language;
 }
 
 export type SettingDesc = NamedItem & {

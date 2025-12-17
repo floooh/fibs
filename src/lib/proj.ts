@@ -515,7 +515,6 @@ function resolveConfigLinkOptions(c: Resolved<ConfigDesc>): LinkOption[] {
         items.opts.map((opt) => ({
             opt,
             scope: items.scope,
-            language: items.language,
             importDir: c.importDir,
             importModule: c.importModule,
         }))
@@ -528,7 +527,6 @@ function resolveBuilderLinkOptions(builders: BuilderImpl[]): LinkOption[] {
             items.opts.map((opt) => ({
                 opt,
                 scope: items.scope,
-                language: items.language,
                 importDir: builder._importDir,
                 importModule: builder._importModule,
             }))
@@ -544,7 +542,6 @@ function resolveTargetLinkOptions(builder: BuilderImpl, t: TargetDesc): LinkOpti
         items.opts.map((opt) => ({
             opt,
             scope: items.scope,
-            language: items.language,
             importDir: builder._importDir,
             importModule: builder._importModule,
         }))
