@@ -16,6 +16,10 @@ import {
     Target,
     Tool,
     FibsModule,
+    IncludeDirectory,
+    CompileDefinition,
+    CompileOption,
+    LinkOption,
 } from '../types.ts';
 import { host, log, settings, util } from '../lib/index.ts';
 
@@ -25,10 +29,10 @@ export class ProjectImpl implements Project {
     _rootDir: string;
     _compiler: Compiler = 'unknown-compiler';
     _cmakeVariables: CmakeVariable[] = [];
-    _includeDirectories: string[] = [];
-    _compileDefinitions: Record<string, string> = {};
-    _compileOptions: string[] = [];
-    _linkOptions: string[] = [];
+    _includeDirectories: IncludeDirectory[] = [];
+    _compileDefinitions: CompileDefinition[] = [];
+    _compileOptions: CompileOption[] = [];
+    _linkOptions: LinkOption[] = [];
     _imports: Import[] = [];
     _targets: Target[] = [];
     _commands: Command[] = [];
@@ -176,19 +180,19 @@ export class ProjectImpl implements Project {
         return this._openers;
     }
 
-    includeDirectories(): string[] {
+    includeDirectories(): IncludeDirectory[] {
         return this._includeDirectories;
     }
 
-    compileDefinitions(): Record<string, string> {
+    compileDefinitions(): CompileDefinition[] {
         return this._compileDefinitions;
     }
 
-    compileOptions(): string[] {
+    compileOptions(): CompileOption[] {
         return this._compileOptions;
     }
 
-    linkOptions(): string[] {
+    linkOptions(): LinkOption[] {
         return this._linkOptions;
     }
 

@@ -17,9 +17,9 @@ export type Configurer = {
     addTool(tool: ArgOrFunc<ToolDesc>): void;
     addRunner(runner: ArgOrFunc<RunnerDesc>): void;
     addOpener(opener: ArgOrFunc<OpenerDesc>): void;
-    addConfig(config: ArgOrFunc<ConfigDesc>): void;
     addAdapter(adapter: ArgOrFunc<AdapterDesc>): void;
     addSetting(setting: ArgOrFunc<SettingDesc>): void;
+    addConfig(config: ArgOrFunc<ConfigDesc>): void;
 
     hostPlatform(): Platform;
     hostArch(): Arch;
@@ -64,10 +64,10 @@ export type Project = {
     runners(): Runner[];
     openers(): Opener[];
 
-    includeDirectories(): string[];
-    compileDefinitions(): Record<string, string>;
-    compileOptions(): string[];
-    linkOptions(): string[];
+    includeDirectories(): IncludeDirectory[];
+    compileDefinitions(): CompileDefinition[];
+    compileOptions(): CompileOption[];
+    linkOptions(): LinkOption[];
 
     findSetting(name: string | undefined): Setting | undefined;
     setting(name: string): Setting;
@@ -111,12 +111,12 @@ export type Project = {
     isRelease(): boolean;
 };
 
-export type Builder = Project & {
+export type Builder = Omit<Project, 'targets'|'includeDirectories'|'compileDefinitions'|'compileOptions'|'linkOptions'> & {
+    addIncludeDirectories(dirs: IncludeDirectoriesDesc[]): void;
+    addCompileDefinitions(defs: CompileDefinitionsDesc[]): void;
+    addCompileOptions(opts: CompileOptionsDesc[]): void;
+    addLinkOptions(opts: LinkOptionsDesc[]): void;
     addTarget(target: ArgOrFunc<TargetDesc>): void;
-    addIncludeDirectory(dir: string): void;
-    addCompileDefinition(key: string, value: string): void;
-    addCompileOption(opt: string): void;
-    addLinkOption(opt: string): void;
 };
 
 export type FibsModule = {
@@ -151,6 +151,8 @@ export type TargetType = 'plain-exe' | 'windowed-exe' | 'lib' | 'dll' | 'interfa
 
 export type BuildMode = 'release' | 'debug';
 
+export type Scope = 'interface' | 'public' | 'private';
+
 export type NamedItem = {
     name: string;
 };
@@ -165,11 +167,57 @@ export type CmakeVariableDesc = NamedItem & {
 };
 export type CmakeVariable = ImportedItem & CmakeVariableDesc;
 
+export type IncludeDirectoriesDesc = {
+    dirs: string[];
+    scope?: Scope;
+    system?: boolean;
+    language?: Language;
+};
+export type IncludeDirectory = ImportedItem & {
+    dir: string;
+    scope?: Scope;
+    system: boolean;
+    language?: Language;
+};
+
+export type CompileDefinitionsDesc = {
+    defs: Record<string, string>;
+    scope?: Scope;
+    language?: Language;
+};
+export type CompileDefinition = ImportedItem & {
+    key: string;
+    val: string;
+    scope?: Scope;
+    language?: Language;
+}
+
+export type CompileOptionsDesc = {
+    opts: string[];
+    scope?: Scope;
+    language?: Language;
+};
+export type CompileOption = ImportedItem & {
+    opt: string;
+    scope?: Scope;
+    language?: Language;
+}
+
+export type LinkOptionsDesc = {
+    opts: string[];
+    scope?: Scope;
+    language?: Language;
+};
+export type LinkOption = ImportedItem & {
+    opt: string;
+    scope?: Scope;
+    language?: Language;
+}
+
 export type SettingDesc = NamedItem & {
     default: string;
     validate(project: Project, value: string): { valid: boolean; hint: string };
 };
-
 export type Setting = NamedItem & SettingDesc & {
     value: string;
 };
@@ -186,10 +234,10 @@ export type ConfigDesc = NamedItem & {
     cmakeVariables?: Record<string, string | boolean>;
     environment?: Record<string, string>;
     options?: Record<string, any>;
-    includeDirectories?: string[];
-    compileDefinitions?: Record<string, string>;
-    compileOptions?: string[];
-    linkOptions?: string[];
+    includeDirectories?: IncludeDirectoriesDesc[];
+    compileDefinitions?: CompileDefinitionsDesc[];
+    compileOptions?: CompileOptionsDesc[];
+    linkOptions?: LinkOptionsDesc[];
     compilers?: Compiler[];
     validate?(project: Project): { valid: boolean; hints: string[] };
 };
@@ -206,10 +254,10 @@ export type Config = NamedItem & ImportedItem & {
     cmakeVariables: Record<string, string | boolean>;
     environment: Record<string, string>;
     options: Record<string, any>;
-    includeDirectories: string[];
-    compileDefinitions: Record<string, string>;
-    compileOptions: string[];
-    linkOptions: string[];
+    includeDirectories: IncludeDirectory[];
+    compileDefinitions: CompileDefinition[];
+    compileOptions: CompileOption[];
+    linkOptions: LinkOption[];
     compilers: Compiler[];
     validate(project: Project): { valid: boolean; hints: string[] };
 };
@@ -248,28 +296,28 @@ export type TargetJob = {
 };
 
 export type TargetDesc = NamedItem & {
-    type?: TargetType;
+    type: TargetType;
     dir?: string;
     sources?: string[];
     deps?: string[];
     libs?: string[];
-    includeDirectories?: TargetArrayItemsDesc;
-    compileDefinitions?: TargetRecordItemsDesc;
-    compileOptions?: TargetArrayItemsDesc;
-    linkOptions?: TargetArrayItemsDesc;
+    includeDirectories?: IncludeDirectoriesDesc[];
+    compileDefinitions?: CompileDefinitionsDesc[];
+    compileOptions?: CompileOptionsDesc[];
+    linkOptions?: LinkOptionsDesc[];
     jobs?: TargetJob[];
 };
 
 export type Target = NamedItem & ImportedItem & {
     type: TargetType;
-    dir: string;
+    dir?: string;
     sources: string[];
     deps: string[];
     libs: string[];
-    includeDirectories: TargetArrayItems;
-    compileDefinitions: TargetRecordItems;
-    compileOptions: TargetArrayItems;
-    linkOptions: TargetArrayItems;
+    includeDirectories: IncludeDirectory[];
+    compileDefinitions: CompileDefinition[];
+    compileOptions: CompileOption[];
+    linkOptions: LinkOption[];
     jobs: TargetJob[];
 };
 

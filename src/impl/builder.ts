@@ -7,11 +7,15 @@ import {
     BuildMode,
     CmakeVariable,
     Command,
+    CompileDefinitionsDesc,
+    CompileOptionsDesc,
     Compiler,
     Config,
     getArg,
     Import,
+    IncludeDirectoriesDesc,
     JobBuilder,
+    LinkOptionsDesc,
     Opener,
     Platform,
     Project,
@@ -20,18 +24,23 @@ import {
     Target,
     TargetDesc,
     Tool,
+    FibsModule,
 } from '../types.ts';
 
 export class BuilderImpl implements Builder {
     _project: Project;
+    _importDir: string;
+    _importModule: FibsModule;
     _targets: TargetDesc[] = [];
-    _includeDirectories: string[] = [];
-    _compileDefinitions: Record<string, string> = {};
-    _compileOptions: string[] = [];
-    _linkOptions: string[] = [];
+    _includeDirectories: IncludeDirectoriesDesc[] = [];
+    _compileDefinitions: CompileDefinitionsDesc[] = [];
+    _compileOptions: CompileOptionsDesc[] = [];
+    _linkOptions: LinkOptionsDesc[] = [];
 
-    constructor(project: Project) {
+    constructor(project: Project, importDir: string, importModule: FibsModule) {
         this._project = project;
+        this._importDir = importDir;
+        this._importModule = importModule;
     }
     addTarget(arg: ArgOrFunc<TargetDesc>): void {
         const target = getArg(arg);
@@ -40,17 +49,17 @@ export class BuilderImpl implements Builder {
         }
         this._targets.push(target);
     }
-    addIncludeDirectory(dir: string): void {
-        this._includeDirectories.push(dir);
+    addIncludeDirectories(dirs: IncludeDirectoriesDesc[]): void {
+        this._includeDirectories.push(...dirs);
     }
-    addCompileDefinition(key: string, value: string): void {
-        this._compileDefinitions[key] = value;
+    addCompileDefinitions(defs: CompileDefinitionsDesc[]): void {
+        this._compileDefinitions.push(...defs);
     }
-    addCompileOption(opt: string): void {
-        this._compileOptions.push(opt);
+    addCompileOptions(opts: CompileOptionsDesc[]): void {
+        this._compileOptions.push(...opts);
     }
-    addLinkOption(opt: string): void {
-        this._linkOptions.push(opt);
+    addLinkOptions(opts: LinkOptionsDesc[]): void {
+        this._linkOptions.push(...opts);
     }
     name(): string {
         return this._project.name();
@@ -112,9 +121,6 @@ export class BuilderImpl implements Builder {
     configs(): Config[] {
         return this._project.configs();
     }
-    targets(): Target[] {
-        return this._project.targets();
-    }
     adapters(): Adapter[] {
         return this._project.adapters();
     }
@@ -135,18 +141,6 @@ export class BuilderImpl implements Builder {
     }
     openers(): Opener[] {
         return this._project.openers();
-    }
-    includeDirectories(): string[] {
-        return this._project.includeDirectories();
-    }
-    compileDefinitions(): Record<string, string> {
-        return this._project.compileDefinitions();
-    }
-    compileOptions(): string[] {
-        return this._project.compileOptions();
-    }
-    linkOptions(): string[] {
-        return this._project.linkOptions();
     }
     findSetting(name: string | undefined): Setting | undefined {
         return this._project.findSetting(name);

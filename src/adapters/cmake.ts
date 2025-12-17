@@ -263,10 +263,9 @@ function genIncludeDirectories(project: Project, config: Config): string {
 function genCompileDefinitions(project: Project, config: Config): string {
     let str = '';
     const defs = { ...project.compileDefinitions(), ...config.compileDefinitions };
-    const items = Object.entries<string>(defs);
-    if (items.length > 0) {
+    if (defs.length > 0) {
         str += 'add_compile_definitions(';
-        items.forEach(([key, val]) => `\n  ${key}=${val}`);
+        defs.forEach((def) => `\n  ${def.key}=${def.val}`);
         str += ')\n';
     }
     return str;
