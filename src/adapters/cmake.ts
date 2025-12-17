@@ -63,7 +63,6 @@ export async function configure(project: Project, config: Config): Promise<Adapt
 export async function generate(project: Project, config: Config): Promise<void> {
     const cmakeListsPath = `${project.dir()}/CMakeLists.txt`;
     const cmakePresetsPath = `${project.dir()}/CMakePresets.json`;
-    log.info(`writing ${cmakeListsPath}`);
     try {
         Deno.writeTextFileSync(
             cmakeListsPath,
@@ -73,7 +72,6 @@ export async function generate(project: Project, config: Config): Promise<void> 
     } catch (err) {
         log.panic(`Failed writing ${cmakeListsPath}: `, err);
     }
-    log.info(`writing ${cmakePresetsPath}`);
     try {
         Deno.writeTextFileSync(
             cmakePresetsPath,
@@ -179,7 +177,7 @@ function genConfigurePresets(project: Project, config: Config, buildDir: string,
             environment: config.environment,
         });
     } else {
-        log.panic(`config '${config.name} is not valid for platform '${project.hostPlatform()}`);
+        log.panic(`config '${config.name} is not valid for platform '${project.hostPlatform()}'`);
     }
     return res;
 }

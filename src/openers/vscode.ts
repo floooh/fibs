@@ -40,7 +40,6 @@ function writeWorkspaceFile(project: Project, config: Config, vscodeDir: string)
         },
     };
     const path = `${vscodeDir}/${project.name}.code-workspace`;
-    log.info(`writing ${path}`);
     try {
         Deno.writeTextFileSync(path, JSON.stringify(ws, null, '  '));
     } catch (err) {
@@ -93,7 +92,6 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
     };
 
     const path = `${vscodeDir}/launch.json`;
-    log.info(`writing ${path}`);
     try {
         Deno.writeTextFileSync(path, JSON.stringify(launch, null, '  '));
     } catch (err) {

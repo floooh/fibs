@@ -1,4 +1,4 @@
-import { imports, log } from '../lib/index.ts';
+import { imports, log, proj } from '../lib/index.ts';
 import { CommandDesc, Project, TargetType } from '../types.ts';
 import { colors } from '../../deps.ts';
 
@@ -24,6 +24,7 @@ async function run(project: Project) {
     if (args.all) {
         log.section('settings');
     }
+    await proj.generateTargets();
     if (args.all || args.settings) {
         for (const s of project.settings()) {
             log.print(`${s.name}: ${s.value} (default: ${s.default})`);
@@ -83,7 +84,6 @@ async function run(project: Project) {
         log.section('targets');
     }
     if (args.all || (args.targetTypes.length > 0)) {
-        // FIXME FIXME FIXME
         const types = allTargetTypes;
         for (const type of types) {
             for (const target of project.targets()) {

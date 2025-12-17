@@ -40,13 +40,18 @@ export async function configure(rootModule: FibsModule, rootDir: string): Promis
     return projectImpl;
 }
 
-export async function generate(): Promise<void> {
-    log.info(`proj.generate called!`);
+export async function generateTargets(): Promise<void> {
     const adapter = projectImpl.adapter('cmake');
     const config = projectImpl.activeConfig();
     const configRes = await adapter.configure(projectImpl, config);
     projectImpl._compiler = configRes.compiler;
     await doBuildSetup(projectImpl, config);
+}
+
+export async function generate(): Promise<void> {
+    await generateTargets();
+    const adapter = projectImpl.adapter('cmake');
+    const config = projectImpl.activeConfig();
     await adapter.generate(projectImpl, config);
 }
 
@@ -59,7 +64,7 @@ export function validateTarget(
     target: Target,
     options: { silent?: boolean; abortOnError?: boolean },
 ): { valid: boolean; hints: string[] } {
-    log.info(`proj.validateTarget() called`);
+    log.info(`FIXME: proj.validateTarget() called`);
     return { valid: true, hints: [] };
 }
 
@@ -218,7 +223,7 @@ function resolveBuildItems(builders: BuilderImpl[], project: ProjectImpl, config
     project._compileDefinitions = resolveBuilderCompileDefinitions(builders);
     project._compileOptions = resolveBuilderCompileOptions(builders);
     project._linkOptions = resolveBuilderLinkOptions(builders);
-    resolveTargets(builders, project, config);
+    project._targets = resolveTargets(builders, project, config);
 }
 
 function resolveCmakeVariables(root: Node, project: ProjectImpl): void {
