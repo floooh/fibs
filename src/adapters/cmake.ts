@@ -248,22 +248,31 @@ function genProlog(project: Project, config: Config): string {
     return str;
 }
 
-function expr(l: Language | undefined, str: string): string {
+function expr(l: Language | undefined, m: BuildMode | undefined, str: string): string {
     switch (l) {
         case 'c':
-            return `$<$<COMPILE_LANGUAGE:C>:${str}>`;
+            str = `$<$<COMPILE_LANGUAGE:C>:${str}>`;
+            break;
         case 'cxx':
-            return `$<$<COMPILE_LANGUAGE:CXX>:${str}>`;
-        default:
-            return str;
+            str = `$<$<COMPILE_LANGUAGE:CXX>:${str}>`;
+            break;
     }
+    switch (m) {
+        case 'debug':
+            str = `$<$<CONFIG:DEBUG>:${str}>`;
+            break;
+        case 'release':
+            str = `$<$<CONFIG:RELEASE>:${str}>`;
+            break;
+    }
+    return str;
 }
 
 function genIncludeDirectories(project: Project, config: Config): string {
     let str = '';
     const items = [...project.includeDirectories(), ...config.includeDirectories];
     items.forEach((item) =>
-        str += `include_directories(${item.system ? 'SYSTEM' : ''} ${expr(item.language, item.dir)})\n`
+        str += `include_directories(${item.system ? 'SYSTEM' : ''} ${expr(item.language, item.buildMode, item.dir)})\n`
     );
     return str;
 }
@@ -274,7 +283,7 @@ function genCompileDefinitions(project: Project, config: Config): string {
     if (items.length > 0) {
         str += 'add_compile_definitions(';
         items.forEach((item) => {
-            str += `\n  ${expr(item.language, `${item.key}=${item.val}`)}`;
+            str += `\n  ${expr(item.language, item.buildMode, `${item.key}=${item.val}`)}`;
         });
         str += ')\n';
     }
@@ -287,7 +296,7 @@ function genCompileOptions(project: Project, config: Config): string {
     if (items.length > 0) {
         str += 'add_compile_options(';
         items.forEach((item) => {
-            str += `\n  ${expr(item.language, item.opt)}`;
+            str += `\n  ${expr(item.language, item.buildMode, item.opt)}`;
         });
         str += ')\n';
     }

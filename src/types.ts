@@ -1,25 +1,15 @@
-export type ArgOrFunc<T> = T | (() => T);
-
-export function getArg<T>(arg: ArgOrFunc<T>): T {
-    if (typeof arg === 'function') {
-        return (arg as () => T)();
-    } else {
-        return arg;
-    }
-}
-
 export type Configurer = {
     setProjectName(name: string): void;
     addCmakeVariable(name: string, value: string | boolean): void;
-    addImport(imp: ArgOrFunc<ImportDesc>): void;
-    addCommand(cmd: ArgOrFunc<CommandDesc>): void;
-    addJob(job: ArgOrFunc<JobBuilderDesc>): void;
-    addTool(tool: ArgOrFunc<ToolDesc>): void;
-    addRunner(runner: ArgOrFunc<RunnerDesc>): void;
-    addOpener(opener: ArgOrFunc<OpenerDesc>): void;
-    addAdapter(adapter: ArgOrFunc<AdapterDesc>): void;
-    addSetting(setting: ArgOrFunc<SettingDesc>): void;
-    addConfig(config: ArgOrFunc<ConfigDesc>): void;
+    addImport(imp: ImportDesc): void;
+    addCommand(cmd: CommandDesc): void;
+    addJob(job: JobBuilderDesc): void;
+    addTool(tool: ToolDesc): void;
+    addRunner(runner: RunnerDesc): void;
+    addOpener(opener: OpenerDesc): void;
+    addAdapter(adapter: AdapterDesc): void;
+    addSetting(setting: SettingDesc): void;
+    addConfig(config: ConfigDesc): void;
 
     hostPlatform(): Platform;
     hostArch(): Arch;
@@ -37,7 +27,6 @@ export type Project = {
     activeConfig(): Config;
     platform(): Platform;
     compiler(): Compiler;
-    buildMode(): BuildMode;
     hostPlatform(): Platform;
     hostArch(): Arch;
 
@@ -106,17 +95,28 @@ export type Project = {
     isAppleClang(): boolean;
     isMsvc(): boolean;
     isGcc(): boolean;
-    isBuildMode(buildMode: BuildMode): boolean;
-    isDebug(): boolean;
-    isRelease(): boolean;
 };
 
 export type Builder = Omit<Project, 'targets'|'includeDirectories'|'compileDefinitions'|'compileOptions'|'linkOptions'> & {
-    addIncludeDirectories(dirs: IncludeDirectoriesDesc[]): void;
-    addCompileDefinitions(defs: CompileDefinitionsDesc[]): void;
-    addCompileOptions(opts: CompileOptionsDesc[]): void;
-    addLinkOptions(opts: LinkOptionsDesc[]): void;
-    addTarget(target: ArgOrFunc<TargetDesc>): void;
+    addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
+    addCompileDefinitions(defs: CompileDefinitionsDesc): void;
+    addCompileOptions(opts: CompileOptionsDesc): void;
+    addLinkOptions(opts: LinkOptionsDesc): void;
+    addTarget(target: TargetDesc ): void;
+    addTarget(name: string, type: TargetType, fn: (t: TargetBuilder) => void): void;
+};
+
+export type TargetBuilder = {
+    setSourcesDir(dir: string): void;
+    addSource(source: string): void;
+    addSources(sources: string[]): void;
+    addDependency(dep: string): void;
+    addLinkLibrary(lib: string): void;
+    addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
+    addCompileDefinitions(defs: CompileDefinitionsDesc): void;
+    addCompileOptions(opts: CompileOptionsDesc): void;
+    addLinkOptions(opts: LinkOptionsDesc): void;
+    addJob(job: TargetJob): void;
 };
 
 export type FibsModule = {
@@ -172,45 +172,53 @@ export type IncludeDirectoriesDesc = {
     scope?: Scope;
     system?: boolean;
     language?: Language;
+    buildMode?: BuildMode;
 };
 export type IncludeDirectory = ImportedItem & {
     dir: string;
     scope?: Scope;
     system: boolean;
     language?: Language;
+    buildMode?: BuildMode;
 };
 
 export type CompileDefinitionsDesc = {
     defs: Record<string, string>;
     scope?: Scope;
     language?: Language;
+    buildMode?: BuildMode;
 };
 export type CompileDefinition = ImportedItem & {
     key: string;
     val: string;
     scope?: Scope;
     language?: Language;
+    buildMode?: BuildMode;
 }
 
 export type CompileOptionsDesc = {
     opts: string[];
     scope?: Scope;
     language?: Language;
+    buildMode?: BuildMode;
 };
 export type CompileOption = ImportedItem & {
     opt: string;
     scope?: Scope;
     language?: Language;
-}
+    buildMode?: BuildMode;
+};
 
 export type LinkOptionsDesc = {
     opts: string[];
     scope?: Scope;
+    buildMode?: BuildMode;
 };
 export type LinkOption = ImportedItem & {
     opt: string;
     scope?: Scope;
-}
+    buildMode?: BuildMode;
+};
 
 export type SettingDesc = NamedItem & {
     default: string;

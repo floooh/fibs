@@ -1,7 +1,6 @@
 import {
     Adapter,
     Arch,
-    BuildMode,
     CmakeVariable,
     Command,
     Compiler,
@@ -66,10 +65,6 @@ export class ProjectImpl implements Project {
 
     platform(): Platform {
         return this.activeConfig().platform;
-    }
-
-    buildMode(): BuildMode {
-        return this.activeConfig().buildMode;
     }
 
     hostPlatform(): Platform {
@@ -374,17 +369,5 @@ export class ProjectImpl implements Project {
 
     isGcc(): boolean {
         return this._compiler === 'gcc';
-    }
-
-    isBuildMode(buildMode: BuildMode): boolean {
-        return this.activeConfig().buildMode === buildMode;
-    }
-
-    isRelease(): boolean {
-        return this.isBuildMode('release');
-    }
-
-    isDebug(): boolean {
-        return this.isBuildMode('debug');
     }
 }

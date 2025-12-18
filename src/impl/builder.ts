@@ -2,16 +2,13 @@ import { log, util } from '../lib/index.ts';
 import {
     Adapter,
     Arch,
-    ArgOrFunc,
     Builder,
-    BuildMode,
     CmakeVariable,
     Command,
     CompileDefinitionsDesc,
     CompileOptionsDesc,
     Compiler,
     Config,
-    getArg,
     Import,
     IncludeDirectoriesDesc,
     JobBuilder,
@@ -25,7 +22,10 @@ import {
     TargetDesc,
     Tool,
     FibsModule,
+    TargetType,
+    TargetBuilder,
 } from '../types.ts';
+import { TargetBuilderImpl } from './target.ts';
 
 export class BuilderImpl implements Builder {
     _project: Project;
@@ -42,24 +42,31 @@ export class BuilderImpl implements Builder {
         this._importDir = importDir;
         this._importModule = importModule;
     }
-    addTarget(arg: ArgOrFunc<TargetDesc>): void {
-        const target = getArg(arg);
+    addTarget(target: TargetDesc | string, type?: TargetType, fn?: (t: TargetBuilder) => void): void {
+        if (typeof target === 'string') {
+            if ((type === undefined) || (fn === undefined)) {
+                throw Error('Builder.addTarget argument mismatch');
+            }
+            const b = new TargetBuilderImpl(target, type);
+            fn(b);
+            target = b.desc;
+        }
         if (util.find(target.name, this._targets)) {
             log.panic(`duplicate target: ${target.name}`);
         }
         this._targets.push(target);
     }
-    addIncludeDirectories(dirs: IncludeDirectoriesDesc[]): void {
-        this._includeDirectories.push(...dirs);
+    addIncludeDirectories(dirs: IncludeDirectoriesDesc): void {
+        this._includeDirectories.push(dirs);
     }
-    addCompileDefinitions(defs: CompileDefinitionsDesc[]): void {
-        this._compileDefinitions.push(...defs);
+    addCompileDefinitions(defs: CompileDefinitionsDesc): void {
+        this._compileDefinitions.push(defs);
     }
-    addCompileOptions(opts: CompileOptionsDesc[]): void {
-        this._compileOptions.push(...opts);
+    addCompileOptions(opts: CompileOptionsDesc): void {
+        this._compileOptions.push(opts);
     }
-    addLinkOptions(opts: LinkOptionsDesc[]): void {
-        this._linkOptions.push(...opts);
+    addLinkOptions(opts: LinkOptionsDesc): void {
+        this._linkOptions.push(opts);
     }
     name(): string {
         return this._project.name();
@@ -72,9 +79,6 @@ export class BuilderImpl implements Builder {
     }
     compiler(): Compiler {
         return this._project.compiler();
-    }
-    buildMode(): BuildMode {
-        return this._project.buildMode();
     }
     hostPlatform(): Platform {
         return this._project.hostPlatform();
@@ -249,14 +253,5 @@ export class BuilderImpl implements Builder {
     }
     isGcc(): boolean {
         return this._project.isGcc();
-    }
-    isBuildMode(buildMode: BuildMode): boolean {
-        return this._project.isBuildMode(buildMode);
-    }
-    isDebug(): boolean {
-        return this._project.isDebug();
-    }
-    isRelease(): boolean {
-        return this._project.isRelease();
     }
 }

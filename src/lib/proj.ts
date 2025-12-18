@@ -372,6 +372,7 @@ function resolveConfigIncludeDirectories(rootDir: string, c: Resolved<ConfigDesc
             scope: items.scope,
             system: items.system ?? false,
             language: items.language,
+            buildMode: items.buildMode,
         }))
     );
 }
@@ -386,6 +387,7 @@ function resolveBuilderIncludeDirectories(builders: BuilderImpl[], project: Proj
                 scope: items.scope,
                 system: items.system ?? false,
                 language: items.language,
+                buildMode: items.buildMode,
             }))
         )
     );
@@ -412,6 +414,7 @@ function resolveTargetIncludeDirectories(
             scope: items.scope,
             system: items.system ?? false,
             language: items.language,
+            buildMode: items.buildMode,
         }))
     );
 }
@@ -426,6 +429,7 @@ function resolveConfigCompileDefinitions(c: Resolved<ConfigDesc>): CompileDefini
             val,
             scope: items.scope,
             language: items.language,
+            buildMode: items.buildMode,
             importDir: c.importDir,
             importModule: c.importModule,
         }))
@@ -440,6 +444,7 @@ function resolveBuilderCompileDefinitions(builders: BuilderImpl[]): CompileDefin
                 val,
                 scope: items.scope,
                 language: items.language,
+                buildMode: items.buildMode,
                 importDir: builder._importDir,
                 importModule: builder._importModule,
             }))
@@ -457,6 +462,7 @@ function resolveTargetCompileDefinitions(builder: BuilderImpl, t: TargetDesc): C
             val,
             scope: items.scope,
             language: items.language,
+            buildMode: items.buildMode,
             importDir: builder._importDir,
             importModule: builder._importModule,
         }))
@@ -472,6 +478,7 @@ function resolveConfigCompileOptions(c: Resolved<ConfigDesc>): CompileOption[] {
             opt,
             scope: items.scope,
             language: items.language,
+            buildMode: items.buildMode,
             importDir: c.importDir,
             importModule: c.importModule,
         }))
@@ -485,6 +492,7 @@ function resolveBuilderCompileOptions(builders: BuilderImpl[]): CompileOption[] 
                 opt,
                 scope: items.scope,
                 language: items.language,
+                buildMode: items.buildMode,
                 importDir: builder._importDir,
                 importModule: builder._importModule,
             }))
@@ -501,6 +509,7 @@ function resolveTargetCompileOptions(builder: BuilderImpl, t: TargetDesc): Compi
             opt,
             scope: items.scope,
             language: items.language,
+            buildMode: items.buildMode,
             importDir: builder._importDir,
             importModule: builder._importModule,
         }))
