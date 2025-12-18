@@ -103,16 +103,17 @@ export function targetAssetDir(
 
 export function resolvePath(path: string, opts: {
     rootDir: string;
+    defaultAlias?: string;
     config?: { name: string; platform: Platform };
     target?: { name: string; dir?: string; type: TargetType };
     selfDir: string;
 }): string {
-    const { rootDir, config, target, selfDir } = opts;
+    const { rootDir, defaultAlias, config, target, selfDir } = opts;
     let aliasMap: Record<string, string> = {
         '@root:': rootDir,
         '@sdks:': sdkDir(rootDir),
         '@imports:': importsDir(rootDir),
-        '@self': selfDir,
+        '@self:': selfDir,
     };
     if (config !== undefined) {
         aliasMap = {
@@ -130,6 +131,9 @@ export function resolvePath(path: string, opts: {
             };
         }
     }
+    if ((defaultAlias !== undefined) && !path.startsWith('@')) {
+        path = `${defaultAlias}:${path}`;
+    }
     if (path.startsWith('@')) {
         for (const k in aliasMap) {
             if (path.startsWith(k)) {
@@ -141,23 +145,27 @@ export function resolvePath(path: string, opts: {
     return path;
 }
 
-export function resolveProjectScopePath(path: string, opts: { rootDir: string }): string {
-    const { rootDir } = opts;
-    return resolvePath(path, { rootDir, selfDir: rootDir });
+export function resolveProjectScopePath(path: string, opts: { rootDir: string; defaultAlias?: string }): string {
+    const { rootDir, defaultAlias } = opts;
+    return resolvePath(path, { rootDir, defaultAlias, selfDir: rootDir });
 }
 
-export function resolveModuleScopePath(path: string, opts: { rootDir: string, moduleDir: string }): string {
-    const { rootDir, moduleDir } = opts;
-    return resolvePath(path, { rootDir, selfDir: moduleDir });
+export function resolveModuleScopePath(
+    path: string,
+    opts: { rootDir: string; defaultAlias?: string; moduleDir: string },
+): string {
+    const { rootDir, defaultAlias, moduleDir } = opts;
+    return resolvePath(path, { rootDir, defaultAlias, selfDir: moduleDir });
 }
 
 export function resolveConfigScopePath(
     path: string,
-    opts: { rootDir: string; config: { name: string; platform: Platform; importDir: string } },
+    opts: { rootDir: string; defaultAlias?: string; config: { name: string; platform: Platform; importDir: string } },
 ): string {
-    const { rootDir, config } = opts;
+    const { rootDir, defaultAlias, config } = opts;
     return resolvePath(path, {
         rootDir,
+        defaultAlias,
         config: { name: config.name, platform: config.platform },
         selfDir: config.importDir,
     });
@@ -167,15 +175,18 @@ export function resolveTargetScopePath(
     path: string,
     opts: {
         rootDir: string;
+        defaultAlias?: string;
         config: { name: string; platform: Platform };
-        target: { name: string; dir?: string; type: TargetType, importDir: string };
+        target: { name: string; dir?: string; type: TargetType; importDir: string };
     },
 ): string {
-    const { rootDir, config, target } = opts;
-    return resolvePath(path, { rootDir,
+    const { rootDir, defaultAlias, config, target } = opts;
+    return resolvePath(path, {
+        rootDir,
+        defaultAlias,
         config: { name: config.name, platform: config.platform },
         target: { name: target.name, dir: target.dir, type: target.type },
-        selfDir: target.importDir
+        selfDir: target.importDir,
     });
 }
 

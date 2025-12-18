@@ -220,17 +220,15 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genCompileOptions(project, config);
     str += genLinkOptions(project, config);
     str += genAllJobsTarget(project, config);
-    /* FIXME
-    for (const target of project.targets()) {
-        str += genTarget(project, config, target);
-        str += genTargetDependencies(project, config, target);
-        str += genTargetIncludeDirectories(project, config, target);
-        str += genTargetCompileDefinitions(project, config, target);
-        str += genTargetCompileOptions(project, config, target);
-        str += genTargetLinkOptions(project, config, target);
-        str += genTargetJobDependencies(project, config, target);
-    }
-    */
+    //for (const target of project.targets()) {
+    //    str += genTarget(project, config, target);
+    //    str += genTargetDependencies(project, config, target);
+    //    str += genTargetIncludeDirectories(project, config, target);
+    //    str += genTargetCompileDefinitions(project, config, target);
+    //    str += genTargetCompileOptions(project, config, target);
+    //    str += genTargetLinkOptions(project, config, target);
+    //    str += genTargetJobDependencies(project, config, target);
+    //}
     return str;
 }
 
@@ -272,7 +270,7 @@ function genIncludeDirectories(project: Project, config: Config): string {
     let str = '';
     const items = [...project.includeDirectories(), ...config.includeDirectories];
     items.forEach((item) =>
-        str += `include_directories(${item.system ? 'SYSTEM' : ''} ${expr(item.language, item.buildMode, item.dir)})\n`
+        str += `include_directories(${item.system ? 'SYSTEM ' : ''}"${expr(item.language, item.buildMode, item.dir)}")\n`
     );
     return str;
 }
@@ -282,9 +280,7 @@ function genCompileDefinitions(project: Project, config: Config): string {
     const items = [...project.compileDefinitions(), ...config.compileDefinitions];
     if (items.length > 0) {
         str += 'add_compile_definitions(';
-        items.forEach((item) => {
-            str += `\n  ${expr(item.language, item.buildMode, `${item.key}=${item.val}`)}`;
-        });
+        str += items.map((item) => `${expr(item.language, item.buildMode, `"${item.key}=${item.val}"`)}`).join(' ');
         str += ')\n';
     }
     return str;
@@ -295,9 +291,7 @@ function genCompileOptions(project: Project, config: Config): string {
     const items = [...project.compileOptions(), ...config.compileOptions];
     if (items.length > 0) {
         str += 'add_compile_options(';
-        items.forEach((item) => {
-            str += `\n  ${expr(item.language, item.buildMode, item.opt)}`;
-        });
+        str += items.map((item) => `${expr(item.language, item.buildMode, item.opt)}`).join(' ');
         str += ')\n';
     }
     return str;
@@ -308,7 +302,7 @@ function genLinkOptions(project: Project, config: Config): string {
     const items = [...project.linkOptions(), ...config.linkOptions];
     if (items.length > 0) {
         str += 'add_link_options(';
-        items.forEach((item) => str += `\n  ${item.opt}`);
+        str += items.map((item) => `${item.opt}`).join(' ');
         str += ')\n';
     }
     return str;
@@ -331,6 +325,59 @@ function genAllJobsTarget(project: Project, config: Config): string {
     }
     return str;
 }
+
+//function genTarget(project: Project, config: Config, target: Target): string {
+//    let str = '';
+//    // get any job outputs which need to be added as target sources
+//    /* FIXME: handle job outputs!
+//    const jobOutputs = proj.resolveTargetJobs(ctx).flatMap((job) => {
+//        if (job.addOutputsToTargetSources) {
+//            return job.outputs;
+//        } else {
+//            return [];
+//        }
+//    });
+//
+//    // need to create an empy dummy for any job output file that doesn't exist yet
+//    for (const path of jobOutputs) {
+//        util.ensureFile(path);
+//    }
+//    */
+//
+//    const targetSources = [...target.sources/*, ...jobOutputs*/];
+//    const targetSourcesStr = targetSources.join(' ');
+//    let subtype = '';
+//    switch (target.type) {
+//        case 'plain-exe':
+//        case 'windowed-exe':
+//            if (target.type === 'windowed-exe') {
+//                if (config.platform === 'windows') {
+//                    subtype = ' WIN32';
+//                } else if ((config.platform === 'macos') || (config.platform === 'ios')) {
+//                    subtype = ' MACOSX_BUNDLE';
+//                }
+//            }
+//            str += `add_executable(${target.name}${subtype} ${targetSourcesStr})\n`;
+//            break;
+//        case 'lib':
+//            str += `add_library(${target.name} STATIC ${targetSourcesStr})\n`;
+//            break;
+//        case 'dll':
+//            str += `add_library(${target.name} SHARED ${targetSourcesStr})\n`;
+//            break;
+//        case 'interface':
+//            str += `add_library(${target.name} INTERFACE ${targetSourcesStr})\n`;
+//            break;
+//    }
+//    const aliasMap = util.buildTargetAliasMap(project, config, target);
+//    str += `source_group(TREE ${util.resolvePath(aliasMap, target.importDir, target.dir)} FILES ${
+//        sources.join(' ')
+//    })\n`;
+//    if (jobOutputs.length > 0) {
+//        str += `source_group(gen FILES ${jobOutputs.join(' ')})\n`;
+//    }
+//    return str;
+//}
 
 /*
 export async function build(
@@ -470,66 +517,6 @@ function genLinkOptions(project: Project, config: Config): string {
     let str = '';
     str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_link_options', project.linkOptions, false, false);
     str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_link_options', config.linkOptions, false, true);
-    return str;
-}
-
-function genTarget(project: Project, config: Config, target: Target): string {
-    let str = '';
-    const ctx: Context = {
-        project,
-        config,
-        target,
-        aliasMap: util.buildTargetAliasMap(project, config, target),
-        host: { platform: host.platform(), arch: host.arch() },
-    };
-    const sources = proj.resolveTargetStringArray(target.sources, ctx, true);
-
-    // get any job outputs which need to be added as target sources
-    const jobOutputs = proj.resolveTargetJobs(ctx).flatMap((job) => {
-        if (job.addOutputsToTargetSources) {
-            return job.outputs;
-        } else {
-            return [];
-        }
-    });
-
-    // need to create an empy dummy for any job output file that doesn't exist yet
-    for (const path of jobOutputs) {
-        util.ensureFile(path);
-    }
-
-    const targetSources = [...sources, ...jobOutputs];
-    const targetSourcesStr = targetSources.join(' ');
-    let subtype = '';
-    switch (target.type) {
-        case 'plain-exe':
-        case 'windowed-exe':
-            if (target.type === 'windowed-exe') {
-                if (config.platform === 'windows') {
-                    subtype = ' WIN32';
-                } else if ((config.platform === 'macos') || (config.platform === 'ios')) {
-                    subtype = ' MACOSX_BUNDLE';
-                }
-            }
-            str += `add_executable(${target.name}${subtype} ${targetSourcesStr})\n`;
-            break;
-        case 'lib':
-            str += `add_library(${target.name} STATIC ${targetSourcesStr})\n`;
-            break;
-        case 'dll':
-            str += `add_library(${target.name} SHARED ${targetSourcesStr})\n`;
-            break;
-        case 'interface':
-            str += `add_library(${target.name} INTERFACE ${targetSourcesStr})\n`;
-            break;
-    }
-    const aliasMap = util.buildTargetAliasMap(project, config, target);
-    str += `source_group(TREE ${util.resolvePath(aliasMap, target.importDir, target.dir)} FILES ${
-        sources.join(' ')
-    })\n`;
-    if (jobOutputs.length > 0) {
-        str += `source_group(gen FILES ${jobOutputs.join(' ')})\n`;
-    }
     return str;
 }
 

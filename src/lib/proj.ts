@@ -365,6 +365,7 @@ function resolveConfigIncludeDirectories(rootDir: string, c: Resolved<ConfigDesc
         items.dirs.map((dir) => ({
             dir: util.resolveConfigScopePath(dir, {
                 rootDir,
+                defaultAlias: '@self',
                 config: { name: c.name, platform: c.platform, importDir: c.importDir },
             }),
             importDir: c.importDir,
@@ -381,7 +382,11 @@ function resolveBuilderIncludeDirectories(builders: BuilderImpl[], project: Proj
     return builders.flatMap((builder) =>
         builder._includeDirectories.flatMap((items) =>
             items.dirs.map((dir) => ({
-                dir: util.resolveModuleScopePath(dir, { rootDir: project._rootDir, moduleDir: builder._importDir }),
+                dir: util.resolveModuleScopePath(dir, {
+                    rootDir: project._rootDir,
+                    defaultAlias: '@self',
+                    moduleDir: builder._importDir
+                }),
                 importDir: builder._importDir,
                 importModule: builder._importModule,
                 scope: items.scope,
@@ -406,12 +411,13 @@ function resolveTargetIncludeDirectories(
         items.dirs.map((dir) => ({
             dir: util.resolveTargetScopePath(dir, {
                 rootDir: project._rootDir,
+                defaultAlias: '@targetsources',
                 config: { name: config.name, platform: config.platform },
                 target: { name: t.name, dir: t.dir, type: t.type, importDir: builder._importDir },
             }),
             importDir: builder._importDir,
             importModule: builder._importModule,
-            scope: items.scope,
+            scope: items.scope ?? 'public',
             system: items.system ?? false,
             language: items.language,
             buildMode: items.buildMode,
@@ -557,6 +563,14 @@ function resolveTargetLinkOptions(builder: BuilderImpl, t: TargetDesc): LinkOpti
     );
 }
 
+function resolveTargetSources(builder: BuilderImpl, project: ProjectImpl, config: Config, t: TargetDesc): string[] {
+    return t.sources.map((src) => util.resolveTargetScopePath(`@targetsources:${src}`, {
+        rootDir: project._rootDir,
+        config: { name: config.name, platform: config.platform },
+        target: { name: t.name, dir: t.dir, type: t.type, importDir: builder._importDir },
+    }));
+}
+
 function resolveTargets(builders: BuilderImpl[], project: ProjectImpl, config: Config): Target[] {
     return builders.flatMap((builder) =>
         builder._targets.map((t) => ({
@@ -565,7 +579,7 @@ function resolveTargets(builders: BuilderImpl[], project: ProjectImpl, config: C
             importModule: builder._importModule,
             type: t.type,
             dir: t.dir,
-            sources: t.sources ?? [],
+            sources: resolveTargetSources(builder, project, config, t),
             deps: t.deps ?? [],
             libs: t.libs ?? [],
             includeDirectories: resolveTargetIncludeDirectories(builder, project, config, t),

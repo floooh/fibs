@@ -304,7 +304,7 @@ export type TargetJob = {
 export type TargetDesc = NamedItem & {
     type: TargetType;
     dir?: string;
-    sources?: string[];
+    sources: string[];
     deps?: string[];
     libs?: string[];
     includeDirectories?: IncludeDirectoriesDesc[];
