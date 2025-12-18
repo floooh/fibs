@@ -101,7 +101,7 @@ export function targetAssetDir(
     }
 }
 
-export function resolvePath(path: string, opts: {
+export function resolvePath(fsPath: string, opts: {
     rootDir: string;
     defaultAlias?: string;
     config?: { name: string; platform: Platform };
@@ -131,18 +131,17 @@ export function resolvePath(path: string, opts: {
             };
         }
     }
-    if ((defaultAlias !== undefined) && !path.startsWith('@')) {
-        path = `${defaultAlias}:${path}`;
+    if ((defaultAlias !== undefined) && !fsPath.startsWith('@')) {
+        fsPath = `${defaultAlias}:${fsPath}`;
     }
-    if (path.startsWith('@')) {
+    if (fsPath.startsWith('@')) {
         for (const k in aliasMap) {
-            if (path.startsWith(k)) {
-                return path.replace(k, `${aliasMap[k]}/`.replace('//', '/'));
+            if (fsPath.startsWith(k)) {
+                fsPath = fsPath.replace(k, `${aliasMap[k]}/`.replace('//', '/'));
             }
         }
-        log.panic(`cannot resolve alias in ${path}`);
     }
-    return path;
+    return path.relative(rootDir, fsPath);
 }
 
 export function resolveProjectScopePath(path: string, opts: { rootDir: string; defaultAlias?: string }): string {
