@@ -154,7 +154,7 @@ function isMultiConfigGenerator(config: Config): boolean {
     }
 }
 
-function resolveCacheVariable(val: string | boolean): any {
+function resolveCacheVariable(val: string | boolean): string | { type: 'BOOL', value: 'ON' | 'OFF' } {
     if (typeof val === 'string') {
         return val;
     } else {
@@ -184,7 +184,7 @@ function genConfigurePresets(project: Project, config: Config, buildDir: string,
 }
 
 function genCacheVariables(project: Project, config: Config, distDir: string): Record<string, unknown> {
-    let res: Record<string, any> = {};
+    let res: Record<string, unknown> = {};
     if (!isMultiConfigGenerator(config)) {
         res.CMAKE_BUILD_TYPE = asCmakeBuildMode(config.buildMode);
     }

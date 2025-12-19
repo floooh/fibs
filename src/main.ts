@@ -3,7 +3,10 @@ import { assertFibsModule, Project } from './types.ts';
 import { resetCmd } from './commands/reset.ts';
 import { configure } from './lib/proj.ts';
 
-export async function main() {
+export async function fibs(importMeta: ImportMeta) {
+    if (!importMeta.main) {
+        return;
+    }
     if (Deno.args.length < 1) {
         log.print("run 'fibs help' for more info");
         Deno.exit(10);

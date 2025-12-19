@@ -87,7 +87,7 @@ async function diagConfigs(project: Project) {
 async function diagTargets(project: Project) {
     for (const target of project.targets()) {
         log.write(`${target.name} (${target.type}): `);
-        const res = proj.validateTarget(target, { silent: true, abortOnError: false });
+        const res = proj.validateTarget(project, target, project.activeConfig(), { silent: true, abortOnError: false });
         if (res.valid) {
             log.write(colors.green('ok\n'));
         } else {

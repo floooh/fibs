@@ -6,7 +6,7 @@ export function print(...args: unknown[]) {
     console.log(...args);
 }
 
-export function dir(item: any) {
+export function dir(item: unknown) {
     console.dir(item, { colors: true, depth: 8 });
 }
 

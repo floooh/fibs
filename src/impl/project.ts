@@ -23,7 +23,7 @@ import {
 import { host, log, settings, util } from '../lib/index.ts';
 
 export class ProjectImpl implements Project {
-    _name: string | null = null;
+    _name: string;
     _rootModule: FibsModule;
     _rootDir: string;
     _compiler: Compiler = 'unknown-compiler';
@@ -44,14 +44,12 @@ export class ProjectImpl implements Project {
     _settings: Setting[] = [];
 
     constructor(rootModule: FibsModule, rootDir: string) {
+        this._name = 'fibs-project';
         this._rootModule = rootModule;
         this._rootDir = rootDir;
     }
 
     name(): string {
-        if (this._name === null) {
-            log.panic('Project name is not set');
-        }
         return this._name;
     }
 

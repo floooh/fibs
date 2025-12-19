@@ -1,5 +1,4 @@
 export type Configurer = {
-    setProjectName(name: string): void;
     addCmakeVariable(name: string, value: string | boolean): void;
     addImport(imp: ImportDesc): void;
     addCommand(cmd: CommandDesc): void;
@@ -239,7 +238,7 @@ export type ConfigDesc = NamedItem & {
     cmakeIncludes?: string[];
     cmakeVariables?: Record<string, string | boolean>;
     environment?: Record<string, string>;
-    options?: Record<string, any>;
+    options?: Record<string, unknown>;
     includeDirectories?: IncludeDirectoriesDesc[];
     compileDefinitions?: CompileDefinitionsDesc[];
     compileOptions?: CompileOptionsDesc[];
@@ -259,7 +258,7 @@ export type Config = NamedItem & ImportedItem & {
     cmakeIncludes: string[];
     cmakeVariables: Record<string, string | boolean>;
     environment: Record<string, string>;
-    options: Record<string, any>;
+    options: Record<string, unknown>;
     includeDirectories: IncludeDirectory[];
     compileDefinitions: CompileDefinition[];
     compileOptions: CompileOption[];
@@ -331,8 +330,8 @@ export type JobFunc = (project: Project) => Job;
 
 export type JobBuilderDesc = NamedItem & {
     help(): void;
-    validate(args: any): { valid: boolean; hints: string[] };
-    build(args: any): JobFunc;
+    validate(args: unknown): { valid: boolean; hints: string[] };
+    build(args: unknown): JobFunc;
 };
 
 export type JobBuilder = ImportedItem & JobBuilderDesc;
@@ -341,8 +340,8 @@ export type Job = NamedItem & {
     inputs: string[];
     outputs: string[];
     addOutputsToTargetSources: boolean;
-    args: any;
-    func: (inputs: string[], output: string[], args: any) => Promise<void>;
+    args: unknown;
+    func: (inputs: string[], output: string[], args: unknown) => Promise<void>;
 };
 
 export type CommandDesc = NamedItem & {

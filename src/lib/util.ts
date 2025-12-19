@@ -23,6 +23,14 @@ export function addOrReplace<T extends NamedItem>(items: T[], item: T) {
     }
 }
 
+export function deduplicate<T extends NamedItem>(items: T[]): T[] {
+    const res: T[] = [];
+    for (const item of items) {
+        addOrReplace(res, item);
+    }
+    return res;
+}
+
 export function fileExists(path: string): boolean {
     try {
         const res = Deno.statSync(path);
