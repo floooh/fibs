@@ -70,7 +70,7 @@ export function buildDir(rootDir: string, configName: string): string {
 }
 
 export function distDir(rootDir: string, configName: string): string {
-    return `${fibsDir(rootDir)}/dist/${configName}}`;
+    return `${fibsDir(rootDir)}/dist/${configName}`;
 }
 
 export function targetBuildDir(rootDir: string, configName: string, targetName: string): string {
@@ -293,8 +293,8 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
         abortOnError = true,
         args,
         cwd,
-        stdout,
-        stderr,
+        stdout = 'inherit',
+        stderr = 'inherit',
         winUseCmd,
     } = options;
     let cmdx;
@@ -311,11 +311,11 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
     }
     try {
         const command = new Deno.Command(cmdx, { args: argsx, stdout, stderr, cwd });
-        const { code: exitCode, stdout: cmdStdout, stderr: cmdStderr } = await command.output();
+        const cmdRes = await command.output();
         const res: RunResult = {
-            exitCode,
-            stdout: (stdout === 'piped') ? new TextDecoder().decode(cmdStdout) : '',
-            stderr: (stderr === 'piped') ? new TextDecoder().decode(cmdStderr) : '',
+            exitCode: cmdRes.code,
+            stdout: (stdout === 'piped') ? new TextDecoder().decode(cmdRes.stdout) : '',
+            stderr: (stderr === 'piped') ? new TextDecoder().decode(cmdRes.stderr) : '',
         };
         return res;
     } catch (err) {

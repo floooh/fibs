@@ -37,15 +37,20 @@ let projectImpl: ProjectImpl;
 export async function configure(rootModule: FibsModule, rootDir: string): Promise<Project> {
     projectImpl = new ProjectImpl(rootModule, rootDir);
     await doConfigure(rootModule, projectImpl);
+    await generateTargets();
+    return projectImpl;
+}
+
+export async function generateTargets(): Promise<void> {
     const adapter = projectImpl.adapter('cmake');
     const config = projectImpl.activeConfig();
     const configRes = await adapter.configure(projectImpl, config);
     projectImpl._compiler = configRes.compiler;
     await doBuildSetup(projectImpl, config);
-    return projectImpl;
 }
 
 export async function generate(): Promise<void> {
+    await generateTargets();
     const adapter = projectImpl.adapter('cmake');
     const config = projectImpl.activeConfig();
     await adapter.generate(projectImpl, config);

@@ -16,10 +16,17 @@ async function run(project: Project) {
     for (const config of configs) {
         const buildPath = project.buildDir(config.name);
         const distPath = project.distDir(config.name);
+        const configPath = project.configDir(config.name);
         const buildExists = util.dirExists(buildPath);
         const distExists = util.dirExists(distPath);
-        if (buildExists || distExists) {
+        const configExists = util.dirExists(configPath);
+        if (buildExists || distExists || configExists) {
             log.info(colors.blue(`${config.name}:`));
+            if (configExists) {
+                log.info(`  delete ${configPath}`);
+                Deno.removeSync(configPath, { recursive: true });
+                numDeleted += 1;
+            }
             if (buildExists) {
                 log.info(`  delete ${buildPath}`);
                 Deno.removeSync(buildPath, { recursive: true });

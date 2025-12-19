@@ -18,10 +18,10 @@ async function run(project: Project) {
         if (arg.startsWith('--')) {
             if (arg === '--get') {
                 log.print(project.activeConfig().name);
+                Deno.exit(0);
             } else {
                 log.panic(`unknown option '${arg} (run 'fibs help config')`);
             }
-            Deno.exit(0);
         }
         return true;
     });
