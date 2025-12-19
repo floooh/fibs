@@ -16,13 +16,18 @@ import {
 } from '../types.ts';
 import { host, log, util } from '../lib/index.ts';
 
+type ImportExtra = {
+    importDir?: string;
+    importModules?: FibsModule[];
+}
+
 export class ConfigurerImpl implements Configurer {
     rootDir: string;
     importModule: FibsModule;
     importDir: string;
     importErrors: unknown[] = [];
     cmakeVariables: CmakeVariableDesc[] = [];
-    imports: ImportDesc[] = [];
+    imports: (ImportDesc & ImportExtra)[] = [];
     commands: CommandDesc[] = [];
     jobs: JobBuilderDesc[] = [];
     tools: ToolDesc[] = [];

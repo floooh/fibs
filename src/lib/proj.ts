@@ -248,9 +248,14 @@ async function configureRecurseImports(
     for (const importDesc of configurer.imports) {
         const { name, url, ref } = importDesc;
         const { valid, dir } = await fetchImport(project, { name, url, ref });
+        // record the actual importDir in the parent ImportDesc
+        importDesc.importDir = dir;
+        importDesc.importModules = [];
         if (valid) {
             const { modules, importErrors } = await importModulesFromDir(dir, importDesc);
             for (const module of modules) {
+                // record the actual import modules in the parent importDesc
+                importDesc.importModules.push(module);
                 const childConfigurer = new ConfigurerImpl(project.dir(), dir, module);
                 childConfigurer.importErrors = importErrors;
                 res.push(childConfigurer);
@@ -266,10 +271,12 @@ async function configureRecurseImports(
 function doBuildSetup(project: ProjectImpl, config: Config): void {
     const builders: BuilderImpl[] = [];
     for (const imp of projectImpl.imports()) {
-        if (imp.importModule.build) {
-            const builder = new BuilderImpl(project, imp.importDir, imp.importModule);
-            imp.importModule.build(builder);
-            builders.push(builder);
+        for (const module of imp.modules) {
+            if (module.build) {
+                const builder = new BuilderImpl(project, imp.importDir, module);
+                module.build(builder);
+                builders.push(builder);
+            }
         }
     }
     if (projectImpl._rootModule.build) {
@@ -332,13 +339,15 @@ function resolveSettings(configurers: ConfigurerImpl[]): Setting[] {
 
 function resolveImports(configurers: ConfigurerImpl[]): Import[] {
     return util.deduplicate(configurers.flatMap((configurer) =>
-        configurer.imports.map((i) => ({
+        configurer.imports.map<Import>((i) => ({
             name: i.name,
-            importDir: configurer.importDir,
+            importDir: i.importDir ?? 'invalid-import-dir',
+            // the importModule is misleading since it's actually the parent import module
             importModule: configurer.importModule,
             importErrors: configurer.importErrors,
             url: i.url,
             ref: i.ref,
+            modules: i.importModules ?? [],
         }))
     ));
 }

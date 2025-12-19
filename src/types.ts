@@ -279,6 +279,8 @@ export type Import = NamedItem & ImportedItem & {
     url: string;
     ref: string | undefined;
     importErrors: unknown[];
+    // each import can have multiple modules
+    modules: FibsModule[];
 };
 
 export type TargetArrayItemsDesc = {

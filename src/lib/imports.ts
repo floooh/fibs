@@ -55,12 +55,7 @@ export async function importModulesFromDir(
     settledResults.forEach((settledResult) => {
         if (settledResult.status === 'fulfilled') {
             const module = settledResult.value;
-            try {
-                res.modules.push(module);
-            } catch (err) {
-                log.warn('importing module failed with:', err);
-                res.importErrors.push(err);
-            }
+            res.modules.push(module);
         } else {
             log.warn('importing module failed with:', settledResult.reason);
             res.importErrors.push(settledResult.reason);

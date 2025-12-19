@@ -149,7 +149,7 @@ export function resolvePath(fsPath: string, opts: {
             }
         }
     }
-    return path.relative(rootDir, fsPath);
+    return fsPath;
 }
 
 export function resolveProjectScopePath(path: string, opts: { rootDir: string; defaultAlias?: string }): string {
