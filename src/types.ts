@@ -258,7 +258,7 @@ export type Config = NamedItem & ImportedItem & {
     arch?: Arch;
     toolchainFile?: string;
     cmakeIncludes: string[];
-    cmakeVariables: Record<string, string | boolean>;
+    cmakeVariables: CmakeVariable[];
     environment: Record<string, string>;
     options: Record<string, unknown>;
     includeDirectories: IncludeDirectory[];

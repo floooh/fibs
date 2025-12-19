@@ -194,11 +194,9 @@ function genCacheVariables(project: Project, config: Config, distDir: string): R
     if (config.platform !== 'android') {
         res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = distDir;
     }
-    for (const cmakeVariable of project.cmakeVariables()) {
+    const cmakeVariables = [...project.cmakeVariables(), ...config.cmakeVariables];
+    for (const cmakeVariable of cmakeVariables) {
         res[cmakeVariable.name] = resolveCacheVariable(cmakeVariable.value);
-    }
-    for (const key in config.cmakeVariables) {
-        res[key] = resolveCacheVariable(config.cmakeVariables[key]);
     }
     return res;
 }

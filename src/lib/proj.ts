@@ -311,7 +311,9 @@ function resolveCmakeVariables(configurers: ConfigurerImpl[]): CmakeVariable[] {
             name: v.name,
             importDir: configurer.importDir,
             importModule: configurer.importModule,
-            value: v.value,
+            value: (typeof v.value !== 'string') ? v.value : util.resolveProjectScopePath(v.value, {
+                rootDir: configurer.rootDir,
+            }),
         }))
     ));
 }
@@ -443,7 +445,7 @@ function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Co
                     });
                 })
                 : [],
-            cmakeVariables: c.cmakeVariables ?? {},
+            cmakeVariables: resolveConfigCmakeVariables(configurer, c),
             environment: c.environment ?? {},
             options: c.options ?? {},
             includeDirectories: resolveConfigIncludeDirectories(configurer, c),
@@ -454,6 +456,21 @@ function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Co
             validate: c.validate ?? (() => ({ valid: true, hints: [] })),
         }))
     ));
+}
+
+function resolveConfigCmakeVariables(configurer: ConfigurerImpl, c: ConfigDesc): CmakeVariable[] {
+    if (c.cmakeVariables === undefined) {
+        return [];
+    }
+    return Object.entries(c.cmakeVariables).map<CmakeVariable>(([key, val]) => ({
+        name: key,
+        value: (typeof val !== 'string') ? val : util.resolveConfigScopePath(val, {
+            rootDir: configurer.rootDir,
+            config: { name: c.name, platform: c.platform, importDir: configurer.importDir }
+        }),
+        importDir: configurer.importDir,
+        importModule: configurer.importModule,
+    }));
 }
 
 function resolveConfigIncludeDirectories(configurer: ConfigurerImpl, c: ConfigDesc): IncludeDirectory[] {
