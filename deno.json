@@ -13,5 +13,10 @@
         "singleQuote": true,
         "lineWidth": 120,
         "proseWrap": "never"
+    },
+    "lint": {
+        "rules": {
+            "exclude": ["require-await"]
+        }
     }
 }
