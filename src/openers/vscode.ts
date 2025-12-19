@@ -14,7 +14,7 @@ async function generate(project: Project, config: Config) {
 
 async function open(project: Project) {
     await run({
-        args: [`${project.dir}/.vscode/${project.name}.code-workspace`],
+        args: [`${project.dir()}/.vscode/${project.name()}.code-workspace`],
         winUseCmd: true,
     });
 }
@@ -22,7 +22,7 @@ async function open(project: Project) {
 function writeWorkspaceFile(project: Project, config: Config, vscodeDir: string) {
     const ws = {
         folders: [
-            { path: project.dir },
+            { path: project.dir() },
             ...project.imports().map((imp) => {
                 return { path: imp.importDir };
             }),
@@ -39,7 +39,7 @@ function writeWorkspaceFile(project: Project, config: Config, vscodeDir: string)
             'cmake.configureOnOpen': false,
         },
     };
-    const path = `${vscodeDir}/${project.name}.code-workspace`;
+    const path = `${vscodeDir}/${project.name()}.code-workspace`;
     try {
         Deno.writeTextFileSync(path, JSON.stringify(ws, null, '  '));
     } catch (err) {

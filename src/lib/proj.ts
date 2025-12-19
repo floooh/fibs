@@ -38,16 +38,13 @@ export async function configure(rootModule: FibsModule, rootDir: string, withTar
     projectImpl = new ProjectImpl(rootModule, rootDir);
     await doConfigure(rootModule, projectImpl);
     if (withTargets) {
-        const adapter = projectImpl.adapter('cmake');
-        const config = projectImpl.activeConfig();
-        const configRes = await adapter.configure(projectImpl, config);
-        projectImpl._compiler = configRes.compiler;
-        doBuildSetup(projectImpl, config);
+        await configureTargets();
     }
     return projectImpl;
 }
 
 export async function generate(): Promise<void> {
+    await configureTargets();
     const adapter = projectImpl.adapter('cmake');
     const config = projectImpl.activeConfig();
     await adapter.generate(projectImpl, config);
@@ -58,6 +55,14 @@ export async function build(options: { buildTarget?: string; forceRebuild?: bool
     const adapter = projectImpl.adapter('cmake');
     const config = projectImpl.activeConfig();
     await adapter.build(projectImpl, config, { buildTarget, forceRebuild });
+}
+
+async function configureTargets(): Promise<void> {
+    const adapter = projectImpl.adapter('cmake');
+    const config = projectImpl.activeConfig();
+    const configRes = await adapter.configure(projectImpl, config);
+    projectImpl._compiler = configRes.compiler;
+    doBuildSetup(projectImpl, config);
 }
 
 export function validateTarget(
