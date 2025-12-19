@@ -39,7 +39,6 @@ async function run(project: Project) {
             log.print();
         }
     };
-    await proj.generateTargets();
     await diag('fibs', diagFibs);
     await diag('tools', diagTools);
     await diag('configs', diagConfigs);

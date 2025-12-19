@@ -96,14 +96,16 @@ export type Project = {
     isGcc(): boolean;
 };
 
-export type Builder = Omit<Project, 'targets'|'includeDirectories'|'compileDefinitions'|'compileOptions'|'linkOptions'> & {
-    addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
-    addCompileDefinitions(defs: CompileDefinitionsDesc): void;
-    addCompileOptions(opts: CompileOptionsDesc): void;
-    addLinkOptions(opts: LinkOptionsDesc): void;
-    addTarget(target: TargetDesc ): void;
-    addTarget(name: string, type: TargetType, fn: (t: TargetBuilder) => void): void;
-};
+export type Builder =
+    & Omit<Project, 'targets' | 'includeDirectories' | 'compileDefinitions' | 'compileOptions' | 'linkOptions'>
+    & {
+        addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
+        addCompileDefinitions(defs: CompileDefinitionsDesc): void;
+        addCompileOptions(opts: CompileOptionsDesc): void;
+        addLinkOptions(opts: LinkOptionsDesc): void;
+        addTarget(target: TargetDesc): void;
+        addTarget(name: string, type: TargetType, fn: (t: TargetBuilder) => void): void;
+    };
 
 export type TargetBuilder = {
     setSourcesDir(dir: string): void;
@@ -193,7 +195,7 @@ export type CompileDefinition = ImportedItem & {
     scope?: Scope;
     language?: Language;
     buildMode?: BuildMode;
-}
+};
 
 export type CompileOptionsDesc = {
     opts: string[];

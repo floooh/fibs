@@ -9,6 +9,7 @@ import {
     Config,
     Language,
     Project,
+    Target,
 } from '../types.ts';
 
 export const cmakeAdapter: AdapterDesc = {
@@ -54,7 +55,6 @@ export async function configure(project: Project, config: Config): Promise<Adapt
             log.panic(`cmake returned with exit code ${res.exitCode}, stderr: \n\n${res.stderr}`);
         }
     }
-
     const configJson = (await import(configPath, { with: { type: 'json' } })).default;
     return {
         compiler: fromCmakeCompiler(configJson.CMAKE_C_COMPILER_ID),
@@ -86,7 +86,10 @@ export async function generate(project: Project, config: Config): Promise<void> 
 }
 
 export async function build(project: Project, config: Config, options: AdapterBuildOptions): Promise<void> {
-    log.info('cmake.build() called!');
+    if (!util.fileExists(`${project.buildDir()}/CMakeCache.txt`)) {
+        await generate(project, config);
+    }
+    await cmake.build(project, config, options);
 }
 
 function genCMakePresetsJson(project: Project, config: Config, buildDir: string, distDir: string): string {
@@ -154,7 +157,7 @@ function isMultiConfigGenerator(config: Config): boolean {
     }
 }
 
-function resolveCacheVariable(val: string | boolean): string | { type: 'BOOL', value: 'ON' | 'OFF' } {
+function resolveCacheVariable(val: string | boolean): string | { type: 'BOOL'; value: 'ON' | 'OFF' } {
     if (typeof val === 'string') {
         return val;
     } else {
@@ -220,15 +223,15 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genCompileOptions(project, config);
     str += genLinkOptions(project, config);
     str += genAllJobsTarget(project, config);
-    //for (const target of project.targets()) {
-    //    str += genTarget(project, config, target);
-    //    str += genTargetDependencies(project, config, target);
-    //    str += genTargetIncludeDirectories(project, config, target);
-    //    str += genTargetCompileDefinitions(project, config, target);
-    //    str += genTargetCompileOptions(project, config, target);
-    //    str += genTargetLinkOptions(project, config, target);
-    //    str += genTargetJobDependencies(project, config, target);
-    //}
+    for (const target of project.targets()) {
+        str += genTarget(project, config, target);
+        //str += genTargetDependencies(project, config, target);
+        //str += genTargetIncludeDirectories(project, config, target);
+        //str += genTargetCompileDefinitions(project, config, target);
+        //str += genTargetCompileOptions(project, config, target);
+        //str += genTargetLinkOptions(project, config, target);
+        //str += genTargetJobDependencies(project, config, target);
+    }
     return str;
 }
 
@@ -270,7 +273,9 @@ function genIncludeDirectories(project: Project, config: Config): string {
     let str = '';
     const items = [...project.includeDirectories(), ...config.includeDirectories];
     items.forEach((item) =>
-        str += `include_directories(${item.system ? 'SYSTEM ' : ''}"${expr(item.language, item.buildMode, item.dir)}")\n`
+        str += `include_directories(${item.system ? 'SYSTEM ' : ''}"${
+            expr(item.language, item.buildMode, item.dir)
+        }")\n`
     );
     return str;
 }
@@ -326,58 +331,62 @@ function genAllJobsTarget(project: Project, config: Config): string {
     return str;
 }
 
-//function genTarget(project: Project, config: Config, target: Target): string {
-//    let str = '';
-//    // get any job outputs which need to be added as target sources
-//    /* FIXME: handle job outputs!
-//    const jobOutputs = proj.resolveTargetJobs(ctx).flatMap((job) => {
-//        if (job.addOutputsToTargetSources) {
-//            return job.outputs;
-//        } else {
-//            return [];
-//        }
-//    });
-//
-//    // need to create an empy dummy for any job output file that doesn't exist yet
-//    for (const path of jobOutputs) {
-//        util.ensureFile(path);
-//    }
-//    */
-//
-//    const targetSources = [...target.sources/*, ...jobOutputs*/];
-//    const targetSourcesStr = targetSources.join(' ');
-//    let subtype = '';
-//    switch (target.type) {
-//        case 'plain-exe':
-//        case 'windowed-exe':
-//            if (target.type === 'windowed-exe') {
-//                if (config.platform === 'windows') {
-//                    subtype = ' WIN32';
-//                } else if ((config.platform === 'macos') || (config.platform === 'ios')) {
-//                    subtype = ' MACOSX_BUNDLE';
-//                }
-//            }
-//            str += `add_executable(${target.name}${subtype} ${targetSourcesStr})\n`;
-//            break;
-//        case 'lib':
-//            str += `add_library(${target.name} STATIC ${targetSourcesStr})\n`;
-//            break;
-//        case 'dll':
-//            str += `add_library(${target.name} SHARED ${targetSourcesStr})\n`;
-//            break;
-//        case 'interface':
-//            str += `add_library(${target.name} INTERFACE ${targetSourcesStr})\n`;
-//            break;
-//    }
-//    const aliasMap = util.buildTargetAliasMap(project, config, target);
-//    str += `source_group(TREE ${util.resolvePath(aliasMap, target.importDir, target.dir)} FILES ${
-//        sources.join(' ')
-//    })\n`;
-//    if (jobOutputs.length > 0) {
-//        str += `source_group(gen FILES ${jobOutputs.join(' ')})\n`;
-//    }
-//    return str;
-//}
+function genTarget(project: Project, config: Config, target: Target): string {
+    let str = '';
+    // get any job outputs which need to be added as target sources
+    /* FIXME: handle job outputs!
+    const jobOutputs = proj.resolveTargetJobs(ctx).flatMap((job) => {
+        if (job.addOutputsToTargetSources) {
+            return job.outputs;
+        } else {
+            return [];
+        }
+    });
+
+    // need to create an empy dummy for any job output file that doesn't exist yet
+    for (const path of jobOutputs) {
+        util.ensureFile(path);
+    }
+    */
+
+    const targetSources = [...target.sources /*, ...jobOutputs*/];
+    const targetSourcesStr = targetSources.join(' ');
+    let subtype = '';
+    switch (target.type) {
+        case 'plain-exe':
+        case 'windowed-exe':
+            if (target.type === 'windowed-exe') {
+                if (config.platform === 'windows') {
+                    subtype = ' WIN32';
+                } else if ((config.platform === 'macos') || (config.platform === 'ios')) {
+                    subtype = ' MACOSX_BUNDLE';
+                }
+            }
+            str += `add_executable(${target.name}${subtype} ${targetSourcesStr})\n`;
+            break;
+        case 'lib':
+            str += `add_library(${target.name} STATIC ${targetSourcesStr})\n`;
+            break;
+        case 'dll':
+            str += `add_library(${target.name} SHARED ${targetSourcesStr})\n`;
+            break;
+        case 'interface':
+            str += `add_library(${target.name} INTERFACE ${targetSourcesStr})\n`;
+            break;
+    }
+    const targetSourceDir = util.resolveTargetScopePath('@targetsources:', {
+        rootDir: project.dir(),
+        config: { name: config.name, platform: config.platform },
+        target: { name: target.name, dir: target.dir, type: target.type, importDir: target.importDir },
+    });
+    str += `source_group(TREE "${targetSourceDir}" FILES ${target.sources.join(' ')})\n`;
+    /* FIXME
+    if (jobOutputs.length > 0) {
+        str += `source_group(gen FILES ${jobOutputs.join(' ')})\n`;
+    }
+    */
+    return str;
+}
 
 /*
 export async function build(

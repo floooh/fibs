@@ -3,10 +3,15 @@ import {
     Arch,
     CmakeVariable,
     Command,
+    CompileDefinition,
+    CompileOption,
     Compiler,
     Config,
+    FibsModule,
     Import,
+    IncludeDirectory,
     JobBuilder,
+    LinkOption,
     Opener,
     Platform,
     Project,
@@ -14,11 +19,6 @@ import {
     Setting,
     Target,
     Tool,
-    FibsModule,
-    IncludeDirectory,
-    CompileDefinition,
-    CompileOption,
-    LinkOption,
 } from '../types.ts';
 import { host, log, settings, util } from '../lib/index.ts';
 

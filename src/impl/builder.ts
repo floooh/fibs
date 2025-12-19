@@ -9,6 +9,7 @@ import {
     CompileOptionsDesc,
     Compiler,
     Config,
+    FibsModule,
     Import,
     IncludeDirectoriesDesc,
     JobBuilder,
@@ -19,11 +20,10 @@ import {
     Runner,
     Setting,
     Target,
-    TargetDesc,
-    Tool,
-    FibsModule,
-    TargetType,
     TargetBuilder,
+    TargetDesc,
+    TargetType,
+    Tool,
 } from '../types.ts';
 import { TargetBuilderImpl } from './target.ts';
 

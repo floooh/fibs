@@ -1,4 +1,4 @@
-import { imports, log, proj } from '../lib/index.ts';
+import { imports, log } from '../lib/index.ts';
 import { CommandDesc, Project, TargetType } from '../types.ts';
 import { colors } from '../../deps.ts';
 
@@ -13,7 +13,7 @@ function help() {
         'list runners',
         'list openers',
         'list jobs',
-        'list targets [--all] [--exe] [--lib] [--dll] [--interface] [--disabled]',
+        'list targets [--all] [--exe] [--lib] [--dll] [--interface] [--verbose]',
     ], 'list available configs, current settings, targets, ...');
 }
 
@@ -24,7 +24,6 @@ async function run(project: Project) {
     if (args.all) {
         log.section('settings');
     }
-    await proj.generateTargets();
     if (args.all || args.settings) {
         for (const s of project.settings()) {
             log.print(`${s.name}: ${s.value} (default: ${s.default})`);
@@ -88,8 +87,11 @@ async function run(project: Project) {
         for (const type of types) {
             for (const target of project.targets()) {
                 if ((target.type === type) && (args.targetTypes.includes(type))) {
-                    const str = `${target.name} (${target.type})`;
-                    log.print(str);
+                    if (args.verbose) {
+                        log.print(`${colors.blue(target.name)}: ${target.type} => ${target.importDir}`);
+                    } else {
+                        log.print(target.name);
+                    }
                 }
             }
         }
@@ -107,7 +109,7 @@ function parseArgs(): {
     runners: boolean;
     openers: boolean;
     jobs: boolean;
-    disabled: boolean;
+    verbose: boolean;
     targetTypes: TargetType[];
 } {
     const args: ReturnType<typeof parseArgs> = {
@@ -118,7 +120,7 @@ function parseArgs(): {
         runners: false,
         openers: false,
         jobs: false,
-        disabled: false,
+        verbose: false,
         targetTypes: [],
     };
     if (Deno.args.length === 1) {
@@ -168,15 +170,15 @@ function parseArgs(): {
                             case '--interface':
                                 args.targetTypes.push('interface');
                                 break;
-                            case '--disabled':
-                                args.disabled = true;
-                                if (args.targetTypes.length === 0) {
-                                    args.targetTypes = allTargetTypes;
-                                }
+                            case '--verbose':
+                                args.verbose = true;
                                 break;
                             default:
                                 log.panic(`unknown target type arg '${targetArg}' (run 'fibs help list')`);
                         }
+                    }
+                    if (args.targetTypes.length === 0) {
+                        args.targetTypes = allTargetTypes;
                     }
                 }
                 break;

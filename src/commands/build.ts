@@ -17,10 +17,9 @@ async function run(project: Project) {
         log.panic('import errors detected');
     }
     const config = project.activeConfig();
-    let forceRebuild;
+    let forceRebuild = false;
     let buildTarget;
-    for (let i = 1; i < Deno.args.length; i++) {
-        const arg = Deno.args[i];
+    for (const arg of Deno.args.slice(1)) {
         if (arg.startsWith('--')) {
             if (arg === '--rebuild') {
                 forceRebuild = true;

@@ -5,6 +5,7 @@ import {
     CommandDesc,
     ConfigDesc,
     Configurer,
+    FibsModule,
     ImportDesc,
     JobBuilderDesc,
     OpenerDesc,
@@ -12,7 +13,6 @@ import {
     RunnerDesc,
     SettingDesc,
     ToolDesc,
-    FibsModule,
 } from '../types.ts';
 import { host, log, util } from '../lib/index.ts';
 

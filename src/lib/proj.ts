@@ -18,8 +18,8 @@ import {
     Setting,
     Target,
     TargetDesc,
-    Tool,
     TargetJob,
+    Tool,
 } from '../types.ts';
 import { ProjectImpl } from '../impl/project.ts';
 import { ConfigurerImpl } from '../impl/configurer.ts';
@@ -37,19 +37,15 @@ let projectImpl: ProjectImpl;
 export async function configure(rootModule: FibsModule, rootDir: string): Promise<Project> {
     projectImpl = new ProjectImpl(rootModule, rootDir);
     await doConfigure(rootModule, projectImpl);
-    return projectImpl;
-}
-
-export async function generateTargets(): Promise<void> {
     const adapter = projectImpl.adapter('cmake');
     const config = projectImpl.activeConfig();
     const configRes = await adapter.configure(projectImpl, config);
     projectImpl._compiler = configRes.compiler;
     await doBuildSetup(projectImpl, config);
+    return projectImpl;
 }
 
 export async function generate(): Promise<void> {
-    await generateTargets();
     const adapter = projectImpl.adapter('cmake');
     const config = projectImpl.activeConfig();
     await adapter.generate(projectImpl, config);
@@ -57,7 +53,9 @@ export async function generate(): Promise<void> {
 
 export async function build(options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void> {
     const { buildTarget, forceRebuild } = options;
-    log.info(`proj.build called (buildTarget: ${buildTarget}, forceRebuild: ${forceRebuild})`);
+    const adapter = projectImpl.adapter('cmake');
+    const config = projectImpl.activeConfig();
+    await adapter.build(projectImpl, config, { buildTarget, forceRebuild });
 }
 
 export function validateTarget(
@@ -670,7 +668,7 @@ function resolveTargetSources(builder: BuilderImpl, project: ProjectImpl, config
 }
 
 function resolveTargets(builders: BuilderImpl[], project: ProjectImpl, config: Config): Target[] {
-    return builders.flatMap((builder) =>
+    return util.deduplicate(builders.flatMap((builder) =>
         builder._targets.map((t) => ({
             name: t.name,
             importDir: builder._importDir,
@@ -686,5 +684,5 @@ function resolveTargets(builders: BuilderImpl[], project: ProjectImpl, config: C
             linkOptions: resolveTargetLinkOptions(builder, t),
             jobs: t.jobs ?? [],
         }))
-    );
+    ));
 }
