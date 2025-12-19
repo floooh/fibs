@@ -27,11 +27,12 @@ export async function fibs(importMeta: ImportMeta) {
         const rootModule = await import(`file://${rootPath}`);
         assertFibsModule(rootModule);
 
-        // run configure-pass
-        const project = await configure(rootModule, rootDir);
+        // run configure-pass (with special-case to avoid redundant target config on changing the config)
+        const cmdName = Deno.args[0];
+        const configureWithTargets = cmdName != 'config';
+        const project = await configure(rootModule, rootDir, configureWithTargets);
 
         // invoke the requested command
-        const cmdName = Deno.args[0];
         const cmd = project.command(cmdName);
         if (!skipCmd) {
             await cmd.run(project);
