@@ -260,7 +260,7 @@ async function configureRecurseImports(
                 childConfigurer.importErrors = importErrors;
                 res.push(childConfigurer);
                 if (module.configure) {
-                    module.configure(configurer);
+                    module.configure(childConfigurer);
                 }
                 configureRecurseImports(childConfigurer, project, res);
             }

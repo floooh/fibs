@@ -394,7 +394,7 @@ export type RunResult = {
 };
 
 export type ToolDesc = NamedItem & {
-    platforms: string[];
+    platforms: Platform[];
     optional: boolean;
     notFoundMsg: string;
     exists(): Promise<boolean>;
