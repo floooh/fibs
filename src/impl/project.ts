@@ -21,6 +21,7 @@ import {
     Tool,
 } from '../types.ts';
 import { host, log, settings, util } from '../lib/index.ts';
+import { path } from '../../deps.ts';
 
 export class ProjectImpl implements Project {
     _name: string;
@@ -44,7 +45,7 @@ export class ProjectImpl implements Project {
     _settings: Setting[] = [];
 
     constructor(rootModule: FibsModule, rootDir: string) {
-        this._name = 'fibs-project';
+        this._name = path.basename(rootDir);
         this._rootModule = rootModule;
         this._rootDir = rootDir;
     }

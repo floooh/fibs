@@ -29,6 +29,7 @@ import { TargetBuilderImpl } from './target.ts';
 
 export class BuilderImpl implements Builder {
     _project: Project;
+    _name: string | undefined;
     _importDir: string;
     _importModule: FibsModule;
     _targets: TargetDesc[] = [];
@@ -41,6 +42,9 @@ export class BuilderImpl implements Builder {
         this._project = project;
         this._importDir = importDir;
         this._importModule = importModule;
+    }
+    setName(name: string): void {
+        this._name = name;
     }
     addTarget(target: TargetDesc | string, type?: TargetType, fn?: (t: TargetBuilder) => void): void {
         if (typeof target === 'string') {

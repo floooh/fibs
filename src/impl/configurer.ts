@@ -19,7 +19,7 @@ import { host, log, util } from '../lib/index.ts';
 type ImportExtra = {
     importDir?: string;
     importModules?: FibsModule[];
-}
+};
 
 export class ConfigurerImpl implements Configurer {
     rootDir: string;

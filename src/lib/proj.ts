@@ -68,7 +68,6 @@ async function configureTargets(): Promise<void> {
 export function validateTarget(
     project: Project,
     target: Target,
-    config: Config,
     options: { silent?: boolean; abortOnError?: boolean },
 ): { valid: boolean; hints: string[] } {
     const { silent = false, abortOnError = false } = options;
@@ -284,7 +283,13 @@ function doBuildSetup(project: ProjectImpl, config: Config): void {
     if (projectImpl._rootModule.build) {
         const builder = new BuilderImpl(project, projectImpl._rootDir, projectImpl._rootModule);
         projectImpl._rootModule.build(builder);
+        // root module builder defines the project name
+        if (builder._name) {
+            projectImpl._name = builder._name;
+        }
         builders.push(builder);
+    } else {
+        log.panic(`root project fibs.ts must export a 'build' function`);
     }
     resolveBuildItems(builders, project, config);
 }
@@ -476,7 +481,7 @@ function resolveConfigCmakeVariables(configurer: ConfigurerImpl, c: ConfigDesc):
         name: key,
         value: (typeof val !== 'string') ? val : util.resolveConfigScopePath(val, {
             rootDir: configurer.rootDir,
-            config: { name: c.name, platform: c.platform, importDir: configurer.importDir }
+            config: { name: c.name, platform: c.platform, importDir: configurer.importDir },
         }),
         importDir: configurer.importDir,
         importModule: configurer.importModule,
