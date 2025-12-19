@@ -98,7 +98,7 @@ export function validateTarget(
 
     // check that jobs exist and have valid arg types
     for (const targetJob of target.jobs) {
-        const targetJobRes = validateTargetJob(project, config, target, targetJob);
+        const targetJobRes = validateTargetJob(project, target, targetJob);
         if (!targetJobRes.valid) {
             res.valid = false;
             res.hints.push(...targetJobRes.hints);
@@ -156,7 +156,6 @@ export function validateTarget(
 
 export function validateTargetJob(
     project: Project,
-    config: Config,
     target: Target,
     targetJob: TargetJob,
 ): { valid: boolean; hints: string[] } {
@@ -181,7 +180,7 @@ export function validateTargetJob(
     return res;
 }
 
-export async function runJobs(target: Target) {
+export async function runJobs(_target: Target) {
     log.info(`proj.runJobs() called`);
     /* FIXME
     const ctx: Context = {
@@ -264,7 +263,7 @@ async function configureRecurseImports(
     }
 }
 
-async function doBuildSetup(project: ProjectImpl, config: Config): Promise<void> {
+function doBuildSetup(project: ProjectImpl, config: Config): void {
     const builders: BuilderImpl[] = [];
     for (const imp of projectImpl.imports()) {
         if (imp.importModule.build) {

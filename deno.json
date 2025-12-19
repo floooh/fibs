@@ -13,11 +13,5 @@
         "singleQuote": true,
         "lineWidth": 120,
         "proseWrap": "never"
-    },
-    "lint": {
-        "rules": {
-            "tags": [],
-            "include": ["eqeqeq", "camelcase"]
-        }
     }
 }

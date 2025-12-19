@@ -19,7 +19,7 @@ function help() {
 
 const allTargetTypes: TargetType[] = ['windowed-exe', 'plain-exe', 'lib', 'dll', 'interface'];
 
-async function run(project: Project) {
+async function run(project: Project): Promise<void> {
     const args = parseArgs();
     if (args.all) {
         log.section('settings');

@@ -1,5 +1,5 @@
 import { log, util } from '../lib/index.ts';
-import { CommandDesc, Project } from '../types.ts';
+import { CommandDesc } from '../types.ts';
 
 export const resetCmd: CommandDesc = { name: 'reset', help, run };
 
@@ -7,7 +7,7 @@ function help() {
     log.helpCmd(['reset'], 'wipe the .fibs subdirectory and start from scratch');
 }
 
-async function run(project: Project) {
+async function run() {
     const cwd = Deno.cwd().replaceAll('\\', '/');
     const fibsFile = `${cwd}/fibs.ts`;
     const fibsDir = `${cwd}/.fibs`;

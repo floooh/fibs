@@ -89,11 +89,11 @@ export async function build(project: Project, config: Config, options: AdapterBu
     if (!util.fileExists(`${project.buildDir()}/CMakeCache.txt`)) {
         await generate(project, config);
     }
-    await cmake.build(project, config, options);
+    await cmake.build(options);
 }
 
 function genCMakePresetsJson(project: Project, config: Config, buildDir: string, distDir: string): string {
-    let preset = {
+    const preset = {
         version: 3,
         cmakeMinimumRequired: {
             major: 4,
@@ -187,7 +187,7 @@ function genConfigurePresets(project: Project, config: Config, buildDir: string,
 }
 
 function genCacheVariables(project: Project, config: Config, distDir: string): Record<string, unknown> {
-    let res: Record<string, unknown> = {};
+    const res: Record<string, unknown> = {};
     if (!isMultiConfigGenerator(config)) {
         res.CMAKE_BUILD_TYPE = asCmakeBuildMode(config.buildMode);
     }
@@ -220,7 +220,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genCompileDefinitions(project, config);
     str += genCompileOptions(project, config);
     str += genLinkOptions(project, config);
-    str += genAllJobsTarget(project, config);
+    str += genAllJobsTarget(project);
     for (const target of project.targets()) {
         str += genTarget(project, config, target);
         //str += genTargetDependencies(project, config, target);
@@ -311,7 +311,7 @@ function genLinkOptions(project: Project, config: Config): string {
     return str;
 }
 
-function genAllJobsTarget(project: Project, config: Config): string {
+function genAllJobsTarget(project: Project): string {
     let str = '';
     // first check if there are any jobs
     let hasJobs: boolean = false;

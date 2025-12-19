@@ -1,5 +1,5 @@
 import { git, log, util } from './index.ts';
-import { assertFibsModule, FibsModule, Import, ImportDesc, Project } from '../types.ts';
+import { FibsModule, Import, ImportDesc, Project } from '../types.ts';
 
 export async function fetchImport(
     project: Project,
@@ -56,7 +56,6 @@ export async function importModulesFromDir(
         if (settledResult.status === 'fulfilled') {
             const module = settledResult.value;
             try {
-                assertFibsModule(module);
                 res.modules.push(module);
             } catch (err) {
                 log.warn('importing module failed with:', err);
@@ -74,11 +73,10 @@ export function hasImportErrors(project: Project): boolean {
     return project.imports().some((imp) => (imp.importErrors.length > 0));
 }
 
-export async function validate(
-    project: Project,
+export function validate(
     imp: Import,
     options: { silent?: boolean; abortOnError?: boolean },
-): Promise<{ valid: boolean; hints: string[] }> {
+): { valid: boolean; hints: string[] } {
     const {
         silent = false,
         abortOnError = true,

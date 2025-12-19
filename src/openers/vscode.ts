@@ -12,7 +12,7 @@ async function generate(project: Project, config: Config) {
     writeLaunchJson(project, config, vscodeDir);
 }
 
-async function open(project: Project, config: Config) {
+async function open(project: Project) {
     await run({
         args: [`${project.dir}/.vscode/${project.name}.code-workspace`],
         winUseCmd: true,

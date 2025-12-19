@@ -32,7 +32,7 @@ export async function generate(project: Project, config: Config) {
     }
 }
 
-export async function build(project: Project, config: Config, options: { target?: string; forceRebuild?: boolean }) {
+export async function build(options: { target?: string; forceRebuild?: boolean }) {
     const {
         target,
         forceRebuild = false,

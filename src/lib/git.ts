@@ -36,7 +36,7 @@ export async function clone(options: { url: string; dir: string; ref?: string; s
         ref = 'HEAD',
         showCmd = true,
     } = options;
-    let repoDir = getDir(dir, url, ref);
+    const repoDir = getDir(dir, url, ref);
     if (util.dirExists(repoDir)) {
         log.panic(`git clone directory ${repoDir} already exists!`);
     }
@@ -74,7 +74,7 @@ export async function update(
         force = false,
         showCmd = true,
     } = options;
-    let repoDir = getDir(dir, url, ref);
+    const repoDir = getDir(dir, url, ref);
     const args = ['fetch', '--depth=1', 'origin', ref];
     if (force) {
         args.push('-f');

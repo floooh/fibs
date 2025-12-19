@@ -35,7 +35,7 @@ export function fileExists(path: string): boolean {
     try {
         const res = Deno.statSync(path);
         return res.isFile;
-    } catch (err) {
+    } catch (_err) {
         return false;
     }
 }
@@ -44,7 +44,7 @@ export function dirExists(path: string): boolean {
     try {
         const res = Deno.statSync(path);
         return res.isDirectory;
-    } catch (err) {
+    } catch (_err) {
         return false;
     }
 }
@@ -235,7 +235,7 @@ export function dirty(inputs: string[], outputs: string[]): boolean {
             } else if (res.mtime.getTime() > mtime) {
                 mtime = res.mtime.getTime();
             }
-        } catch (err) {
+        } catch (_err) {
             // output file doesn't exist
             return true;
         }
@@ -389,7 +389,7 @@ export function isString(val: unknown): val is string {
     return typeof val === 'string';
 }
 
-export function isNumber(val: unknown): val is Number {
+export function isNumber(val: unknown): val is number {
     return typeof val === 'number';
 }
 
@@ -401,7 +401,7 @@ export function isStringArray(val: unknown): val is string[] {
     return Array.isArray(val) && val.every((item) => isString(item));
 }
 
-export function isNumberArray(val: unknown): val is Number[] {
+export function isNumberArray(val: unknown): val is number[] {
     return Array.isArray(val) && val.every((item) => isNumber(item));
 }
 
@@ -448,6 +448,7 @@ export function validateArgs(
                         res.valid = false;
                         res.hints.push(`arg '${key} must be a boolean array`);
                     }
+                    break;
                 case 'number':
                     if (!isNumber(value)) {
                         res.valid = false;

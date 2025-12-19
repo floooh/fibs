@@ -49,7 +49,7 @@ async function run(project: Project) {
 
 function parseArgs(project: Project): Config[] {
     let all = false;
-    let args = Deno.args.slice(1).filter((arg) => {
+    const args = Deno.args.slice(1).filter((arg) => {
         if (arg.startsWith('--')) {
             if (arg === '--all') {
                 all = true;
