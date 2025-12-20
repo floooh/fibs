@@ -121,8 +121,8 @@ export type TargetBuilder = {
     setSourcesDir(dir: string): void;
     addSource(source: string): void;
     addSources(sources: string[]): void;
-    addDependency(dep: string): void;
-    addLinkLibrary(lib: string): void;
+    addDependencies(dep: string[]): void;
+    addLibraries(lib: string[]): void;
     addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
     addIncludeDirectories(dirs: string[]): void;
     addCompileDefinitions(defs: CompileDefinitionsDesc): void;

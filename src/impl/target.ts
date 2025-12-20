@@ -43,12 +43,12 @@ export class TargetBuilderImpl implements TargetBuilder {
         this.desc.sources!.push(...sources);
     }
 
-    addDependency(dep: string): void {
-        this.desc.deps!.push(dep);
+    addDependencies(deps: string[]): void {
+        this.desc.deps!.push(...deps);
     }
 
-    addLinkLibrary(lib: string): void {
-        this.desc.libs!.push(lib);
+    addLibraries(libs: string[]): void {
+        this.desc.libs!.push(...libs);
     }
 
     addIncludeDirectories(dirs: IncludeDirectoriesDesc | string[]): void {
