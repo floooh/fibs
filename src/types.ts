@@ -103,9 +103,13 @@ type BuilderProject = Omit<
 export type Builder = BuilderProject & {
     setName(name: string): void;
     addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
+    addIncludeDirectories(dirs: string[]): void;
     addCompileDefinitions(defs: CompileDefinitionsDesc): void;
+    addCompileDefinitions(defs: Record<string, string>): void;
     addCompileOptions(opts: CompileOptionsDesc): void;
+    addCompileOptions(opts: string[]): void;
     addLinkOptions(opts: LinkOptionsDesc): void;
+    addLinkOptions(opts: string[]): void
     addTarget(target: TargetDesc): void;
     addTarget(name: string, type: TargetType, fn: (t: TargetBuilder) => void): void;
 };
@@ -117,9 +121,13 @@ export type TargetBuilder = {
     addDependency(dep: string): void;
     addLinkLibrary(lib: string): void;
     addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
+    addIncludeDirectories(dirs: string[]): void;
     addCompileDefinitions(defs: CompileDefinitionsDesc): void;
+    addCompileDefinitions(defs: Record<string, string>): void;
     addCompileOptions(opts: CompileOptionsDesc): void;
+    addCompileOptions(opts: string[]): void;
     addLinkOptions(opts: LinkOptionsDesc): void;
+    addLinkOptions(opts: string[]): void;
     addJob(job: TargetJob): void;
 };
 
@@ -178,6 +186,12 @@ export type IncludeDirectoriesDesc = {
     language?: Language;
     buildMode?: BuildMode;
 };
+export function isIncludeDirectoriesDesc(val: unknown): val is IncludeDirectoriesDesc {
+    return val !== null &&
+           typeof val === 'object' &&
+           'dirs' in val &&
+           Array.isArray(val.dirs);
+}
 export type IncludeDirectory = ImportedItem & {
     dir: string;
     scope: Scope;
@@ -192,6 +206,13 @@ export type CompileDefinitionsDesc = {
     language?: Language;
     buildMode?: BuildMode;
 };
+export function isCompileDefinitionsDesc(val: unknown): val is CompileDefinitionsDesc {
+    return val !== null &&
+        typeof val === 'object' &&
+        'defs' in val &&
+        typeof val.defs === 'object' &&
+        val.defs !== null;
+}
 export type CompileDefinition = NamedItem & ImportedItem & {
     val: string;
     scope: Scope;
@@ -205,6 +226,12 @@ export type CompileOptionsDesc = {
     language?: Language;
     buildMode?: BuildMode;
 };
+export function isCompileOptionsDesc(val: unknown): val is CompileOptionsDesc {
+    return val !== null &&
+        typeof val === 'object' &&
+        'opts' in val &&
+        Array.isArray(val.opts);
+}
 export type CompileOption = ImportedItem & {
     opt: string;
     scope: Scope;
@@ -217,6 +244,12 @@ export type LinkOptionsDesc = {
     scope?: Scope;
     buildMode?: BuildMode;
 };
+export function isLinkOptionsDesc(val: unknown): val is LinkOptionsDesc {
+    return val !== null &&
+        typeof val === 'object' &&
+        'opts' in val &&
+        Array.isArray(val.opts);
+}
 export type LinkOption = ImportedItem & {
     opt: string;
     scope: Scope;

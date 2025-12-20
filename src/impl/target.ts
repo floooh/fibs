@@ -7,6 +7,10 @@ import {
     TargetDesc,
     TargetJob,
     TargetType,
+    isCompileDefinitionsDesc,
+    isIncludeDirectoriesDesc,
+    isCompileOptionsDesc,
+    isLinkOptionsDesc,
 } from '../types.ts';
 
 export class TargetBuilderImpl implements TargetBuilder {
@@ -47,20 +51,36 @@ export class TargetBuilderImpl implements TargetBuilder {
         this.desc.libs!.push(lib);
     }
 
-    addIncludeDirectories(dirs: IncludeDirectoriesDesc): void {
-        this.desc.includeDirectories!.push(dirs);
+    addIncludeDirectories(dirs: IncludeDirectoriesDesc | string[]): void {
+        if (isIncludeDirectoriesDesc(dirs)) {
+            this.desc.includeDirectories!.push(dirs);
+        } else {
+            this.desc.includeDirectories!.push({ dirs });
+        }
     }
 
-    addCompileDefinitions(defs: CompileDefinitionsDesc): void {
-        this.desc.compileDefinitions!.push(defs);
+    addCompileDefinitions(defs: CompileDefinitionsDesc | Record<string, string>): void {
+        if (isCompileDefinitionsDesc(defs)) {
+            this.desc.compileDefinitions!.push(defs);
+        } else {
+            this.desc.compileDefinitions!.push({ defs });
+        }
     }
 
-    addCompileOptions(opts: CompileOptionsDesc): void {
-        this.desc.compileOptions!.push(opts);
+    addCompileOptions(opts: CompileOptionsDesc | string[]): void {
+        if (isCompileOptionsDesc(opts)) {
+            this.desc.compileOptions!.push(opts);
+        } else {
+            this.desc.compileOptions!.push({ opts });
+        }
     }
 
-    addLinkOptions(opts: LinkOptionsDesc): void {
-        this.desc.linkOptions!.push(opts);
+    addLinkOptions(opts: LinkOptionsDesc | string[]): void {
+        if (isLinkOptionsDesc(opts)) {
+            this.desc.linkOptions!.push(opts);
+        } else {
+            this.desc.linkOptions!.push({ opts });
+        }
     }
 
     addJob(job: TargetJob): void {
