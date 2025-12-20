@@ -31,7 +31,7 @@ export class TargetBuilderImpl implements TargetBuilder {
         };
     }
 
-    setSourcesDir(dir: string): void {
+    setDir(dir: string): void {
         this.desc.dir = dir;
     }
 

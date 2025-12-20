@@ -132,7 +132,7 @@ export function resolvePath(fsPath: string, opts: {
         if (target !== undefined) {
             aliasMap = {
                 ...aliasMap,
-                '@targetsources:': (target.dir !== undefined) ? [selfDir, target.dir].join('/') : selfDir,
+                '@targetdir:': (target.dir !== undefined) ? target.dir : selfDir,
                 '@targetbuild:': targetBuildDir(rootDir, config.name, target.name),
                 '@targetdist:': targetDistDir(rootDir, config.name, target.name, config.platform, target.type),
                 '@targetassets:': targetAssetDir(rootDir, config.name, target.name, config.platform, target.type),

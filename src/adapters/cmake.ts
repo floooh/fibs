@@ -376,7 +376,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
             str += `add_library(${target.name} INTERFACE ${targetSourcesStr})\n`;
             break;
     }
-    const targetSourceDir = util.resolveTargetScopePath('@targetsources:', {
+    const targetSourceDir = util.resolveTargetScopePath('@targetdir', {
         rootDir: project.dir(),
         config: { name: config.name, platform: config.platform },
         target: { name: target.name, dir: target.dir, type: target.type, importDir: target.importDir },

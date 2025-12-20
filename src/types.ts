@@ -118,7 +118,7 @@ export type Builder = BuilderProject & {
 };
 
 export type TargetBuilder = {
-    setSourcesDir(dir: string): void;
+    setDir(dir: string): void;
     addSource(source: string): void;
     addSources(sources: string[]): void;
     addDependencies(dep: string[]): void;

@@ -545,7 +545,7 @@ function resolveTargetIncludeDirectories(
         items.dirs.map((dir) => ({
             dir: util.resolveTargetScopePath(dir, {
                 rootDir: project._rootDir,
-                defaultAlias: '@targetsources',
+                defaultAlias: '@targetdir',
                 config: { name: config.name, platform: config.platform },
                 target: { name: t.name, dir: t.dir, type: t.type, importDir: builder._importDir },
             }),
@@ -703,7 +703,7 @@ function resolveTargetSources(builder: BuilderImpl, project: ProjectImpl, config
     return t.sources.map((src) =>
         util.resolveTargetScopePath(src, {
             rootDir: project._rootDir,
-            defaultAlias: '@targetsources',
+            defaultAlias: '@targetdir',
             config: { name: config.name, platform: config.platform },
             target: { name: t.name, dir: t.dir, type: t.type, importDir: builder._importDir },
         })
