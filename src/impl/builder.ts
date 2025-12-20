@@ -36,16 +36,18 @@ export class BuilderImpl implements Builder {
     _name: string | undefined;
     _importDir: string;
     _importModule: FibsModule;
+    _importOptions: Record<string, unknown>;
     _targets: TargetDesc[] = [];
     _includeDirectories: IncludeDirectoriesDesc[] = [];
     _compileDefinitions: CompileDefinitionsDesc[] = [];
     _compileOptions: CompileOptionsDesc[] = [];
     _linkOptions: LinkOptionsDesc[] = [];
 
-    constructor(project: Project, importDir: string, importModule: FibsModule) {
+    constructor(project: Project, importDir: string, importModule: FibsModule, importOptions: Record<string, unknown>) {
         this._project = project;
         this._importDir = importDir;
         this._importModule = importModule;
+        this._importOptions = importOptions;
     }
     setName(name: string): void {
         this._name = name;
@@ -91,6 +93,9 @@ export class BuilderImpl implements Builder {
         } else {
             this._linkOptions.push({ opts });
         }
+    }
+    importOption(name: string): unknown | undefined {
+        return this._importOptions[name];
     }
     name(): string {
         return this._project.name();

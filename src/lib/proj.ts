@@ -206,7 +206,7 @@ async function doConfigure(rootModule: FibsModule, project: ProjectImpl): Promis
     const configurers: ConfigurerImpl[] = [];
 
     // start configuration at the root object to gather imports
-    const rootConfigurer = new ConfigurerImpl(project.dir(), project.dir(), rootModule);
+    const rootConfigurer = new ConfigurerImpl(project.dir(), project.dir(), rootModule, {});
     if (rootModule.configure) {
         rootModule.configure(rootConfigurer);
     }
@@ -223,7 +223,7 @@ async function doConfigure(rootModule: FibsModule, project: ProjectImpl): Promis
 }
 
 function configureBuiltins(module: FibsModule, project: ProjectImpl): ConfigurerImpl {
-    const configurer = new ConfigurerImpl(project.dir(), project.dir(), module);
+    const configurer = new ConfigurerImpl(project.dir(), project.dir(), module, {});
     configurer.addSetting({
         name: 'config',
         default: host.defaultConfig(),
@@ -246,7 +246,7 @@ async function configureRecurseImports(
     project: ProjectImpl,
     res: ConfigurerImpl[],
 ): Promise<void> {
-    for (const importDesc of configurer.imports) {
+    for (const importDesc of configurer._imports) {
         const { name, url, ref } = importDesc;
         const { valid, dir } = await fetchImport(project, { name, url, ref });
         // record the actual importDir in the parent ImportDesc
@@ -257,8 +257,8 @@ async function configureRecurseImports(
             for (const module of modules) {
                 // record the actual import modules in the parent importDesc
                 importDesc.importModules.push(module);
-                const childConfigurer = new ConfigurerImpl(project.dir(), dir, module);
-                childConfigurer.importErrors = importErrors;
+                const childConfigurer = new ConfigurerImpl(project.dir(), dir, module, importDesc.options ?? {});
+                childConfigurer._importErrors = importErrors;
                 res.push(childConfigurer);
                 if (module.configure) {
                     module.configure(childConfigurer);
@@ -274,14 +274,14 @@ function doBuildSetup(project: ProjectImpl, config: Config): void {
     for (const imp of projectImpl.imports()) {
         for (const module of imp.modules) {
             if (module.build) {
-                const builder = new BuilderImpl(project, imp.importDir, module);
+                const builder = new BuilderImpl(project, imp.importDir, module, imp.options);
                 module.build(builder);
                 builders.push(builder);
             }
         }
     }
     if (projectImpl._rootModule.build) {
-        const builder = new BuilderImpl(project, projectImpl._rootDir, projectImpl._rootModule);
+        const builder = new BuilderImpl(project, projectImpl._rootDir, projectImpl._rootModule, {});
         projectImpl._rootModule.build(builder);
         // root module builder defines the project name
         if (builder._name) {
@@ -320,12 +320,12 @@ function resolveBuildItems(builders: BuilderImpl[], project: ProjectImpl, config
 
 function resolveCmakeVariables(configurers: ConfigurerImpl[]): CmakeVariable[] {
     return util.deduplicate(configurers.flatMap((configurer) =>
-        configurer.cmakeVariables.map((v) => ({
+        configurer._cmakeVariables.map((v) => ({
             name: v.name,
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
             value: (typeof v.value !== 'string') ? v.value : util.resolveProjectScopePath(v.value, {
-                rootDir: configurer.rootDir,
+                rootDir: configurer._rootDir,
             }),
         }))
     ));
@@ -333,10 +333,10 @@ function resolveCmakeVariables(configurers: ConfigurerImpl[]): CmakeVariable[] {
 
 function resolveSettings(configurers: ConfigurerImpl[]): Setting[] {
     return util.deduplicate(configurers.flatMap((configurer) =>
-        configurer.settings.map((s) => ({
+        configurer._settings.map((s) => ({
             name: s.name,
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
             default: s.default,
             value: s.default, // not a bug
             validate: s.validate,
@@ -346,25 +346,26 @@ function resolveSettings(configurers: ConfigurerImpl[]): Setting[] {
 
 function resolveImports(configurers: ConfigurerImpl[]): Import[] {
     return util.deduplicate(configurers.flatMap((configurer) =>
-        configurer.imports.map<Import>((i) => ({
+        configurer._imports.map<Import>((i) => ({
             name: i.name,
             importDir: i.importDir ?? 'invalid-import-dir',
             // the importModule is misleading since it's actually the parent import module
-            importModule: configurer.importModule,
-            importErrors: configurer.importErrors,
+            importModule: configurer._importModule,
+            importErrors: configurer._importErrors,
             url: i.url,
             ref: i.ref,
             modules: i.importModules ?? [],
+            options: i.options ?? {},
         }))
     ));
 }
 
 function resolveCommands(configurers: ConfigurerImpl[]): Command[] {
     return util.deduplicate(configurers.flatMap((configurer) =>
-        configurer.commands.map((c) => ({
+        configurer._commands.map((c) => ({
             name: c.name,
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
             help: c.help,
             run: c.run,
         }))
@@ -373,10 +374,10 @@ function resolveCommands(configurers: ConfigurerImpl[]): Command[] {
 
 function resolveJobs(configurers: ConfigurerImpl[]): JobBuilder[] {
     return util.deduplicate(configurers.flatMap((configurer) =>
-        configurer.jobs.map((j) => ({
+        configurer._jobs.map((j) => ({
             name: j.name,
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
             help: j.help,
             validate: j.validate,
             build: j.build,
@@ -386,10 +387,10 @@ function resolveJobs(configurers: ConfigurerImpl[]): JobBuilder[] {
 
 function resolveTools(configurers: ConfigurerImpl[]): Tool[] {
     return util.deduplicate(configurers.flatMap((configurer) =>
-        configurer.tools.map((t) => ({
+        configurer._tools.map((t) => ({
             name: t.name,
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
             platforms: t.platforms,
             optional: t.optional,
             notFoundMsg: t.notFoundMsg,
@@ -400,10 +401,10 @@ function resolveTools(configurers: ConfigurerImpl[]): Tool[] {
 
 function resolveRunners(configurers: ConfigurerImpl[]): Runner[] {
     return util.deduplicate(configurers.flatMap((configurer) =>
-        configurer.runners.map((r) => ({
+        configurer._runners.map((r) => ({
             name: r.name,
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
             run: r.run,
         }))
     ));
@@ -411,10 +412,10 @@ function resolveRunners(configurers: ConfigurerImpl[]): Runner[] {
 
 function resolveOpeners(configurers: ConfigurerImpl[]): Opener[] {
     return util.deduplicate(configurers.flatMap((configurer) =>
-        configurer.openers.map((o) => ({
+        configurer._openers.map((o) => ({
             name: o.name,
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
             generate: o.generate,
             open: o.open,
         }))
@@ -423,10 +424,10 @@ function resolveOpeners(configurers: ConfigurerImpl[]): Opener[] {
 
 function resolveAdapters(configurers: ConfigurerImpl[]): Adapter[] {
     return util.deduplicate(configurers.flatMap((configurer) =>
-        configurer.adapters.map((a) => ({
+        configurer._adapters.map((a) => ({
             name: a.name,
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
             generate: a.generate,
             configure: a.configure,
             build: a.build,
@@ -436,10 +437,10 @@ function resolveAdapters(configurers: ConfigurerImpl[]): Adapter[] {
 
 function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Config[] {
     return util.deduplicate(configurers.flatMap((configurer) =>
-        configurer.configs.map((c) => ({
+        configurer._configs.map((c) => ({
             name: c.name,
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
             platform: c.platform,
             buildMode: c.buildMode,
             runner: project.findRunner(c.runner) ?? project.runner('native'),
@@ -449,14 +450,14 @@ function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Co
             toolchainFile: c.toolchainFile
                 ? util.resolveConfigScopePath(c.toolchainFile, {
                     rootDir: project.dir(),
-                    config: { name: c.name, platform: c.platform, importDir: configurer.importDir },
+                    config: { name: c.name, platform: c.platform, importDir: configurer._importDir },
                 })
                 : undefined,
             cmakeIncludes: c.cmakeIncludes
                 ? c.cmakeIncludes.map((path) => {
                     return util.resolveConfigScopePath(path, {
                         rootDir: project.dir(),
-                        config: { name: c.name, platform: c.platform, importDir: configurer.importDir },
+                        config: { name: c.name, platform: c.platform, importDir: configurer._importDir },
                     });
                 })
                 : [],
@@ -481,11 +482,11 @@ function resolveConfigCmakeVariables(configurer: ConfigurerImpl, c: ConfigDesc):
         Object.entries(c.cmakeVariables).map<CmakeVariable>(([key, val]) => ({
             name: key,
             value: (typeof val !== 'string') ? val : util.resolveConfigScopePath(val, {
-                rootDir: configurer.rootDir,
-                config: { name: c.name, platform: c.platform, importDir: configurer.importDir },
+                rootDir: configurer._rootDir,
+                config: { name: c.name, platform: c.platform, importDir: configurer._importDir },
             }),
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
         })),
     );
 }
@@ -497,12 +498,12 @@ function resolveConfigIncludeDirectories(configurer: ConfigurerImpl, c: ConfigDe
     return c.includeDirectories.flatMap((items) =>
         items.dirs.map((dir) => ({
             dir: util.resolveConfigScopePath(dir, {
-                rootDir: configurer.rootDir,
+                rootDir: configurer._rootDir,
                 defaultAlias: '@self',
-                config: { name: c.name, platform: c.platform, importDir: configurer.importDir },
+                config: { name: c.name, platform: c.platform, importDir: configurer._importDir },
             }),
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
             scope: items.scope ?? 'public',
             system: items.system ?? false,
             language: items.language,
@@ -569,8 +570,8 @@ function resolveConfigCompileDefinitions(configurer: ConfigurerImpl, c: ConfigDe
             scope: items.scope ?? 'public',
             language: items.language,
             buildMode: items.buildMode,
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
         }))
     ));
 }
@@ -620,8 +621,8 @@ function resolveConfigCompileOptions(configurer: ConfigurerImpl, c: ConfigDesc):
             scope: items.scope ?? 'public',
             language: items.language,
             buildMode: items.buildMode,
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
         }))
     );
 }
@@ -665,8 +666,8 @@ function resolveConfigLinkOptions(configurer: ConfigurerImpl, c: ConfigDesc): Li
         items.opts.map((opt) => ({
             opt,
             scope: items.scope ?? 'public',
-            importDir: configurer.importDir,
-            importModule: configurer.importModule,
+            importDir: configurer._importDir,
+            importModule: configurer._importModule,
         }))
     );
 }
@@ -700,8 +701,9 @@ function resolveTargetLinkOptions(builder: BuilderImpl, t: TargetDesc): LinkOpti
 
 function resolveTargetSources(builder: BuilderImpl, project: ProjectImpl, config: Config, t: TargetDesc): string[] {
     return t.sources.map((src) =>
-        util.resolveTargetScopePath(`@targetsources:${src}`, {
+        util.resolveTargetScopePath(src, {
             rootDir: project._rootDir,
+            defaultAlias: '@targetsources',
             config: { name: config.name, platform: config.platform },
             target: { name: t.name, dir: t.dir, type: t.type, importDir: builder._importDir },
         })

@@ -22,25 +22,31 @@ type ImportExtra = {
 };
 
 export class ConfigurerImpl implements Configurer {
-    rootDir: string;
-    importModule: FibsModule;
-    importDir: string;
-    importErrors: unknown[] = [];
-    cmakeVariables: CmakeVariableDesc[] = [];
-    imports: (ImportDesc & ImportExtra)[] = [];
-    commands: CommandDesc[] = [];
-    jobs: JobBuilderDesc[] = [];
-    tools: ToolDesc[] = [];
-    runners: RunnerDesc[] = [];
-    openers: OpenerDesc[] = [];
-    configs: ConfigDesc[] = [];
-    adapters: AdapterDesc[] = [];
-    settings: SettingDesc[] = [];
+    _rootDir: string;
+    _importModule: FibsModule;
+    _importDir: string;
+    _importOptions: Record<string, unknown>;
+    _importErrors: unknown[] = [];
+    _cmakeVariables: CmakeVariableDesc[] = [];
+    _imports: (ImportDesc & ImportExtra)[] = [];
+    _commands: CommandDesc[] = [];
+    _jobs: JobBuilderDesc[] = [];
+    _tools: ToolDesc[] = [];
+    _runners: RunnerDesc[] = [];
+    _openers: OpenerDesc[] = [];
+    _configs: ConfigDesc[] = [];
+    _adapters: AdapterDesc[] = [];
+    _settings: SettingDesc[] = [];
 
-    constructor(rootDir: string, importDir: string, importModule: FibsModule) {
-        this.rootDir = rootDir;
-        this.importDir = importDir;
-        this.importModule = importModule;
+    constructor(rootDir: string, importDir: string, importModule: FibsModule, importOptions: Record<string, unknown>) {
+        this._rootDir = rootDir;
+        this._importDir = importDir;
+        this._importModule = importModule;
+        this._importOptions = importOptions;
+    }
+
+    importOption(name: string): unknown | undefined {
+        return this._importOptions[name];
     }
 
     hostPlatform(): Platform {
@@ -52,100 +58,100 @@ export class ConfigurerImpl implements Configurer {
     }
 
     projectDir(): string {
-        return this.rootDir;
+        return this._rootDir;
     }
 
     fibsDir(): string {
-        return util.fibsDir(this.rootDir);
+        return util.fibsDir(this._rootDir);
     }
 
     sdkDir(): string {
-        return util.sdkDir(this.rootDir);
+        return util.sdkDir(this._rootDir);
     }
 
     importsDir(): string {
-        return util.importsDir(this.rootDir);
+        return util.importsDir(this._rootDir);
     }
 
     configDir(configName: string): string {
-        return util.configDir(this.rootDir, configName);
+        return util.configDir(this._rootDir, configName);
     }
 
     buildDir(configName: string): string {
-        return util.buildDir(this.rootDir, configName);
+        return util.buildDir(this._rootDir, configName);
     }
 
     distDir(configName: string): string {
-        return util.distDir(this.rootDir, configName);
+        return util.distDir(this._rootDir, configName);
     }
 
     addCmakeVariable(name: string, value: string | boolean): void {
-        if (util.find(name, this.cmakeVariables)) {
+        if (util.find(name, this._cmakeVariables)) {
             log.panic(`duplicate cmake variable: ${name}`);
         }
-        this.cmakeVariables.push({ name, value });
+        this._cmakeVariables.push({ name, value });
     }
 
     addImport(imp: ImportDesc): void {
-        if (util.find(imp.name, this.imports)) {
+        if (util.find(imp.name, this._imports)) {
             log.panic(`duplicate import: ${imp.name}`);
         }
-        this.imports.push(imp);
+        this._imports.push(imp);
     }
 
     addCommand(cmd: CommandDesc): void {
-        if (util.find(cmd.name, this.commands)) {
+        if (util.find(cmd.name, this._commands)) {
             log.panic(`duplicate command: ${cmd.name}`);
         }
-        this.commands.push(cmd);
+        this._commands.push(cmd);
     }
 
     addJob(job: JobBuilderDesc): void {
-        if (util.find(job.name, this.jobs)) {
+        if (util.find(job.name, this._jobs)) {
             log.panic(`duplicate job: ${job.name}`);
         }
-        this.jobs.push(job);
+        this._jobs.push(job);
     }
 
     addTool(tool: ToolDesc): void {
-        if (util.find(tool.name, this.tools)) {
+        if (util.find(tool.name, this._tools)) {
             log.panic(`duplicate tool: ${tool.name}`);
         }
-        this.tools.push(tool);
+        this._tools.push(tool);
     }
 
     addRunner(runner: RunnerDesc): void {
-        if (util.find(runner.name, this.runners)) {
+        if (util.find(runner.name, this._runners)) {
             log.panic(`duplicate runner: ${runner.name}`);
         }
-        this.runners.push(runner);
+        this._runners.push(runner);
     }
 
     addOpener(opener: OpenerDesc): void {
-        if (util.find(opener.name, this.openers)) {
+        if (util.find(opener.name, this._openers)) {
             log.panic(`duplicate opener: ${opener.name}`);
         }
-        this.openers.push(opener);
+        this._openers.push(opener);
     }
 
     addConfig(config: ConfigDesc): void {
-        if (util.find(config.name, this.configs)) {
+        if (util.find(config.name, this._configs)) {
             log.panic(`duplicate config: ${config.name}`);
         }
-        this.configs.push(config);
+        this._configs.push(config);
     }
 
     addAdapter(adapter: AdapterDesc): void {
-        if (util.find(adapter.name, this.adapters)) {
+        if (util.find(adapter.name, this._adapters)) {
             log.panic(`duplicate adapter: ${adapter.name}`);
         }
-        this.adapters.push(adapter);
+        this._adapters.push(adapter);
     }
 
     addSetting(setting: SettingDesc): void {
-        if (util.find(setting.name, this.adapters)) {
+        if (util.find(setting.name, this._adapters)) {
             log.panic(`duplicate setting: ${setting.name}`);
         }
-        this.settings.push(setting);
+        this._settings.push(setting);
     }
 }

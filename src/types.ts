@@ -10,6 +10,7 @@ export type Configurer = {
     addSetting(setting: SettingDesc): void;
     addConfig(config: ConfigDesc): void;
 
+    importOption(name: string): unknown | undefined;
     hostPlatform(): Platform;
     hostArch(): Arch;
     projectDir(): string;
@@ -112,6 +113,8 @@ export type Builder = BuilderProject & {
     addLinkOptions(opts: string[]): void
     addTarget(target: TargetDesc): void;
     addTarget(name: string, type: TargetType, fn: (t: TargetBuilder) => void): void;
+
+    importOption(name: string): unknown | undefined;
 };
 
 export type TargetBuilder = {
@@ -308,11 +311,13 @@ export type ImportDesc = NamedItem & {
     url: string;
     ref?: string;
     files?: string[];
+    options?: Record<string, unknown>;
 };
 
 export type Import = NamedItem & ImportedItem & {
     url: string;
     ref: string | undefined;
+    options: Record<string, unknown>;
     importErrors: unknown[];
     // each import can have multiple modules
     modules: FibsModule[];
