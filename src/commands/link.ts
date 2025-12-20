@@ -1,4 +1,5 @@
-import { CommandDesc, imports, log, Project } from '../../mod.ts';
+import { imports, log } from '../lib/index.ts';
+import { CommandDesc, Project } from '../types.ts';
 import { path } from '../../deps.ts';
 
 export const linkCmd: CommandDesc = { name: 'link', help, run };
@@ -11,7 +12,7 @@ function help() {
 
 async function run(project: Project) {
     if (Deno.args.length !== 3) {
-        log.error('expected args [import] and [directory] (run \'fibs help link\')');
+        log.panic("expected args [import] and [directory] (run 'fibs help link')");
     }
     const imp = Deno.args[1];
     const dir = path.resolve(Deno.args[2]);

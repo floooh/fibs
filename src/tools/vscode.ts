@@ -1,4 +1,5 @@
-import { log, RunOptions, RunResult, ToolDesc, util } from '../../mod.ts';
+import { log, util } from '../lib/index.ts';
+import { RunOptions, RunResult, ToolDesc } from '../types.ts';
 
 export const vscodeTool: ToolDesc = {
     name: 'vscode',
@@ -14,7 +15,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
         return await util.runCmd('code', options);
     } catch (err) {
         if (abortOnError) {
-            log.error(`Failed to run 'code' with: ${err.message}`);
+            log.panic(`Failed to run 'code' with: `, err);
         } else {
             throw err;
         }

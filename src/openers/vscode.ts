@@ -1,19 +1,20 @@
-import { Config, host, log, OpenerDesc, Project, util } from '../../mod.ts';
+import { host, log } from '../lib/index.ts';
+import { Config, OpenerDesc, Project } from '../types.ts';
 import { run } from '../tools/vscode.ts';
 import { fs } from '../../deps.ts';
 
-export const vscodeOpener: OpenerDesc = { name: 'vscode', configure, open };
+export const vscodeOpener: OpenerDesc = { name: 'vscode', generate, open };
 
-async function configure(project: Project, config: Config) {
-    const vscodeDir = `${project.dir}/.vscode`;
+async function generate(project: Project, config: Config) {
+    const vscodeDir = `${project.dir()}/.vscode`;
     fs.ensureDirSync(vscodeDir);
     writeWorkspaceFile(project, config, vscodeDir);
     writeLaunchJson(project, config, vscodeDir);
 }
 
-async function open(project: Project, config: Config) {
+async function open(project: Project) {
     await run({
-        args: [`${project.dir}/.vscode/${project.name}.code-workspace`],
+        args: [`${project.dir()}/.vscode/${project.name()}.code-workspace`],
         winUseCmd: true,
     });
 }
@@ -21,8 +22,8 @@ async function open(project: Project, config: Config) {
 function writeWorkspaceFile(project: Project, config: Config, vscodeDir: string) {
     const ws = {
         folders: [
-            { path: project.dir },
-            ...project.imports.map((imp) => {
+            { path: project.dir() },
+            ...project.imports().map((imp) => {
                 return { path: imp.importDir };
             }),
         ],
@@ -32,18 +33,17 @@ function writeWorkspaceFile(project: Project, config: Config, vscodeDir: string)
                 testPreset: { visibility: 'hidden' },
                 debug: { visibility: 'hidden' },
             },
-            'cmake.debugConfig': { cwd: util.distDir(project, config) },
+            'cmake.debugConfig': { cwd: project.distDir(config.name) },
             'cmake.autoSelectActiveFolder': false,
             'cmake.ignoreCMakeListsMissing': true,
             'cmake.configureOnOpen': false,
         },
     };
-    const path = `${vscodeDir}/${project.name}.code-workspace`;
-    log.info(`writing ${path}`);
+    const path = `${vscodeDir}/${project.name()}.code-workspace`;
     try {
         Deno.writeTextFileSync(path, JSON.stringify(ws, null, '  '));
     } catch (err) {
-        log.error(`Failed writing ${path} with: ${err.message}`);
+        log.panic(`Failed writing ${path} with: `, err);
     }
 }
 
@@ -66,17 +66,24 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
         name: 'Debug Current Target',
         request: 'launch',
         program: '${command:cmake.launchTargetPath}',
-        cwd: util.distDir(project, config),
+        cwd: project.distDir(config.name),
         args: [],
         type: getType(),
         MIMode: getMIMode(),
     };
-    const stopAtEntryLaunchConfig = structuredClone(launchConfig);
-    stopAtEntryLaunchConfig.name = 'Debug Current Target (Stop at Entry)';
-    if (stopAtEntryLaunchConfig.type === 'lldb') {
-        stopAtEntryLaunchConfig.stopOnEntry = true;
+    let stopAtEntryLaunchConfig;
+    if (launchConfig.type === 'lldb') {
+        stopAtEntryLaunchConfig = {
+            ...launchConfig,
+            name: 'Debug Current Target (Stop at Entry)',
+            stopOnEntry: true,
+        };
     } else {
-        stopAtEntryLaunchConfig.stopAtEntry = true;
+        stopAtEntryLaunchConfig = {
+            ...launchConfig,
+            name: 'Debug Current Target (Stop at Entry)',
+            stopAtEntry: true,
+        };
     }
 
     const launch = {
@@ -85,10 +92,9 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
     };
 
     const path = `${vscodeDir}/launch.json`;
-    log.info(`writing ${path}`);
     try {
         Deno.writeTextFileSync(path, JSON.stringify(launch, null, '  '));
     } catch (err) {
-        log.error(`Failed writing ${path} with: ${err.message}`);
+        log.panic(`Failed writing ${path} with: `, err);
     }
 }

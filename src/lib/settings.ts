@@ -1,39 +1,27 @@
-import { Project } from './types.ts';
-import * as util from './util.ts';
-import * as log from './log.ts';
+import { log, util } from './index.ts';
+import { Project } from '../types.ts';
 
 export function set(project: Project, key: string, value: string) {
-    if (validate(project, key, value)) {
-        project.settings[key].value = value;
-        save(project);
-    }
-}
-
-export function unset(project: Project, key: string) {
-    if (validKey(project, key)) {
-        project.settings[key].value = project.settings[key].default;
-    }
+    project.setting(key).value = value;
     save(project);
 }
 
-export function get(project: Project, key: string): string | undefined {
-    if (validKey(project, key)) {
-        return project.settings[key].value;
-    } else {
-        return undefined;
-    }
+export function unset(project: Project, key: string) {
+    const s = project.setting(key);
+    s.value = s.default;
+    save(project);
 }
 
-export function getDefault(project: Project, key: string): string | undefined {
-    if (validKey(project, key)) {
-        return project.settings[key].default;
-    } else {
-        return undefined;
-    }
+export function get(project: Project, key: string): string {
+    return project.setting(key).value;
+}
+
+export function getDefault(project: Project, key: string): string {
+    return project.setting(key).default;
 }
 
 export function load(project: Project) {
-    const path = util.fibsDir(project) + '/settings.json';
+    const path = project.fibsDir() + '/settings.json';
     let items: Record<string, string> = {};
     if (util.fileExists(path)) {
         try {
@@ -41,7 +29,7 @@ export function load(project: Project) {
                 Deno.readTextFileSync(path),
             ) as typeof items;
         } catch (err) {
-            log.error(`failed loading settings from '${path}' with: ${err.message}`);
+            log.panic(`failed loading settings from '${path}' with: `, err);
         }
     }
     // only accept valid items, otherwise use default
@@ -49,7 +37,7 @@ export function load(project: Project) {
     for (const key in items) {
         const value = items[key];
         if (validate(project, key, value)) {
-            project.settings[key].value = value;
+            set(project, key, value);
         } else {
             hasInvalidKeys = true;
         }
@@ -67,32 +55,25 @@ export function save(project: Project) {
     const path = util.ensureFibsDir(project) + '/settings.json';
     try {
         const kvp: Record<string, string> = {};
-        for (const key in project.settings) {
-            kvp[key] = project.settings[key].value;
+        for (const s of project.settings()) {
+            kvp[s.name] = s.value;
         }
         Deno.writeTextFileSync(
             path,
             JSON.stringify(kvp, null, '  '),
         );
     } catch (err) {
-        log.error(`failed saving settings to '${path}' with: ${err.message}`);
-    }
-}
-
-export function validKey(project: Project, key: string): boolean {
-    if (project.settings[key].default !== undefined) {
-        return true;
-    } else {
-        log.warn(`unknown settings item '${key} (run 'fibs list settings')`);
-        return false;
+        log.panic(`failed saving settings to '${path}' with: `, err);
     }
 }
 
 export function validate(project: Project, key: string, value: string): boolean {
-    if (!validKey(project, key)) {
+    const s = project.findSetting(key);
+    if (s === undefined) {
+        log.warn(`unknown settings item '${key} (run 'fibs list settings')`);
         return false;
     }
-    const res = project.settings[key].validate(project, value);
+    const res = s.validate(project, value);
     if (!res.valid) {
         log.warn(`invalid value '${value}' for settings item '${key}' (${res.hint})`);
         return false;

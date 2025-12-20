@@ -1,4 +1,5 @@
-import { CommandDesc, Config, log, Project, util } from '../../mod.ts';
+import { log, util } from '../lib/index.ts';
+import { CommandDesc, Config, Project } from '../types.ts';
 import { colors } from '../../deps.ts';
 
 export const cleanCmd: CommandDesc = { name: 'clean', help, run };
@@ -13,12 +14,19 @@ async function run(project: Project) {
     const configs = parseArgs(project);
     let numDeleted = 0;
     for (const config of configs) {
-        const buildPath = util.buildDir(project, config);
-        const distPath = util.distDir(project, config);
+        const buildPath = project.buildDir(config.name);
+        const distPath = project.distDir(config.name);
+        const configPath = project.configDir(config.name);
         const buildExists = util.dirExists(buildPath);
         const distExists = util.dirExists(distPath);
-        if (buildExists || distExists) {
+        const configExists = util.dirExists(configPath);
+        if (buildExists || distExists || configExists) {
             log.info(colors.blue(`${config.name}:`));
+            if (configExists) {
+                log.info(`  delete ${configPath}`);
+                Deno.removeSync(configPath, { recursive: true });
+                numDeleted += 1;
+            }
             if (buildExists) {
                 log.info(`  delete ${buildPath}`);
                 Deno.removeSync(buildPath, { recursive: true });
@@ -41,28 +49,22 @@ async function run(project: Project) {
 
 function parseArgs(project: Project): Config[] {
     let all = false;
-    let args = Deno.args.slice(1).filter((arg) => {
+    const args = Deno.args.slice(1).filter((arg) => {
         if (arg.startsWith('--')) {
             if (arg === '--all') {
                 all = true;
             } else {
-                log.error(`unknown option '${arg}' (run 'fibs help clean')`);
+                log.panic(`unknown option '${arg}' (run 'fibs help clean')`);
             }
             return false;
         }
         return true;
     });
     if (all) {
-        return project.configs;
+        return project.configs();
     } else if (args.length === 0) {
-        return [util.activeConfig(project)];
+        return [project.activeConfig()];
     } else {
-        return args.map((arg) => {
-            const config = util.find(arg, project.configs);
-            if (config === undefined) {
-                log.error(`unknown config '${arg}' (run 'fibs list configs')`);
-            }
-            return config;
-        });
+        return args.map((arg) => project.config(arg));
     }
 }

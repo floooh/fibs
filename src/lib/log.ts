@@ -6,7 +6,7 @@ export function print(...args: unknown[]) {
     console.log(...args);
 }
 
-export function dir(item: any) {
+export function dir(item: unknown) {
     console.dir(item, { colors: true, depth: 8 });
 }
 
@@ -53,7 +53,7 @@ export function warn(...args: unknown[]) {
     console.warn(`${colors.yellow('[warning]')}`, ...args);
 }
 
-export function error(...args: unknown[]): never {
+export function panic(...args: unknown[]): never {
     console.warn(`${colors.red('[error]')}`, ...args);
     Deno.exit(10);
 }

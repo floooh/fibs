@@ -15,7 +15,7 @@ import { unsetCmd } from './unset.ts';
 import { updateCmd } from './update.ts';
 import { runjobsCmd } from './runjobs.ts';
 
-export const commands = [
+export const builtinCommands = [
     helpCmd,
     resetCmd,
     configCmd,

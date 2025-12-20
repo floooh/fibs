@@ -1,5 +1,5 @@
 import { nativeRunner } from './native.ts';
 
-export const runners = [
+export const builtinRunners = [
     nativeRunner,
 ];

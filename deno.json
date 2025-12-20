@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
         "strict": true,
-        "allowJs": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noUnusedLocals": true,
@@ -17,8 +16,7 @@
     },
     "lint": {
         "rules": {
-            "tags": [],
-            "include": ["recommended", "eqeqeq", "camelcase", "no-extra-semi"]
+            "exclude": ["require-await"]
         }
     }
 }

@@ -1,4 +1,5 @@
-import { CommandDesc, log, proj, Project, util } from '../../mod.ts';
+import { log, proj, util } from '../lib/index.ts';
+import { CommandDesc, Project } from '../types.ts';
 
 export const openCmd: CommandDesc = { name: 'open', help, run };
 
@@ -12,20 +13,16 @@ function help() {
 async function run(project: Project) {
     let config;
     if (Deno.args.length <= 1) {
-        config = util.activeConfig(project);
+        config = project.activeConfig();
     } else {
         const configName = Deno.args[1];
-        config = util.find(configName, project.configs);
-        if (config === undefined) {
-            log.error(`unknown config '${configName}' (run 'fibs list configs')`);
-        }
+        config = project.config(configName);
     }
     if (config.opener === undefined) {
-        log.error(`don't know how to open config '${config.name}' (config has undefined runner)`);
+        log.panic(`don't know how to open config '${config.name}' (config has undefined runner)`);
     }
-    if (!util.dirExists(util.buildDir(project, config))) {
-        const adapter = util.find('cmake', project.adapters)!;
-        await proj.configure(project, config, adapter, {});
+    if (!util.dirExists(project.buildDir(config.name))) {
+        await proj.generate();
     }
     await config.opener.open(project, config);
 }

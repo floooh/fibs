@@ -1,40 +1,19 @@
-import { Config, NamedItem, Project, RunOptions, RunResult, Target } from './types.ts';
-import * as log from './log.ts';
+import { Config, NamedItem, Platform, Project, RunOptions, RunResult, TargetType } from '../types.ts';
+import { log } from './index.ts';
 import { fs, path } from '../../deps.ts';
 
-/**
- * Find a named item in an array of NamedItem-derived items.
- * @param name - the name to search for
- * @param items - an array of NamedItem-derived items
- * @returns found item, or undefined if not found
- */
-export function find<T extends NamedItem>(name: string | undefined, items: T[] | undefined): T | undefined {
-    if ((name === undefined) || (items === undefined)) {
+export function find<T extends NamedItem>(name: string | undefined, items: T[]): T | undefined {
+    if (name === undefined) {
         return undefined;
     }
     return items.find((elm) => elm.name === name);
 }
 
-/**
- * Find index of a named item in an array of NamedItem-derived items.
- * @param name - the name to search for
- * @param items - an array of NamedItem-derived items
- * @returns index of found item, or undefined if not found
- */
-export function findIndex<T extends NamedItem>(name: string | undefined, items: T[] | undefined): number | undefined {
-    if ((name === undefined) || (items === undefined)) {
-        return undefined;
-    }
+export function findIndex<T extends NamedItem>(name: string, items: T[]): number | undefined {
     const index = items.findIndex((elm) => elm.name === name);
     return (index === -1) ? undefined : index;
 }
 
-/**
- * Searches for item with the same name in an array of named items.
- * If item exists, replace it, otherwise append it to the array.
- * @param items - array NamedItem-derived items
- * @param item - Named-item derived item to add or replace
- */
 export function addOrReplace<T extends NamedItem>(items: T[], item: T) {
     const index = findIndex(item.name, items);
     if (index === undefined) {
@@ -44,39 +23,180 @@ export function addOrReplace<T extends NamedItem>(items: T[], item: T) {
     }
 }
 
-/**
- * Test if a path exists as file.
- * @param path absolute or cwd-relative path
- * @returns true if path exists and is a file, otherwise false
- */
+export function deduplicate<T extends NamedItem>(items: T[]): T[] {
+    const res: T[] = [];
+    for (const item of items) {
+        addOrReplace(res, item);
+    }
+    return res;
+}
+
 export function fileExists(path: string): boolean {
     try {
         const res = Deno.statSync(path);
         return res.isFile;
-    } catch (err) {
+    } catch (_err) {
         return false;
     }
 }
 
-/**
- * Tests if a path exists as directory.
- * @param path absolute or cwd-relative path
- * @returns true if path exists and is a directory, otherwise false
- */
 export function dirExists(path: string): boolean {
     try {
         const res = Deno.statSync(path);
         return res.isDirectory;
-    } catch (err) {
+    } catch (_err) {
         return false;
     }
 }
 
-/**
- * Ensures that a file and its directory exists. If not,
- * creates directory and an empty text file.
- * @param filePath absolute or cwd-relative file path
- */
+export function fibsDir(rootDir: string): string {
+    return `${rootDir}/.fibs`;
+}
+
+export function sdkDir(rootDir: string): string {
+    return `${fibsDir(rootDir)}/sdks`;
+}
+
+export function importsDir(rootDir: string): string {
+    return `${fibsDir(rootDir)}/imports`;
+}
+
+export function configDir(rootDir: string, configName: string): string {
+    return `${fibsDir(rootDir)}/config/${configName}`;
+}
+
+export function buildDir(rootDir: string, configName: string): string {
+    return `${fibsDir(rootDir)}/build/${configName}`;
+}
+
+export function distDir(rootDir: string, configName: string): string {
+    return `${fibsDir(rootDir)}/dist/${configName}`;
+}
+
+export function targetBuildDir(rootDir: string, configName: string, targetName: string): string {
+    return `${buildDir(rootDir, configName)}/${targetName}`;
+}
+
+export function targetDistDir(
+    rootDir: string,
+    configName: string,
+    targetName: string,
+    platform: Platform,
+    targetType: TargetType,
+): string {
+    if (platform === 'macos' && targetType === 'windowed-exe') {
+        return `${distDir(rootDir, configName)}/${targetName}.app/Contents/MacOS`;
+    } else if (platform === 'ios' && targetType === 'windowed-exe') {
+        return `${distDir(rootDir, configName)}/${targetName}.app`;
+    } else {
+        return distDir(rootDir, configName);
+    }
+}
+
+export function targetAssetDir(
+    rootDir: string,
+    configName: string,
+    targetName: string,
+    platform: Platform,
+    targetType: TargetType,
+): string {
+    if (platform === 'macos' && targetType === 'windowed-exe') {
+        return `${distDir(rootDir, configName)}/${targetName}.app/Contents/Resources`;
+    } else if (platform === 'ios' && targetType === 'windowed-exe') {
+        return `${distDir(rootDir, configName)}/${targetName}.app`;
+    } else {
+        return distDir(rootDir, configName);
+    }
+}
+
+export function resolvePath(fsPath: string, opts: {
+    rootDir: string;
+    defaultAlias?: string;
+    config?: { name: string; platform: Platform };
+    target?: { name: string; dir?: string; type: TargetType };
+    selfDir: string;
+}): string {
+    const { rootDir, defaultAlias, config, target, selfDir } = opts;
+    let aliasMap: Record<string, string> = {
+        '@root:': rootDir,
+        '@sdks:': sdkDir(rootDir),
+        '@imports:': importsDir(rootDir),
+        '@self:': selfDir,
+    };
+    if (config !== undefined) {
+        aliasMap = {
+            ...aliasMap,
+            '@build:': buildDir(rootDir, config.name),
+            '@dist:': distDir(rootDir, config.name),
+        };
+        if (target !== undefined) {
+            aliasMap = {
+                ...aliasMap,
+                '@targetsources:': (target.dir !== undefined) ? [selfDir, target.dir].join('/') : selfDir,
+                '@targetbuild:': targetBuildDir(rootDir, config.name, target.name),
+                '@targetdist:': targetDistDir(rootDir, config.name, target.name, config.platform, target.type),
+                '@targetassets:': targetAssetDir(rootDir, config.name, target.name, config.platform, target.type),
+            };
+        }
+    }
+    if ((defaultAlias !== undefined) && !fsPath.startsWith('@')) {
+        fsPath = `${defaultAlias}:${fsPath}`;
+    }
+    if (fsPath.startsWith('@')) {
+        for (const k in aliasMap) {
+            if (fsPath.startsWith(k)) {
+                fsPath = fsPath.replace(k, `${aliasMap[k]}/`.replace('//', '/'));
+            }
+        }
+    }
+    return fsPath;
+}
+
+export function resolveProjectScopePath(path: string, opts: { rootDir: string; defaultAlias?: string }): string {
+    const { rootDir, defaultAlias } = opts;
+    return resolvePath(path, { rootDir, defaultAlias, selfDir: rootDir });
+}
+
+export function resolveModuleScopePath(
+    path: string,
+    opts: { rootDir: string; defaultAlias?: string; moduleDir: string },
+): string {
+    const { rootDir, defaultAlias, moduleDir } = opts;
+    return resolvePath(path, { rootDir, defaultAlias, selfDir: moduleDir });
+}
+
+export function resolveConfigScopePath(
+    path: string,
+    opts: { rootDir: string; defaultAlias?: string; config: { name: string; platform: Platform; importDir: string } },
+): string {
+    const { rootDir, defaultAlias, config } = opts;
+    return resolvePath(path, {
+        rootDir,
+        defaultAlias,
+        config: { name: config.name, platform: config.platform },
+        selfDir: config.importDir,
+    });
+}
+
+export function resolveTargetScopePath(
+    path: string,
+    opts: {
+        rootDir: string;
+        defaultAlias?: string;
+        config: { name: string; platform: Platform };
+        target: { name: string; dir?: string; type: TargetType; importDir: string };
+    },
+): string {
+    const { rootDir, defaultAlias, config, target } = opts;
+    return resolvePath(path, {
+        rootDir,
+        defaultAlias,
+        config: { name: config.name, platform: config.platform },
+        target: { name: target.name, dir: target.dir, type: target.type },
+        selfDir: target.importDir,
+    });
+}
+
 export function ensureFile(filePath: string) {
     if (!fileExists(filePath)) {
         fs.ensureDirSync(path.dirname(filePath));
@@ -115,7 +235,7 @@ export function dirty(inputs: string[], outputs: string[]): boolean {
             } else if (res.mtime.getTime() > mtime) {
                 mtime = res.mtime.getTime();
             }
-        } catch (err) {
+        } catch (_err) {
             // output file doesn't exist
             return true;
         }
@@ -132,231 +252,30 @@ export function dirty(inputs: string[], outputs: string[]): boolean {
     return false;
 }
 
-/**
- * Returns absolute path to the project's .fibs/ subdirectory directory.
- * @param project - a valid Project object
- * @returns absolute path to project's .fibs/ subdirectory
- */
-export function fibsDir(project: Project): string {
-    return `${project.dir}/.fibs`;
-}
-
-/**
- * Ensures that the project's .fibs/ subdirectory exists and returns
- * its absolute path.
- * @param project - a valid Project object
- * @returns absolute path to project's .fibs/ subdirectory
- */
 export function ensureFibsDir(project: Project): string {
-    const path = fibsDir(project);
+    const path = project.fibsDir();
     fs.ensureDirSync(path);
     return path;
 }
 
-/**
- * Returns absolute path to the build directory for a project
- * and build config: `[project]/.fibs/build/[config]/`
- * @param project - a valid Project object
- * @param config - a valid Config object
- * @returns absolute path to build directory
- */
-export function buildDir(project: Project, config: Config): string {
-    return `${fibsDir(project)}/build/${config.name}`;
-}
-
-/**
- * Ensures that the build directory for a project and build config exists
- * under `[project]/.fibs/build/[config]` and returns its absolute path.
- * @param project - a valid Project object
- * @param config - a valid Config object
- * @returns absolute path to build directory
- */
-export function ensureBuildDir(project: Project, config: Config): string {
-    const path = buildDir(project, config);
+export function ensureDistDir(project: Project, configName?: string): string {
+    const path = project.distDir(configName);
     fs.ensureDirSync(path);
     return path;
 }
 
-/**
- * Returns absolute path to the dist directory for a project and build
- * config: `[project]/.fibs/dist/[config]/`
- * @param project - a valid Project object
- * @param config - a valid Config object
- * @returns absolute path to dist directory
- */
-export function distDir(project: Project, config: Config): string {
-    return `${fibsDir(project)}/dist/${config.name}`;
-}
-
-/**
- * Ensures that the dist directory for a project and build config exists
- * under `[project]/.fibs/dist/[config]` and returns its absolute path.
- * @param project - a valid Project object
- * @param config - a valid Config object
- * @returns absolute path to dist directory
- */
-export function ensureDistDir(project: Project, config: Config): string {
-    const path = distDir(project, config);
-    fs.ensureDirSync(path);
-    return path;
-}
-
-/**
- * Returns absolute path to the sdks directory for a project:
- * `[project]/.fibs/sdks/`
- * @param project - a valid Project object
- * @returns absolute path to sdks directory
- */
-export function sdkDir(project: Project): string {
-    return `${fibsDir(project)}/sdks`;
-}
-
-/**
- * Ensures that the sdks directory for a project exists
- * under `[project]/.fibs/sdks/` and returns its absolute path.
- * @param project - a valid Project object
- * @returns absolute path to sdks directory
- */
-export function ensureSdkDir(project: Project): string {
-    const path = sdkDir(project);
-    fs.ensureDirSync(path);
-    return path;
-}
-
-/**
- * Returns absolute path to the imports directory for a project:
- * `[project]/.fibs/imports/`.
- * @param project - a valid Project object
- * @returns absolute path to imports directory
- */
-export function importsDir(project: Project): string {
-    return `${fibsDir(project)}/imports`;
-}
-
-/**
- * Ensures that the imports directory for a project exists
- * under `[project]/.fibs/imports/` and returns its absolute path.
- * @param project - a valid Project object
- * @returns absolute path to imports directory
- */
 export function ensureImportsDir(project: Project): string {
-    const path = importsDir(project);
+    const path = project.importsDir();
     fs.ensureDirSync(path);
     return path;
 }
 
-/**
- * Returns absolute path to a build target's build directory
- * under `[project]/.fibs/build/[config]/[target]`.
- * @param project - a valid Project object
- * @param config - a valid Config object
- * @param target - a valid Target object
- * @returns absolute path to the target's build directory
- */
-export function targetBuildDir(project: Project, config: Config, target: Target): string {
-    return `${buildDir(project, config)}/${target.name}`;
-}
-
-/**
- * Ensures that a build target's build directory exists under
- * `[project]/.fibs/build/[config]/[target] and returns its
- * absolute path.
- * @param project - a valid Project object
- * @param config - a valid Config object
- * @param target - a valid Target object
- * @returns absolute path to the target's build directory
- */
-export function ensureTargetBuildDir(project: Project, config: Config, target: Target): string {
-    const path = targetBuildDir(project, config, target);
+export function ensureSdkDir(project: Project): string {
+    const path = project.sdkDir();
     fs.ensureDirSync(path);
     return path;
 }
 
-/**
- * Returns absolute path to a build target's dist directory (where the
- * executable resides), this may have platform-specific subdirectories.
- * @param project - a valid Project object
- * @param config - a valid Config object
- * @param target - a valid Target object
- * @returns absolute path to the target's dist directory
- */
-export function targetDistDir(project: Project, config: Config, target: Target): string {
-    // FIXME: Android
-    if (config.platform === 'macos' && target.type === 'windowed-exe') {
-        return `${distDir(project, config)}/${target.name}.app/Contents/MacOS`;
-    } else if (config.platform === 'ios' && target.type === 'windowed-exe') {
-        return `${distDir(project, config)}/${target.name}.app`;
-    } else {
-        return distDir(project, config);
-    }
-}
-
-/**
- * Ensures that a build target's dist directory exists (where the executable
- * resides), and returns its absolute path.
- * @param project - a valid Project object
- * @param config - a valid Config object
- * @param target - a valid Target object
- * @returns absolute path to the target's dist directory
- */
-export function ensureTargetDistDir(project: Project, config: Config, target: Target): string {
-    const path = targetDistDir(project, config, target);
-    fs.ensureDirSync(path);
-    return path;
-}
-
-/**
- * Returns absolute path to a build target's asset directory. Depending on platform
- * this may be different from the target's dist directory.
- * @param project - a valid Project object
- * @param config - a valid Config object
- * @param target - a valid Target object
- * @returns absolute path to the target's asset directory
- */
-export function targetAssetsDir(project: Project, config: Config, target: Target): string {
-    if (config.platform === 'macos' && target.type === 'windowed-exe') {
-        return `${distDir(project, config)}/${target.name}.app/Contents/Resources`;
-    } else if (config.platform === 'ios' && target.type === 'windowed-exe') {
-        return `${distDir(project, config)}/${target.name}.app`;
-    } else {
-        return distDir(project, config);
-    }
-}
-
-/**
- * Ensures that a build target's asset directory exists and returns its absolute path.
- * @param project - a valid Project object
- * @param config - a valid Config object
- * @param target - a valid Target object
- * @returns absolute path to the target's asset directory
- */
-export function ensureTargetAssetsDir(project: Project, config: Config, target: Target): string {
-    const path = targetAssetsDir(project, config, target);
-    fs.ensureDirSync(path);
-    return path;
-}
-
-/**
- * Returns the currently active build config of a project.
- * @param project - a valid Project object
- * @returns Config object of the currently active build config
- */
-export function activeConfig(project: Project): Config {
-    const name = project.settings.config.value;
-    const config = find(name, project.configs);
-    if (config === undefined) {
-        log.error(`active config ${name} does not exist`);
-    }
-    return config;
-}
-
-/**
- * Returns true if the provided build config is compatible with
- * the provided platform (cross-compilation configs are always valid).
- * @param config - a valid Config object
- * @param platform - a platform name
- * @returns true if config is compatible with platform
- */
 export function validConfigForPlatform(config: Config, platform: string): boolean {
     // cross-compilation configs are valid on all platforms
     // FIXME: how to deal with cmake's integrated cross-platform support
@@ -365,153 +284,6 @@ export function validConfigForPlatform(config: Config, platform: string): boolea
         return true;
     }
     return config.platform === platform;
-}
-
-function buildAliasMap(options: { project: Project; config: Config; target?: Target; selfDir?: string }): Record<string, string> {
-    const { project, config, target, selfDir } = options;
-    let res: Record<string, string> = {
-        '@root:': project.dir,
-        '@sdks:': sdkDir(project),
-        '@build:': buildDir(project, config),
-        '@dist:': distDir(project, config),
-        '@imports:': importsDir(project),
-    };
-    if (selfDir !== undefined) {
-        res = {
-            ...res,
-            '@self:': selfDir,
-        };
-    }
-    if (target !== undefined) {
-        res = {
-            ...res,
-            '@targetsources:': resolvePathNoAlias(target.importDir, target.dir),
-            '@targetbuild:': targetBuildDir(project, config, target),
-            '@targetdist:': targetDistDir(project, config, target),
-            '@targetassets:': targetAssetsDir(project, config, target),
-        };
-    }
-    return res;
-}
-
-/**
- * Builds a path-alias map for a project and config, mapping the following path
- * aliases to an absolute filesystem path:
- *
- * - `@root:` points to the project's root directory
- * - `@self:` same as `@root`
- * - `@sdks:` points to the project's `.fibs/sdks` subdirectory
- * - `@build:` points to the `.fibs/build/[config]` subdirectory
- * - `@dist:` points to the project's `.fibs/dist/[config]` subdirectory
- * - `@imports:` points to the project's `.fibs/imports` subdirectory
- *
- * @param project - a valid Project object
- * @param config - a valid Config object
- * @returns a path-alias map with absolute paths as described above
- */
-export function buildProjectAliasMap(project: Project, config: Config): Record<string, string> {
-    return buildAliasMap({ project, config, selfDir: project.dir });
-}
-
-/**
- * Builds a path-alias map for a project and config, with `@self` pointing to the
- * import directory of the build config. This is useful for imports that define
- * their own build configs, and where the configs need to reference files in the
- * import directory.
- *
- * The result contains the following aliases:
- *
- * - `@root:` points to the project's root directory
- * - `@self:` points to the config's import directory
- * - `@sdks:` points to the project's `.fibs/sdks` subdirectory
- * - `@build:` points to the `.fibs/build/[config]` subdirectory
- * - `@dist:` points to the project's `.fibs/dist/[config]` subdirectory
- * - `@imports:` points to the project's `.fibs/imports` subdirectory
- *
- * @param project - a valid Project object
- * @param config - a valid Config object
- * @returns a path-alias map with absolute paths as described above
- */
-export function buildConfigAliasMap(project: Project, config: Config): Record<string, string> {
-    return buildAliasMap({ project, config, selfDir: config.importDir });
-}
-
-/**
- * Builds a path-alias map for a project, config and build target. The `@self` alias
- * points to the target's import directory, and there are additional target-specific
- * aliases:
- *
- * - `@root:` points to the project's root directory
- * - `@self:` points to the target's import directory
- * - `@sdks:` points to the project's `.fibs/sdks` subdirectory
- * - `@build:` points to the `.fibs/build/[config]` subdirectory
- * - `@dist:` points to the project's `.fibs/dist/[config]` subdirectory
- * - `@imports:` points to the project's `.fibs/imports` subdirectory
- * - `@targetsources`: points to the target's source code root directory
- * - `@targetbuild`: points to the target's intermediate build directory
- * - `@targetdist`: points to the target's dist directory (where the executable resides)
- * - `@targetassets`: points to the target's asset directory
- *
- * @param project - a valid Project object
- * @param config - a valid Config object
- * @param target - a valid Target object
- * @returns a path-alias map with absolute paths as described above
- */
-export function buildTargetAliasMap(project: Project, config: Config, target: Target): Record<string, string> {
-    return buildAliasMap({ project, config, target, selfDir: target.importDir });
-}
-
-/**
- * If string starts with a path alias ('@'), resolve the string into an absolute
- * path, otherwise return original string.
- *
- * @param aliasMap - a path-alias map which maps '@' aliases to absolute paths
- * @param str - a string that may start with a path alias '@'
- * @returns a string with path-aliases resolved
- */
-export function resolveAlias(aliasMap: Record<string, string>, str: string): string {
-    if ((str !== undefined) && str.startsWith('@')) {
-        for (const k in aliasMap) {
-            if (str.startsWith(k)) {
-                return str.replace(k, `${aliasMap[k]}/`).replace('//', '/');
-            }
-        }
-        // FIXME: should throw instead
-        log.error(`cannot resolve alias in '${str}`);
-    }
-    return str;
-}
-
-/**
- * Join path components into a single path without resolving path-aliases.
- * @param items - path components
- * @returns joined path
- */
-export function resolvePathNoAlias(...items: (string | undefined)[]): string {
-    return items.filter((item) => item !== undefined).join('/');
-}
-
-/**
- * Build an absolute path and resolve path-aliases.
- * NOTE: the last path-alias item in the input items invalidates any previous
- * directory items. For instance when the input looks like this:
- *
- * `['baseDir', 'subDir', '@targetbuild:', 'src']`
- *
- * ...it will be treated as:
- *
- * `['@targetbuild:', 'src']`
- *
- * @param aliasMap - a path-alias map which maps '@' aliases to absolute paths
- * @param items - one or multiple path components and path-aliases
- * @returns an absolute path with resolved path aliases
- */
-export function resolvePath(aliasMap: Record<string, string>, ...items: (string | undefined)[]): string {
-    const lastAliasIndex = items.findLastIndex((item) => (item !== undefined) ? item.startsWith('@') : false);
-    if (lastAliasIndex > 0) {
-        items = items.toSpliced(0, lastAliasIndex);
-    }
-    return resolveAlias(aliasMap, resolvePathNoAlias(...items));
 }
 
 /**
@@ -527,35 +299,34 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
         abortOnError = true,
         args,
         cwd,
-        stdout,
-        stderr,
+        stdout = 'inherit',
+        stderr = 'inherit',
         winUseCmd,
     } = options;
-    let cmdLine;
+    let cmdx;
+    let argsx;
     if ((Deno.build.os === 'windows') && winUseCmd) {
-        cmdLine = ['cmd', '/c', cmd, ...args];
+        cmdx = 'cmd';
+        argsx = ['/c', cmd, ...args];
     } else {
-        cmdLine = [cmd, ...args];
+        cmdx = cmd;
+        argsx = args;
     }
     if (showCmd) {
-        log.run(cmdLine, cwd);
+        log.run([cmdx, ...argsx], cwd);
     }
     try {
-        const p = Deno.run({
-            cmd: cmdLine,
-            cwd: cwd,
-            stdout: stdout,
-            stderr: stderr,
-        });
+        const command = new Deno.Command(cmdx, { args: argsx, stdout, stderr, cwd });
+        const cmdRes = await command.output();
         const res: RunResult = {
-            exitCode: (await p.status()).code,
-            stdout: (stdout === 'piped') ? new TextDecoder().decode(await p.output()) : '',
-            stderr: (stderr === 'piped') ? new TextDecoder().decode(await p.stderrOutput()) : '',
+            exitCode: cmdRes.code,
+            stdout: (stdout === 'piped') ? new TextDecoder().decode(cmdRes.stdout) : '',
+            stderr: (stderr === 'piped') ? new TextDecoder().decode(cmdRes.stderr) : '',
         };
         return res;
     } catch (err) {
         if (abortOnError) {
-            log.error(`Failed running '${cmd}' with: ${err.message}`);
+            log.panic(`Failed running '${cmd}' with: `, err);
         } else {
             throw err;
         }
@@ -571,7 +342,9 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
  * @param options.abortOnError - whether to abort on an error (default is true)
  * @returns true if download succeeded
  */
-export async function download(options: { url: string; dir: string; filename: string; abortOnError?: boolean }): Promise<boolean> {
+export async function download(
+    options: { url: string; dir: string; filename: string; abortOnError?: boolean },
+): Promise<boolean> {
     const {
         url,
         dir,
@@ -600,96 +373,44 @@ export async function download(options: { url: string; dir: string; filename: st
         } else {
             const msg = `Downloading '${url} failed with: ${response.status} (${response.statusText})`;
             if (abortOnError) {
-                log.error(msg);
+                log.panic(msg);
             } else {
                 log.warn(msg);
                 return false;
             }
         }
     } catch (err) {
-        const msg = `Downloading '${url} to ${path} failed with: ${err.message}`;
+        const msg = `Downloading '${url} to ${path} failed with: `;
         if (abortOnError) {
-            log.error(msg);
+            log.panic(msg, err);
         } else {
-            log.warn(msg);
+            log.warn(msg, err);
             return false;
         }
     }
     return true;
 }
 
-/**
- * Removes a new array with all undefined and null items removed.
- * @param array - an array with potential undefined or null items
- * @returns a new array with undefined and null items removed
- */
-export function arrayRemoveNullish<T>(array: (T | undefined | null)[]): T[] {
-    return array.filter((item) => ((item !== undefined) && (item !== null))) as T[];
-}
-
-/**
- * If passed undefined, returns undefined. If passed an array, returns a new
- * array with all undefined and null items removed.
- * @param array - optional array with potential undefined or null items
- * @returns a new array with undefined and null items removed, or undefined
- */
-export function optionalArrayRemoveNullish<T>(array: (T | undefined | null)[] | undefined): T[] | undefined {
-    if (array === undefined) {
-        return undefined;
-    }
-    return arrayRemoveNullish(array);
-}
-
-/**
- * Returns true if 'val' is a (potentially empty) string and coerce to string.
- * @param val - an object of unknown type
- * @returns true if val is a string
- */
 export function isString(val: unknown): val is string {
     return typeof val === 'string';
 }
 
-/**
- * Returns true if 'val' is a Number and coerce to Number.
- * @param val - an object of unknown type
- * @returns true if val is a number
- */
-export function isNumber(val: unknown): val is Number {
+export function isNumber(val: unknown): val is number {
     return typeof val === 'number';
 }
 
-/**
- * Returns true if 'val' is a boolean and coerce to boolean.
- * @param val - an object of unknown type
- * @returns true if val is a boolean
- */
 export function isBoolean(val: unknown): val is boolean {
     return typeof val === 'boolean';
 }
 
-/**
- * Returns true if 'val' is a string array and coerces to a string array.
- * @param val - an object of unknown type
- * @returns true if val is a string array
- */
 export function isStringArray(val: unknown): val is string[] {
     return Array.isArray(val) && val.every((item) => isString(item));
 }
 
-/**
- * Returns true if 'val' is a Number array and coerces to a number array
- * @param val - an object of unknown type
- * @returns true if val is a Number array
- */
-export function isNumberArray(val: unknown): val is Number[] {
+export function isNumberArray(val: unknown): val is number[] {
     return Array.isArray(val) && val.every((item) => isNumber(item));
 }
 
-/**
- * Returns true if 'val' is a boolean array and coerves to a boolean array.
- * @param val - an object of unknown type
- * @returns trye if val is a boolean array
- */
 export function isBooleanArray(val: unknown): val is boolean[] {
     return Array.isArray(val) && val.every((item) => isBoolean(item));
 }
@@ -703,7 +424,10 @@ export function isBooleanArray(val: unknown): val is boolean[] {
  */
 export function validateArgs(
     args: object,
-    expected: Record<string, { type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]'; optional: boolean }>,
+    expected: Record<
+        string,
+        { type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]'; optional: boolean }
+    >,
 ): { valid: boolean; hints: string[] } {
     const res: ReturnType<typeof validateArgs> = { valid: true, hints: [] };
     for (const [key, value] of Object.entries(expected)) {
@@ -730,6 +454,7 @@ export function validateArgs(
                         res.valid = false;
                         res.hints.push(`arg '${key} must be a boolean array`);
                     }
+                    break;
                 case 'number':
                     if (!isNumber(value)) {
                         res.valid = false;

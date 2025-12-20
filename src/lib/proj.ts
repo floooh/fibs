@@ -1,376 +1,68 @@
+import { host, log, settings, util } from './index.ts';
 import {
     Adapter,
+    CmakeVariable,
+    Command,
+    CompileDefinition,
+    CompileOption,
     Config,
     ConfigDesc,
-    ConfigDescWithImportDir,
-    Context,
-    Job,
-    Language,
+    FibsModule,
+    Import,
+    IncludeDirectory,
+    JobBuilder,
+    LinkOption,
+    Opener,
     Project,
-    ProjectDesc,
-    StringArrayFunc,
-    StringRecordFunc,
+    Runner,
+    Setting,
     Target,
-    TargetArrayItems,
-    TargetArrayItemsDesc,
     TargetDesc,
     TargetJob,
-    TargetRecordItems,
-    TargetRecordItemsDesc,
-    NamedItem,
-} from './types.ts';
-import * as settings from './settings.ts';
-import * as log from './log.ts';
-import * as imports from './imports.ts';
-import * as util from './util.ts';
-import * as host from './host.ts';
+    Tool,
+} from '../types.ts';
+import { ProjectImpl } from '../impl/project.ts';
+import { ConfigurerImpl } from '../impl/configurer.ts';
+import { BuilderImpl } from '../impl/builder.ts';
+import { builtinAdapters } from '../adapters/index.ts';
+import { builtinConfigs } from '../configs/index.ts';
+import { builtinOpeners } from '../openers/index.ts';
+import { builtinRunners } from '../runners/index.ts';
+import { builtinTools } from '../tools/index.ts';
+import { builtinCommands } from '../commands/index.ts';
+import { fetchImport, importModulesFromDir } from './imports.ts';
 
-export async function setup(
-    rootDir: string,
-    rootDesc: ProjectDesc,
-    stdDesc: ProjectDesc,
-): Promise<Project> {
-    const project: Project = {
-        name: rootDesc.name ?? 'project',
-        dir: rootDir,
-        settings: {},
-        cmakeVariables: {},
-        includeDirectories: [],
-        compileDefinitions: [],
-        compileOptions: [],
-        linkOptions: [],
-        imports: [],
-        targets: [],
-        commands: [],
-        tools: [],
-        jobs: [],
-        runners: [],
-        openers: [],
-        configs: [],
-        configDescs: [],
-        adapters: [],
-    };
+let projectImpl: ProjectImpl;
 
-    // first integrate std project properties (tools, commands, ...)
-    await integrateProjectDesc(project, stdDesc, rootDir);
-    // followed by the root project properties
-    await integrateProjectDesc(project, rootDesc, rootDir);
-    // build resulting config list (happens as a post-step because configs can be inherited)
-    resolveConfigs(project);
-
-    settings.load(project);
-
-    // FIXME: validate the resulting project (esp target dependencies)
-
-    return project;
-}
-
-function resolveConfigs(project: Project) {
-    project.configs = [];
-    for (const desc of project.configDescs) {
-        if (desc.ignore) {
-            continue;
-        }
-        if (desc.inherits !== undefined) {
-            resolveInheritedConfigDesc(desc, project.configDescs);
-        }
-        if (desc.platform === undefined) {
-            log.error(`config '${desc.name}' requires 'platform' field`);
-        }
-        if (desc.buildType === undefined) {
-            log.error(`config '${desc.name}' requires 'buildType' field`);
-        }
-        let runner = util.find(desc.runner ?? 'native', project.runners);
-        if (runner === undefined) {
-            log.error(`config '${desc.name}' has unknown runner '${desc.runner}'`);
-        }
-        let opener = undefined;
-        if (desc.opener !== undefined) {
-            opener = util.find(desc.opener, project.openers);
-            if (opener === undefined) {
-                log.error(`config '${desc.name}' has unknown opener '${desc.opener}'`);
-            }
-        }
-        const config: Config = {
-            name: desc.name,
-            importDir: desc.importDir,
-            platform: desc.platform,
-            runner: runner,
-            opener: opener,
-            buildType: desc.buildType,
-            generator: desc.generator,
-            arch: desc.arch ?? undefined,
-            toolchainFile: desc.toolchainFile,
-            cmakeIncludes: desc.cmakeIncludes ?? [],
-            cmakeVariables: desc.cmakeVariables ?? {},
-            environment: desc.environment ?? {},
-            options: desc.options ?? {},
-            includeDirectories: desc.includeDirectories ?? [],
-            compileDefinitions: desc.compileDefinitions ?? {},
-            compileOptions: desc.compileOptions ?? [],
-            linkOptions: desc.linkOptions ?? [],
-            compilers: desc.compilers ?? ['unknown-compiler'],
-            validate: desc.validate ?? (() => ({ valid: false, hints: ['no validate function set on config!'] })),
-        };
-        util.addOrReplace(project.configs, config);
+export async function configure(rootModule: FibsModule, rootDir: string, withTargets: boolean): Promise<Project> {
+    projectImpl = new ProjectImpl(rootModule, rootDir);
+    await doConfigure(rootModule, projectImpl);
+    if (withTargets) {
+        await configureTargets();
     }
+    return projectImpl;
 }
 
-function optionalToArray<T>(val: T | undefined): T[] {
-    return (val === undefined) ? [] : [val];
+export async function generate(): Promise<void> {
+    await configureTargets();
+    const adapter = projectImpl.adapter('cmake');
+    const config = projectImpl.activeConfig();
+    await adapter.generate(projectImpl, config);
 }
 
-function assignMaybeUndefined<T>(into: T | undefined, src: T | undefined): T | undefined {
-    return (src === undefined) ? into : src;
+export async function build(options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void> {
+    const { buildTarget, forceRebuild } = options;
+    const adapter = projectImpl.adapter('cmake');
+    const config = projectImpl.activeConfig();
+    await adapter.build(projectImpl, config, { buildTarget, forceRebuild });
 }
 
-function assign<T>(into: T, src: T | undefined): T {
-    return (src === undefined) ? into : src;
-}
-
-function mergeRecordsMaybeUndefined<T>(
-    into: Record<string, T> | undefined,
-    src: Record<string, T> | undefined,
-): Record<string, T> | undefined {
-    if ((into === undefined) && (src === undefined)) {
-        return undefined;
-    }
-    if (into === undefined) {
-        return structuredClone(src);
-    }
-    if (src === undefined) {
-        return into;
-    }
-    return Object.assign(into, src);
-}
-
-function mergeRecords<T>(into: Record<string, T>, src: Record<string, T> | undefined): Record<string, T> {
-    if (src === undefined) {
-        return into;
-    }
-    return Object.assign(into, src);
-}
-
-function mergeArraysMaybeUndefined<T>(into: T[] | undefined, src: T[] | undefined): T[] | undefined {
-    if ((into === undefined) && (src === undefined)) {
-        return undefined;
-    }
-    if (into === undefined) {
-        return structuredClone(src);
-    }
-    if (src === undefined) {
-        return into;
-    }
-    // remove duplicates
-    return [...new Set([...into, ...src])];
-}
-
-function mergeArrays<T>(into: T[], src: T[]): T[] {
-    if (src === undefined) {
-        return into;
-    }
-    // remove duplicates
-    return [...new Set([...into, ...src])];
-}
-
-function cleanupUndefinedProperties<T>(obj: T) {
-    for (let key in obj) {
-        if (obj[key] === undefined) {
-            delete obj[key];
-        }
-    }
-}
-
-function mergeConfigDescWithImportDir(into: ConfigDescWithImportDir, from: ConfigDescWithImportDir) {
-    into.ignore = assignMaybeUndefined(into.ignore, from.ignore);
-    into.inherits = assignMaybeUndefined(into.inherits, from.inherits);
-    into.platform = assignMaybeUndefined(into.platform, from.platform);
-    into.runner = assignMaybeUndefined(into.runner, from.runner);
-    into.opener = assignMaybeUndefined(into.opener, from.opener);
-    into.buildType = assignMaybeUndefined(into.buildType, from.buildType);
-    into.generator = assignMaybeUndefined(into.generator, from.generator);
-    into.arch = assignMaybeUndefined(into.arch, from.arch);
-    into.toolchainFile = assignMaybeUndefined(into.toolchainFile, from.toolchainFile);
-    into.cmakeIncludes = mergeArraysMaybeUndefined(into.cmakeIncludes, from.cmakeIncludes);
-    into.cmakeVariables = mergeRecordsMaybeUndefined(into.cmakeVariables, from.cmakeVariables);
-    into.environment = mergeRecordsMaybeUndefined(into.environment, from.environment);
-    into.options = mergeRecordsMaybeUndefined(into.options, from.options);
-    into.includeDirectories = mergeArraysMaybeUndefined(into.includeDirectories, from.includeDirectories);
-    into.compileDefinitions = mergeRecordsMaybeUndefined(into.compileDefinitions, from.compileDefinitions);
-    into.compileOptions = mergeArraysMaybeUndefined(into.compileOptions, from.compileOptions);
-    into.linkOptions = mergeArraysMaybeUndefined(into.linkOptions, from.linkOptions);
-    into.compilers = assignMaybeUndefined(into.compilers, from.compilers);
-    into.validate = assignMaybeUndefined(into.validate, from.validate);
-    cleanupUndefinedProperties(into);
-}
-
-function mergeTransformArray<T0, T1>(
-    into: T0[],
-    from: T1[] | undefined,
-    importDir: string,
-    mergeTransformFunc: (into: T0[], src: T1, importDir: string) => void,
-): T0[] {
-    if (from !== undefined) {
-        from.forEach((src) => mergeTransformFunc(into, src, importDir));
-    }
-    return into;
-}
-
-function integrateSimpleItem<T0 extends NamedItem, T1 extends NamedItem>(items: T0[], desc: T1, importDir: string) {
-    const item: T0 = { importDir, ...desc } as unknown as T0;
-    let into = util.find(desc.name, items);
-    if (into === undefined) {
-        items.push(item);
-    } else {
-        into = item;
-    }
-}
-
-function integrateTarget(targets: Target[], desc: TargetDesc, importDir: string) {
-    const toTargetArrayItems = (desc: TargetArrayItemsDesc | undefined): TargetArrayItems => ({
-        interface: optionalToArray(desc?.interface),
-        private: optionalToArray(desc?.private),
-        public: optionalToArray(desc?.public),
-    });
-    const toTargetRecordItems = (desc: TargetRecordItemsDesc | undefined): TargetRecordItems => ({
-        interface: optionalToArray(desc?.interface),
-        private: optionalToArray(desc?.private),
-        public: optionalToArray(desc?.public),
-    });
-    const mergeTargetArrayItems = (into: TargetArrayItems, src: TargetArrayItems): TargetArrayItems => {
-        return {
-            interface: mergeArrays(into.interface, src.interface),
-            private: mergeArrays(into.private, src.private),
-            public: mergeArrays(into.public, src.public),
-        };
-    };
-    const mergeTargetRecordItems = (into: TargetRecordItems, src: TargetRecordItems): TargetRecordItems => {
-        return {
-            interface: mergeArrays(into.interface, src.interface),
-            private: mergeArrays(into.private, src.private),
-            public: mergeArrays(into.public, src.public),
-        };
-    };
-
-    const into = util.find(desc.name, targets);
-    const target: Target = {
-        name: desc.name,
-        importDir,
-        dir: desc.dir,
-        type: desc.type ?? 'plain-exe',
-        enabled: desc.enabled ?? (() => true),
-        sources: optionalToArray(desc.sources),
-        deps: optionalToArray(desc.deps),
-        libs: optionalToArray(desc.libs),
-        includeDirectories: toTargetArrayItems(desc.includeDirectories),
-        compileDefinitions: toTargetRecordItems(desc.compileDefinitions),
-        compileOptions: toTargetArrayItems(desc.compileOptions),
-        linkOptions: toTargetArrayItems(desc.linkOptions),
-        jobs: optionalToArray(desc.jobs),
-    };
-    if (into === undefined) {
-        targets.push(target);
-    } else {
-        into.type = assign(into.type, desc.type);
-        into.dir = assign(into.dir, desc.dir);
-        into.enabled = assign(into.enabled, desc.enabled);
-        into.sources = mergeArrays(into.sources, target.sources);
-        into.deps = mergeArrays(into.deps, target.deps);
-        into.libs = mergeArrays(into.libs, target.libs);
-        into.includeDirectories = mergeTargetArrayItems(into.includeDirectories, target.includeDirectories);
-        into.compileDefinitions = mergeTargetRecordItems(into.compileDefinitions, target.compileDefinitions);
-        into.compileOptions = mergeTargetArrayItems(into.compileOptions, target.compileOptions);
-        into.linkOptions = mergeTargetArrayItems(into.linkOptions, target.linkOptions);
-        into.jobs = mergeArrays(into.jobs, target.jobs);
-    }
-}
-
-function integrateConfigDesc(configDescs: ConfigDescWithImportDir[], desc: ConfigDesc, importDir: string) {
-    const into = util.find(desc.name, configDescs);
-    const from: ConfigDescWithImportDir = { ...desc, importDir };
-    if (into === undefined) {
-        configDescs.push(from);
-    } else {
-        mergeConfigDescWithImportDir(into, from);
-    }
-}
-
-async function integrateProjectDesc(into: Project, other: ProjectDesc, importDir: string) {
-    // important to keep imports at the top!
-    if (other.imports !== undefined) {
-        for (const desc of other.imports) {
-            const fetchResult = await imports.fetch(into, { name: desc.name, url: desc.url, ref: desc.ref });
-            let importErrors: Error[] = [];
-            if (fetchResult.valid) {
-                const importResult = await imports.importProjects(fetchResult.dir, desc);
-                importErrors = importResult.importErrors;
-                for (const projDesc of importResult.projectDescs) {
-                    await integrateProjectDesc(into, projDesc, fetchResult.dir);
-                }
-            }
-            util.addOrReplace(into.imports, {
-                name: desc.name,
-                importErrors,
-                importDir: fetchResult.dir,
-                url: desc.url,
-                ref: desc.ref,
-            });
-        }
-    }
-    into.configDescs = mergeTransformArray(into.configDescs, other.configs, importDir, integrateConfigDesc);
-    into.cmakeVariables = mergeRecords(into.cmakeVariables, other.cmakeVariables);
-    into.includeDirectories = mergeArrays(into.includeDirectories, optionalToArray(other.includeDirectories));
-    into.compileDefinitions = mergeArrays(into.compileDefinitions, optionalToArray(other.compileDefinitions));
-    into.compileOptions = mergeArrays(into.compileOptions, optionalToArray(other.compileOptions));
-    into.linkOptions = mergeArrays(into.linkOptions, optionalToArray(other.linkOptions));
-    into.commands = mergeTransformArray(into.commands, other.commands, importDir, integrateSimpleItem);
-    into.tools = mergeTransformArray(into.tools, other.tools, importDir, integrateSimpleItem);
-    into.jobs = mergeTransformArray(into.jobs, other.jobs, importDir, integrateSimpleItem);
-    into.runners = mergeTransformArray(into.runners, other.runners, importDir, integrateSimpleItem);
-    into.openers = mergeTransformArray(into.openers, other.openers, importDir, integrateSimpleItem);
-    into.adapters = mergeTransformArray(into.adapters, other.adapters, importDir, integrateSimpleItem);
-    into.targets = mergeTransformArray(into.targets, other.targets, importDir, integrateTarget);
-    into.settings = mergeRecords(into.settings, other.settings);
-}
-
-function resolveInheritedConfigDesc(config: ConfigDescWithImportDir, configs: ConfigDescWithImportDir[]) {
-    let inheritChain: ConfigDescWithImportDir[] = [];
-    const maxInherits = 8;
-    let curConfig = config;
-    while (inheritChain.length < maxInherits) {
-        inheritChain.unshift(curConfig);
-        if (curConfig.inherits !== undefined) {
-            const nextConfig = util.find(curConfig.inherits, configs);
-            if (nextConfig === undefined) {
-                log.error(`config '${curConfig.name}' tries to inherit from non-existing config '${curConfig.inherits}'`);
-            }
-            curConfig = nextConfig;
-        } else {
-            break;
-        }
-    }
-    if (inheritChain.length === maxInherits) {
-        log.error(`circular dependency in config '${config.name}'?`);
-    }
-    inheritChain.forEach((src) => mergeConfigDescWithImportDir(config, src));
-}
-
-export async function configure(
-    project: Project,
-    config: Config,
-    adapter: Adapter,
-    options: { buildTarget?: string; forceRebuild?: boolean },
-): Promise<void> {
-    await adapter.configure(project, config, options);
-}
-
-export async function build(
-    project: Project,
-    config: Config,
-    adapter: Adapter,
-    options: { buildTarget?: string; forceRebuild?: boolean },
-): Promise<void> {
-    await adapter.build(project, config, options);
+async function configureTargets(): Promise<void> {
+    const adapter = projectImpl.adapter('cmake');
+    const config = projectImpl.activeConfig();
+    const configRes = await adapter.configure(projectImpl, config);
+    projectImpl._compiler = configRes.compiler;
+    doBuildSetup(projectImpl, config);
 }
 
 export function validateTarget(
@@ -378,71 +70,45 @@ export function validateTarget(
     target: Target,
     options: { silent?: boolean; abortOnError?: boolean },
 ): { valid: boolean; hints: string[] } {
-    const {
-        silent = false,
-        abortOnError = false,
-    } = options;
-
+    const { silent = false, abortOnError = false } = options;
     const res: ReturnType<typeof validateTarget> = { valid: true, hints: [] };
 
     // check restrictions for interface targets
     if (target.type === 'interface') {
-        const check = (items: TargetArrayItems | TargetRecordItems): boolean => {
-            if (items.private.length > 0) {
-                return false;
-            }
-            if (items.public.length > 0) {
-                return false;
-            }
-            return true;
-        };
         if ((target.sources.length > 0)) {
             res.valid = false;
             res.hints.push(`target type 'interface' cannot have source files attached`);
         }
-        if (!check(target.includeDirectories)) {
+        if (target.includeDirectories.some((item) => item.scope !== 'interface')) {
             res.valid = false;
             res.hints.push(`interface targets must only define interface include directories`);
         }
-        if (!check(target.compileDefinitions)) {
+        if (target.compileDefinitions.some((item) => item.scope !== 'interface')) {
             res.valid = false;
             res.hints.push(`interface targets must only define interface compile definitins`);
         }
-        if (!check(target.compileOptions)) {
+        if (target.compileOptions.some((item) => item.scope !== 'interface')) {
             res.valid = false;
             res.hints.push(`interface targets must only define interface compile options`);
         }
-        if (!check(target.linkOptions)) {
+        if (target.linkOptions.some((item) => item.scope !== 'interface')) {
             res.valid = false;
             res.hints.push(`interface targets must only define interface link options`);
         }
     }
 
     // check that jobs exist and have valid arg types
-    const config = util.activeConfig(project);
-    const aliasMap = util.buildTargetAliasMap(project, config, target);
-    const ctx: Context = {
-        project,
-        config,
-        target,
-        aliasMap,
-        host: { platform: host.platform(), arch: host.arch() },
-    };
-    for (const targetJobFunc of target.jobs) {
-        const targetJobs = util.arrayRemoveNullish(targetJobFunc(ctx));
-        for (const targetJob of targetJobs) {
-            const targetJobRes = validateTargetJob(project, config, target, targetJob);
-            if (!targetJobRes.valid) {
-                res.valid = false;
-                res.hints.push(...targetJobRes.hints);
-            }
+    for (const targetJob of target.jobs) {
+        const targetJobRes = validateTargetJob(project, target, targetJob);
+        if (!targetJobRes.valid) {
+            res.valid = false;
+            res.hints.push(...targetJobRes.hints);
         }
     }
 
     // check that dependencies exist as targets
-    const deps = resolveTargetStringArray(target.deps, ctx, false);
-    for (const dep of deps) {
-        const depTarget = util.find(dep, project.targets);
+    for (const dep of target.deps) {
+        const depTarget = util.find(dep, project.targets());
         if (depTarget === undefined) {
             res.valid = false;
             res.hints.push(`dependency target not found: ${dep}`);
@@ -455,64 +121,33 @@ export function validateTarget(
     }
 
     // check that lib names don't collide with target names
-    const libs = resolveTargetStringArray(target.libs, ctx, false);
-    for (const lib of libs) {
-        if (util.find(lib, project.targets) !== undefined) {
+    for (const lib of target.libs) {
+        if (util.find(lib, project.targets()) !== undefined) {
             res.valid = false;
             res.hints.push(`library name collides with target: ${lib}`);
         }
     }
 
     // check that source files exist
-    const srcDir = util.resolvePath(aliasMap, target.importDir, target.dir);
-    if (!util.dirExists(srcDir)) {
-        res.valid = false;
-        res.hints.push(`src dir not found: ${srcDir}`);
-    } else {
-        const sources = resolveTargetStringArray(target.sources, ctx, true);
-        for (const src of sources) {
-            if (!util.fileExists(src)) {
-                res.valid = false;
-                res.hints.push(`src file not found: ${src}`);
-            }
+    for (const src of target.sources) {
+        if (!util.fileExists(src)) {
+            res.valid = false;
+            res.hints.push(`src file not found: ${src}`);
         }
     }
 
     // check that include directories exist
-    let missingIncludeDirectories: string[] = [];
-    const checkMissingDirs = (dirs: string[]): string[] => {
-        return dirs.filter((dir) => {
-            return !util.dirExists(dir);
-        });
-    };
-    for (const language of ['c', 'cxx']) {
-        for (const compiler of config.compilers) {
-            const ctx: Context = {
-                project,
-                config,
-                target,
-                compiler,
-                language: language as Language,
-                aliasMap,
-                host: { platform: host.platform(), arch: host.arch() },
-            };
-            const resolvedItems = resolveTargetArrayItems(target.includeDirectories, ctx, true);
-            missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.interface));
-            missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.private));
-            missingIncludeDirectories.push(...checkMissingDirs(resolvedItems.public));
+    for (const idir of target.includeDirectories) {
+        if (!util.dirExists(idir.dir)) {
+            res.valid = false;
+            res.hints.push(`include directory not found: ${idir.dir}`);
         }
-    }
-    if (missingIncludeDirectories.length > 0) {
-        // remove duplicates
-        missingIncludeDirectories = [...new Set(missingIncludeDirectories)];
-        res.valid = false;
-        res.hints.push(...missingIncludeDirectories.map((dir) => `include directory not found: ${dir}`));
     }
 
     if (!res.valid && !silent) {
         const msg = [`target '${target.name} not valid:\n`, ...res.hints].join('\n  ') + '\n';
         if (abortOnError) {
-            log.error(msg);
+            log.panic(msg);
         } else {
             log.warn(msg);
         }
@@ -522,13 +157,12 @@ export function validateTarget(
 
 export function validateTargetJob(
     project: Project,
-    config: Config,
     target: Target,
     targetJob: TargetJob,
 ): { valid: boolean; hints: string[] } {
     const res: ReturnType<typeof validateTargetJob> = { valid: true, hints: [] };
     const jobName = targetJob.job;
-    const jobTemplate = util.find(jobName, project.jobs);
+    const jobTemplate = util.find(jobName, project.jobs());
     if (jobTemplate !== undefined) {
         const valRes = jobTemplate.validate(targetJob.args);
         if (!valRes.valid) {
@@ -547,18 +181,9 @@ export function validateTargetJob(
     return res;
 }
 
-export function resolveTargetJobs(ctx: Context): Job[] {
-    const targetJobs = util.arrayRemoveNullish(ctx.target!.jobs.flatMap((jobFunc) => jobFunc(ctx)));
-    return targetJobs.map((targetJob) => {
-        const res = validateTargetJob(ctx.project, ctx.config, ctx.target!, targetJob);
-        if (!res.valid) {
-            log.error(`failed to validate job ${targetJob.job} in target ${ctx.target!.name}:\n${res.hints.map((line) => `  ${line}\n`)}`);
-        }
-        return util.find(targetJob.job, ctx.project.jobs)!.builder(targetJob.args)(ctx);
-    });
-}
-
-export async function runJobs(project: Project, config: Config, target: Target) {
+export async function runJobs(_target: Target) {
+    log.info(`proj.runJobs() called`);
+    /* FIXME
     const ctx: Context = {
         project,
         config,
@@ -571,113 +196,534 @@ export async function runJobs(project: Project, config: Config, target: Target) 
         try {
             await job.func(job.inputs, job.outputs, job.args);
         } catch (err) {
-            log.error(`job '${job.name}' in target '${target.name}' failed with ${err}`);
+            log.panic(`job '${job.name}' in target '${target.name}' failed with ${err}`);
         }
     }
+    */
 }
 
-function resolveAliasOrPath(
-    item: string,
-    baseDir: string,
-    subDir: string | undefined,
-    aliasMap: Record<string, string>,
-    itemsAreFilePaths: boolean,
-): string {
-    if (itemsAreFilePaths) {
-        return util.resolvePath(aliasMap, baseDir, subDir, item);
-    } else {
-        return util.resolveAlias(aliasMap, item);
+async function doConfigure(rootModule: FibsModule, project: ProjectImpl): Promise<void> {
+    const configurers: ConfigurerImpl[] = [];
+
+    // start configuration at the root object to gather imports
+    const rootConfigurer = new ConfigurerImpl(project.dir(), project.dir(), rootModule);
+    if (rootModule.configure) {
+        rootModule.configure(rootConfigurer);
     }
+    configurers.push(rootConfigurer);
+
+    // next recurse into imported modules
+    await configureRecurseImports(rootConfigurer, project, configurers);
+
+    // finally configure the builtins
+    configurers.push(configureBuiltins(rootModule, project));
+
+    resolveConfigureItems(configurers, project);
+    settings.load(project);
 }
 
-export function resolveProjectStringArray(array: StringArrayFunc[] | string[], ctx: Context, itemsAreFilePaths: boolean): string[] {
-    const baseDir = ctx.project.dir;
-    const subDir = undefined;
-    return array.flatMap((funcOrString) => {
-        if (typeof funcOrString === 'function') {
-            return util.arrayRemoveNullish(funcOrString(ctx)).map((item) =>
-                resolveAliasOrPath(item!, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths)
-            );
-        } else {
-            return funcOrString ? [resolveAliasOrPath(funcOrString, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths)] : [];
-        }
-    }) as string[];
-}
-
-export function resolveProjectStringRecord(
-    record: StringRecordFunc[] | Record<string, string>,
-    ctx: Context,
-    itemsAreFilePaths: boolean,
-): Record<string, string> {
-    const baseDir = ctx.project.dir;
-    const subDir = undefined;
-    const result: Record<string, string> = {};
-    const resolve = (record: Record<string, string>) => {
-        for (const [key, val] of Object.entries(record)) {
-            result[key] = resolveAliasOrPath(val, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths);
-        }
-    };
-    if (Array.isArray(record)) {
-        record.forEach((func) => resolve(func(ctx) as Record<string, string>));
-    } else {
-        resolve(record);
-    }
-    return result;
-}
-
-export function resolveTargetStringArray(array: StringArrayFunc[], ctx: Context, itemsAreFilePaths: boolean): string[] {
-    const baseDir = ctx.target!.importDir;
-    const subDir = ctx.target!.dir;
-    return array.flatMap((funcOrString) => {
-        return util.arrayRemoveNullish(funcOrString(ctx)).map((item) =>
-            resolveAliasOrPath(item, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths)
-        );
+function configureBuiltins(module: FibsModule, project: ProjectImpl): ConfigurerImpl {
+    const configurer = new ConfigurerImpl(project.dir(), project.dir(), module);
+    configurer.addSetting({
+        name: 'config',
+        default: host.defaultConfig(),
+        validate: () => ({ valid: true, hint: '' }),
     });
+    configurer.addCmakeVariable('CMAKE_C_STANDARD', '99');
+    configurer.addCmakeVariable('CMAKE_CXX_STANDARD', '14');
+    builtinCommands.forEach((command) => configurer.addCommand(command));
+    builtinAdapters.forEach((adapter) => configurer.addAdapter(adapter));
+    builtinConfigs.forEach((config) => configurer.addConfig(config));
+    builtinOpeners.forEach((opener) => configurer.addOpener(opener));
+    builtinRunners.forEach((runner) => configurer.addRunner(runner));
+    builtinTools.forEach((tool) => configurer.addTool(tool));
+    return configurer;
 }
 
-export function resolveTargetStringRecord(record: StringRecordFunc[], ctx: Context, itemsAreFilePaths: boolean): Record<string, string> {
-    const baseDir = ctx.target!.importDir;
-    const subDir = ctx.target!.dir;
-    const result: Record<string, string> = {};
-    const resolve = (record: Record<string, string>) => {
-        for (const [key, val] of Object.entries(record)) {
-            result[key] = resolveAliasOrPath(val, baseDir, subDir, ctx.aliasMap, itemsAreFilePaths);
+// FIXME: detect import cycles!
+async function configureRecurseImports(
+    configurer: ConfigurerImpl,
+    project: ProjectImpl,
+    res: ConfigurerImpl[],
+): Promise<void> {
+    for (const importDesc of configurer.imports) {
+        const { name, url, ref } = importDesc;
+        const { valid, dir } = await fetchImport(project, { name, url, ref });
+        // record the actual importDir in the parent ImportDesc
+        importDesc.importDir = dir;
+        importDesc.importModules = [];
+        if (valid) {
+            const { modules, importErrors } = await importModulesFromDir(dir, importDesc);
+            for (const module of modules) {
+                // record the actual import modules in the parent importDesc
+                importDesc.importModules.push(module);
+                const childConfigurer = new ConfigurerImpl(project.dir(), dir, module);
+                childConfigurer.importErrors = importErrors;
+                res.push(childConfigurer);
+                if (module.configure) {
+                    module.configure(childConfigurer);
+                }
+                configureRecurseImports(childConfigurer, project, res);
+            }
         }
-    };
-    record.forEach((func) => resolve(func(ctx) as Record<string, string>));
-    return result;
+    }
 }
 
-export function resolveTargetArrayItems(
-    items: TargetArrayItems,
-    ctx: Context,
-    itemsAreFilePaths: boolean,
-): { interface: string[]; private: string[]; public: string[] } {
-    return {
-        interface: resolveTargetStringArray(items.interface, ctx, itemsAreFilePaths),
-        private: resolveTargetStringArray(items.private, ctx, itemsAreFilePaths),
-        public: resolveTargetStringArray(items.public, ctx, itemsAreFilePaths),
-    };
+function doBuildSetup(project: ProjectImpl, config: Config): void {
+    const builders: BuilderImpl[] = [];
+    for (const imp of projectImpl.imports()) {
+        for (const module of imp.modules) {
+            if (module.build) {
+                const builder = new BuilderImpl(project, imp.importDir, module);
+                module.build(builder);
+                builders.push(builder);
+            }
+        }
+    }
+    if (projectImpl._rootModule.build) {
+        const builder = new BuilderImpl(project, projectImpl._rootDir, projectImpl._rootModule);
+        projectImpl._rootModule.build(builder);
+        // root module builder defines the project name
+        if (builder._name) {
+            projectImpl._name = builder._name;
+        }
+        builders.push(builder);
+    } else {
+        log.panic(`root project fibs.ts must export a 'build' function`);
+    }
+    resolveBuildItems(builders, project, config);
 }
 
-export function resolveTargetRecordItems(
-    items: TargetRecordItems,
-    ctx: Context,
-    itemsAreFilePaths: boolean,
-): { interface: Record<string, string>; private: Record<string, string>; public: Record<string, string> } {
-    return {
-        interface: resolveTargetStringRecord(items.interface, ctx, itemsAreFilePaths),
-        private: resolveTargetStringRecord(items.private, ctx, itemsAreFilePaths),
-        public: resolveTargetStringRecord(items.public, ctx, itemsAreFilePaths),
-    };
+function resolveConfigureItems(configurers: ConfigurerImpl[], project: ProjectImpl): void {
+    // resolve in reverse order, this allows the builtin config to be
+    // overriden by imports, and imports to be overriden by the root project
+    const reversed = configurers.toReversed();
+    project._cmakeVariables = resolveCmakeVariables(reversed);
+    project._settings = resolveSettings(reversed);
+    project._imports = resolveImports(reversed);
+    project._commands = resolveCommands(reversed);
+    project._jobs = resolveJobs(reversed);
+    project._tools = resolveTools(reversed);
+    project._runners = resolveRunners(reversed);
+    project._openers = resolveOpeners(reversed);
+    project._adapters = resolveAdapters(reversed);
+    project._configs = resolveConfigs(reversed, project);
 }
 
-export function isTargetEnabled(project: Project, config: Config, target: Target): boolean {
-    return target.enabled({
-        project,
-        config,
-        target,
-        aliasMap: util.buildTargetAliasMap(project, config, target),
-        host: { platform: host.platform(), arch: host.arch() },
-    });
+function resolveBuildItems(builders: BuilderImpl[], project: ProjectImpl, config: Config): void {
+    project._includeDirectories = resolveBuilderIncludeDirectories(builders, project);
+    project._compileDefinitions = resolveBuilderCompileDefinitions(builders);
+    project._compileOptions = resolveBuilderCompileOptions(builders);
+    project._linkOptions = resolveBuilderLinkOptions(builders);
+    project._targets = resolveTargets(builders, project, config);
+}
+
+function resolveCmakeVariables(configurers: ConfigurerImpl[]): CmakeVariable[] {
+    return util.deduplicate(configurers.flatMap((configurer) =>
+        configurer.cmakeVariables.map((v) => ({
+            name: v.name,
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+            value: (typeof v.value !== 'string') ? v.value : util.resolveProjectScopePath(v.value, {
+                rootDir: configurer.rootDir,
+            }),
+        }))
+    ));
+}
+
+function resolveSettings(configurers: ConfigurerImpl[]): Setting[] {
+    return util.deduplicate(configurers.flatMap((configurer) =>
+        configurer.settings.map((s) => ({
+            name: s.name,
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+            default: s.default,
+            value: s.default, // not a bug
+            validate: s.validate,
+        }))
+    ));
+}
+
+function resolveImports(configurers: ConfigurerImpl[]): Import[] {
+    return util.deduplicate(configurers.flatMap((configurer) =>
+        configurer.imports.map<Import>((i) => ({
+            name: i.name,
+            importDir: i.importDir ?? 'invalid-import-dir',
+            // the importModule is misleading since it's actually the parent import module
+            importModule: configurer.importModule,
+            importErrors: configurer.importErrors,
+            url: i.url,
+            ref: i.ref,
+            modules: i.importModules ?? [],
+        }))
+    ));
+}
+
+function resolveCommands(configurers: ConfigurerImpl[]): Command[] {
+    return util.deduplicate(configurers.flatMap((configurer) =>
+        configurer.commands.map((c) => ({
+            name: c.name,
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+            help: c.help,
+            run: c.run,
+        }))
+    ));
+}
+
+function resolveJobs(configurers: ConfigurerImpl[]): JobBuilder[] {
+    return util.deduplicate(configurers.flatMap((configurer) =>
+        configurer.jobs.map((j) => ({
+            name: j.name,
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+            help: j.help,
+            validate: j.validate,
+            build: j.build,
+        }))
+    ));
+}
+
+function resolveTools(configurers: ConfigurerImpl[]): Tool[] {
+    return util.deduplicate(configurers.flatMap((configurer) =>
+        configurer.tools.map((t) => ({
+            name: t.name,
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+            platforms: t.platforms,
+            optional: t.optional,
+            notFoundMsg: t.notFoundMsg,
+            exists: t.exists,
+        }))
+    ));
+}
+
+function resolveRunners(configurers: ConfigurerImpl[]): Runner[] {
+    return util.deduplicate(configurers.flatMap((configurer) =>
+        configurer.runners.map((r) => ({
+            name: r.name,
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+            run: r.run,
+        }))
+    ));
+}
+
+function resolveOpeners(configurers: ConfigurerImpl[]): Opener[] {
+    return util.deduplicate(configurers.flatMap((configurer) =>
+        configurer.openers.map((o) => ({
+            name: o.name,
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+            generate: o.generate,
+            open: o.open,
+        }))
+    ));
+}
+
+function resolveAdapters(configurers: ConfigurerImpl[]): Adapter[] {
+    return util.deduplicate(configurers.flatMap((configurer) =>
+        configurer.adapters.map((a) => ({
+            name: a.name,
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+            generate: a.generate,
+            configure: a.configure,
+            build: a.build,
+        }))
+    ));
+}
+
+function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Config[] {
+    return util.deduplicate(configurers.flatMap((configurer) =>
+        configurer.configs.map((c) => ({
+            name: c.name,
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+            platform: c.platform,
+            buildMode: c.buildMode,
+            runner: project.findRunner(c.runner) ?? project.runner('native'),
+            opener: project.findOpener(c.opener),
+            generator: c.generator,
+            arch: c.arch,
+            toolchainFile: c.toolchainFile
+                ? util.resolveConfigScopePath(c.toolchainFile, {
+                    rootDir: project.dir(),
+                    config: { name: c.name, platform: c.platform, importDir: configurer.importDir },
+                })
+                : undefined,
+            cmakeIncludes: c.cmakeIncludes
+                ? c.cmakeIncludes.map((path) => {
+                    return util.resolveConfigScopePath(path, {
+                        rootDir: project.dir(),
+                        config: { name: c.name, platform: c.platform, importDir: configurer.importDir },
+                    });
+                })
+                : [],
+            cmakeVariables: resolveConfigCmakeVariables(configurer, c),
+            environment: c.environment ?? {},
+            options: c.options ?? {},
+            includeDirectories: resolveConfigIncludeDirectories(configurer, c),
+            compileDefinitions: resolveConfigCompileDefinitions(configurer, c),
+            compileOptions: resolveConfigCompileOptions(configurer, c),
+            linkOptions: resolveConfigLinkOptions(configurer, c),
+            compilers: c.compilers ?? [],
+            validate: c.validate ?? (() => ({ valid: true, hints: [] })),
+        }))
+    ));
+}
+
+function resolveConfigCmakeVariables(configurer: ConfigurerImpl, c: ConfigDesc): CmakeVariable[] {
+    if (c.cmakeVariables === undefined) {
+        return [];
+    }
+    return util.deduplicate(
+        Object.entries(c.cmakeVariables).map<CmakeVariable>(([key, val]) => ({
+            name: key,
+            value: (typeof val !== 'string') ? val : util.resolveConfigScopePath(val, {
+                rootDir: configurer.rootDir,
+                config: { name: c.name, platform: c.platform, importDir: configurer.importDir },
+            }),
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+        })),
+    );
+}
+
+function resolveConfigIncludeDirectories(configurer: ConfigurerImpl, c: ConfigDesc): IncludeDirectory[] {
+    if (c.includeDirectories === undefined) {
+        return [];
+    }
+    return c.includeDirectories.flatMap((items) =>
+        items.dirs.map((dir) => ({
+            dir: util.resolveConfigScopePath(dir, {
+                rootDir: configurer.rootDir,
+                defaultAlias: '@self',
+                config: { name: c.name, platform: c.platform, importDir: configurer.importDir },
+            }),
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+            scope: items.scope ?? 'public',
+            system: items.system ?? false,
+            language: items.language,
+            buildMode: items.buildMode,
+        }))
+    );
+}
+
+function resolveBuilderIncludeDirectories(builders: BuilderImpl[], project: ProjectImpl): IncludeDirectory[] {
+    return builders.flatMap((builder) =>
+        builder._includeDirectories.flatMap((items) =>
+            items.dirs.map((dir) => ({
+                dir: util.resolveModuleScopePath(dir, {
+                    rootDir: project._rootDir,
+                    defaultAlias: '@self',
+                    moduleDir: builder._importDir,
+                }),
+                importDir: builder._importDir,
+                importModule: builder._importModule,
+                scope: items.scope ?? 'public',
+                system: items.system ?? false,
+                language: items.language,
+                buildMode: items.buildMode,
+            }))
+        )
+    );
+}
+
+function resolveTargetIncludeDirectories(
+    builder: BuilderImpl,
+    project: ProjectImpl,
+    config: Config,
+    t: TargetDesc,
+): IncludeDirectory[] {
+    if (t.includeDirectories === undefined) {
+        return [];
+    }
+    return t.includeDirectories.flatMap((items) =>
+        items.dirs.map((dir) => ({
+            dir: util.resolveTargetScopePath(dir, {
+                rootDir: project._rootDir,
+                defaultAlias: '@targetsources',
+                config: { name: config.name, platform: config.platform },
+                target: { name: t.name, dir: t.dir, type: t.type, importDir: builder._importDir },
+            }),
+            importDir: builder._importDir,
+            importModule: builder._importModule,
+            scope: items.scope ?? 'public',
+            system: items.system ?? false,
+            language: items.language,
+            buildMode: items.buildMode,
+        }))
+    );
+}
+
+function resolveConfigCompileDefinitions(configurer: ConfigurerImpl, c: ConfigDesc): CompileDefinition[] {
+    if (c.compileDefinitions === undefined) {
+        return [];
+    }
+    return util.deduplicate(c.compileDefinitions.flatMap((items) =>
+        Object.entries(items.defs).map(([key, val]) => ({
+            name: key,
+            val,
+            scope: items.scope ?? 'public',
+            language: items.language,
+            buildMode: items.buildMode,
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+        }))
+    ));
+}
+
+function resolveBuilderCompileDefinitions(builders: BuilderImpl[]): CompileDefinition[] {
+    return util.deduplicate(
+        builders.flatMap((builder) =>
+            builder._compileDefinitions.flatMap((items) =>
+                Object.entries(items.defs).map(([key, val]) => ({
+                    name: key,
+                    val,
+                    scope: items.scope ?? 'public',
+                    language: items.language,
+                    buildMode: items.buildMode,
+                    importDir: builder._importDir,
+                    importModule: builder._importModule,
+                }))
+            )
+        ),
+    );
+}
+
+function resolveTargetCompileDefinitions(builder: BuilderImpl, t: TargetDesc): CompileDefinition[] {
+    if (t.compileDefinitions === undefined) {
+        return [];
+    }
+    return util.deduplicate(t.compileDefinitions.flatMap((items) =>
+        Object.entries(items.defs).map(([key, val]) => ({
+            name: key,
+            val,
+            scope: items.scope ?? 'public',
+            language: items.language,
+            buildMode: items.buildMode,
+            importDir: builder._importDir,
+            importModule: builder._importModule,
+        }))
+    ));
+}
+
+function resolveConfigCompileOptions(configurer: ConfigurerImpl, c: ConfigDesc): CompileOption[] {
+    if (c.compileOptions === undefined) {
+        return [];
+    }
+    return c.compileOptions.flatMap((items) =>
+        items.opts.map((opt) => ({
+            opt,
+            scope: items.scope ?? 'public',
+            language: items.language,
+            buildMode: items.buildMode,
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+        }))
+    );
+}
+
+function resolveBuilderCompileOptions(builders: BuilderImpl[]): CompileOption[] {
+    return builders.flatMap((builder) =>
+        builder._compileOptions.flatMap((items) =>
+            items.opts.map((opt) => ({
+                opt,
+                scope: items.scope ?? 'public',
+                language: items.language,
+                buildMode: items.buildMode,
+                importDir: builder._importDir,
+                importModule: builder._importModule,
+            }))
+        )
+    );
+}
+
+function resolveTargetCompileOptions(builder: BuilderImpl, t: TargetDesc): CompileOption[] {
+    if (t.compileOptions === undefined) {
+        return [];
+    }
+    return t.compileOptions.flatMap((items) =>
+        items.opts.map((opt) => ({
+            opt,
+            scope: items.scope ?? 'public',
+            language: items.language,
+            buildMode: items.buildMode,
+            importDir: builder._importDir,
+            importModule: builder._importModule,
+        }))
+    );
+}
+
+function resolveConfigLinkOptions(configurer: ConfigurerImpl, c: ConfigDesc): LinkOption[] {
+    if (c.linkOptions === undefined) {
+        return [];
+    }
+    return c.linkOptions.flatMap((items) =>
+        items.opts.map((opt) => ({
+            opt,
+            scope: items.scope ?? 'public',
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+        }))
+    );
+}
+
+function resolveBuilderLinkOptions(builders: BuilderImpl[]): LinkOption[] {
+    return builders.flatMap((builder) =>
+        builder._linkOptions.flatMap((items) =>
+            items.opts.map((opt) => ({
+                opt,
+                scope: items.scope ?? 'public',
+                importDir: builder._importDir,
+                importModule: builder._importModule,
+            }))
+        )
+    );
+}
+
+function resolveTargetLinkOptions(builder: BuilderImpl, t: TargetDesc): LinkOption[] {
+    if (t.linkOptions === undefined) {
+        return [];
+    }
+    return t.linkOptions.flatMap((items) =>
+        items.opts.map((opt) => ({
+            opt,
+            scope: items.scope ?? 'public',
+            importDir: builder._importDir,
+            importModule: builder._importModule,
+        }))
+    );
+}
+
+function resolveTargetSources(builder: BuilderImpl, project: ProjectImpl, config: Config, t: TargetDesc): string[] {
+    return t.sources.map((src) =>
+        util.resolveTargetScopePath(`@targetsources:${src}`, {
+            rootDir: project._rootDir,
+            config: { name: config.name, platform: config.platform },
+            target: { name: t.name, dir: t.dir, type: t.type, importDir: builder._importDir },
+        })
+    );
+}
+
+function resolveTargets(builders: BuilderImpl[], project: ProjectImpl, config: Config): Target[] {
+    return util.deduplicate(builders.flatMap((builder) =>
+        builder._targets.map((t) => ({
+            name: t.name,
+            importDir: builder._importDir,
+            importModule: builder._importModule,
+            type: t.type,
+            dir: t.dir,
+            sources: resolveTargetSources(builder, project, config, t),
+            deps: t.deps ?? [],
+            libs: t.libs ?? [],
+            includeDirectories: resolveTargetIncludeDirectories(builder, project, config, t),
+            compileDefinitions: resolveTargetCompileDefinitions(builder, t),
+            compileOptions: resolveTargetCompileOptions(builder, t),
+            linkOptions: resolveTargetLinkOptions(builder, t),
+            jobs: t.jobs ?? [],
+        }))
+    ));
 }

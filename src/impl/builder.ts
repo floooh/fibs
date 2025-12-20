@@ -1,0 +1,281 @@
+import { log, util } from '../lib/index.ts';
+import {
+    Adapter,
+    Arch,
+    Builder,
+    CmakeVariable,
+    Command,
+    CompileDefinitionsDesc,
+    CompileOptionsDesc,
+    Compiler,
+    Config,
+    FibsModule,
+    Import,
+    IncludeDirectoriesDesc,
+    JobBuilder,
+    LinkOptionsDesc,
+    Opener,
+    Platform,
+    Project,
+    Runner,
+    Setting,
+    Target,
+    TargetBuilder,
+    TargetDesc,
+    TargetType,
+    Tool,
+    isCompileDefinitionsDesc,
+    isIncludeDirectoriesDesc,
+    isCompileOptionsDesc,
+    isLinkOptionsDesc,
+} from '../types.ts';
+import { TargetBuilderImpl } from './target.ts';
+
+export class BuilderImpl implements Builder {
+    _project: Project;
+    _name: string | undefined;
+    _importDir: string;
+    _importModule: FibsModule;
+    _targets: TargetDesc[] = [];
+    _includeDirectories: IncludeDirectoriesDesc[] = [];
+    _compileDefinitions: CompileDefinitionsDesc[] = [];
+    _compileOptions: CompileOptionsDesc[] = [];
+    _linkOptions: LinkOptionsDesc[] = [];
+
+    constructor(project: Project, importDir: string, importModule: FibsModule) {
+        this._project = project;
+        this._importDir = importDir;
+        this._importModule = importModule;
+    }
+    setName(name: string): void {
+        this._name = name;
+    }
+    addTarget(target: TargetDesc | string, type?: TargetType, fn?: (t: TargetBuilder) => void): void {
+        if (typeof target === 'string') {
+            if ((type === undefined) || (fn === undefined)) {
+                throw Error('Builder.addTarget argument mismatch');
+            }
+            const b = new TargetBuilderImpl(target, type);
+            fn(b);
+            target = b.desc;
+        }
+        if (util.find(target.name, this._targets)) {
+            log.panic(`duplicate target: ${target.name}`);
+        }
+        this._targets.push(target);
+    }
+    addIncludeDirectories(dirs: IncludeDirectoriesDesc | string[]): void {
+        if (isIncludeDirectoriesDesc(dirs)) {
+            this._includeDirectories.push(dirs);
+        } else {
+            this._includeDirectories.push({ dirs });
+        }
+    }
+    addCompileDefinitions(defs: CompileDefinitionsDesc | Record<string, string>): void {
+        if (isCompileDefinitionsDesc(defs)) {
+            this._compileDefinitions.push(defs);
+        } else {
+            this._compileDefinitions.push({ defs });
+        }
+    }
+    addCompileOptions(opts: CompileOptionsDesc | string[]): void {
+        if (isCompileOptionsDesc(opts)) {
+            this._compileOptions.push(opts);
+        } else {
+            this._compileOptions.push({ opts });
+        }
+    }
+    addLinkOptions(opts: LinkOptionsDesc | string[]): void {
+        if (isLinkOptionsDesc(opts)) {
+            this._linkOptions.push(opts);
+        } else {
+            this._linkOptions.push({ opts });
+        }
+    }
+    name(): string {
+        return this._project.name();
+    }
+    activeConfig(): Config {
+        return this._project.activeConfig();
+    }
+    platform(): Platform {
+        return this._project.platform();
+    }
+    compiler(): Compiler {
+        return this._project.compiler();
+    }
+    hostPlatform(): Platform {
+        return this._project.hostPlatform();
+    }
+    hostArch(): Arch {
+        return this._project.hostArch();
+    }
+    dir(): string {
+        return this._project.dir();
+    }
+    fibsDir(): string {
+        return this._project.fibsDir();
+    }
+    sdkDir(): string {
+        return this._project.sdkDir();
+    }
+    configDir(configName?: string): string {
+        return this._project.configDir(configName);
+    }
+    buildDir(configName?: string): string {
+        return this._project.buildDir(configName);
+    }
+    distDir(configName?: string): string {
+        return this._project.distDir(configName);
+    }
+    importsDir(): string {
+        return this._project.importsDir();
+    }
+    targetBuildDir(targetName: string, configName?: string): string {
+        return this._project.targetBuildDir(targetName, configName);
+    }
+    targetDistDir(targetName: string, configName?: string): string {
+        return this._project.targetDistDir(targetName, configName);
+    }
+    targetAssetsDir(targetName: string, configName?: string): string {
+        return this._project.targetAssetsDir(targetName, configName);
+    }
+    settings(): Setting[] {
+        return this._project.settings();
+    }
+    cmakeVariables(): CmakeVariable[] {
+        return this._project.cmakeVariables();
+    }
+    configs(): Config[] {
+        return this._project.configs();
+    }
+    adapters(): Adapter[] {
+        return this._project.adapters();
+    }
+    commands(): Command[] {
+        return this._project.commands();
+    }
+    imports(): Import[] {
+        return this._project.imports();
+    }
+    tools(): Tool[] {
+        return this._project.tools();
+    }
+    jobs(): JobBuilder[] {
+        return this._project.jobs();
+    }
+    runners(): Runner[] {
+        return this._project.runners();
+    }
+    openers(): Opener[] {
+        return this._project.openers();
+    }
+    findSetting(name: string | undefined): Setting | undefined {
+        return this._project.findSetting(name);
+    }
+    setting(name: string): Setting {
+        return this._project.setting(name);
+    }
+    findConfig(name: string | undefined): Config | undefined {
+        return this._project.findConfig(name);
+    }
+    config(name: string): Config {
+        return this._project.config(name);
+    }
+    findTarget(name: string | undefined): Target | undefined {
+        return this._project.findTarget(name);
+    }
+    target(name: string): Target {
+        return this._project.target(name);
+    }
+    findAdapter(name: string | undefined): Adapter | undefined {
+        return this._project.findAdapter(name);
+    }
+    adapter(name: string): Adapter {
+        return this._project.adapter(name);
+    }
+    findCommand(name: string | undefined): Command | undefined {
+        return this._project.findCommand(name);
+    }
+    command(name: string): Command {
+        return this._project.command(name);
+    }
+    findImport(name: string | undefined): Import | undefined {
+        return this._project.findImport(name);
+    }
+    import(name: string): Import {
+        return this._project.import(name);
+    }
+    findTool(name: string | undefined): Tool | undefined {
+        return this._project.findTool(name);
+    }
+    tool(name: string): Tool {
+        return this._project.tool(name);
+    }
+    findRunner(name: string | undefined): Runner | undefined {
+        return this._project.findRunner(name);
+    }
+    runner(name: string): Runner {
+        return this._project.runner(name);
+    }
+    findOpener(name: string | undefined): Opener | undefined {
+        return this._project.findOpener(name);
+    }
+    opener(name: string): Opener {
+        return this._project.opener(name);
+    }
+    isPlatform(platform: Platform): boolean {
+        return this._project.isPlatform(platform);
+    }
+    isWindows(): boolean {
+        return this._project.isWindows();
+    }
+    isLinux(): boolean {
+        return this._project.isLinux();
+    }
+    isMacOS(): boolean {
+        return this._project.isMacOS();
+    }
+    isIOS(): boolean {
+        return this._project.isIOS();
+    }
+    isAndroid(): boolean {
+        return this._project.isAndroid();
+    }
+    isEmscripten(): boolean {
+        return this._project.isEmscripten();
+    }
+    isWasi(): boolean {
+        return this._project.isWasi();
+    }
+    isWasm(): boolean {
+        return this._project.isWasm();
+    }
+    isHostPlatform(platform: Platform): boolean {
+        return this._project.isHostPlatform(platform);
+    }
+    isHostWindows(): boolean {
+        return this._project.isHostWindows();
+    }
+    isHostLinux(): boolean {
+        return this._project.isHostLinux();
+    }
+    isHostMacOS(): boolean {
+        return this._project.isHostMacOS();
+    }
+    isCompiler(compiler: Compiler): boolean {
+        return this._project.isCompiler(compiler);
+    }
+    isClang(): boolean {
+        return this._project.isClang();
+    }
+    isAppleClang(): boolean {
+        return this._project.isAppleClang();
+    }
+    isMsvc(): boolean {
+        return this._project.isMsvc();
+    }
+    isGcc(): boolean {
+        return this._project.isGcc();
+    }
+}

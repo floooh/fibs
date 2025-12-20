@@ -1,12 +1,11 @@
-import { Config, Project, RunOptions, RunResult } from './types.ts';
-import * as util from './util.ts';
-import * as log from './log.ts';
+import { log, util } from './index.ts';
+import { Config, Project, RunOptions, RunResult } from '../types.ts';
 
 export async function run(options: RunOptions): Promise<RunResult> {
     try {
         return await util.runCmd('cmake', options);
     } catch (err) {
-        log.error(`Failed running cmake with: ${err.message}`);
+        log.panic('Failed running cmake with: ', err);
     }
 }
 
@@ -20,20 +19,20 @@ export async function exists(): Promise<boolean> {
     }
 }
 
-export async function configure(project: Project, config: Config) {
+export async function generate(project: Project, config: Config) {
     if (config.opener !== undefined) {
-        await config.opener.configure(project, config);
+        await config.opener.generate(project, config);
     }
-    const args = ['--preset', config.name, '-B', util.buildDir(project, config)];
+    const args = ['--preset', config.name, '-B', project.buildDir(config.name)];
     const res = await run({ args, stderr: 'piped' });
     if (res.exitCode !== 0) {
-        log.error(
+        log.panic(
             `cmake returned with exit code ${res.exitCode}, stderr:\n\n${res.stderr}`,
         );
     }
 }
 
-export async function build(project: Project, config: Config, options: { target?: string; forceRebuild?: boolean }) {
+export async function build(options: { target?: string; forceRebuild?: boolean }) {
     const {
         target,
         forceRebuild = false,
@@ -47,6 +46,6 @@ export async function build(project: Project, config: Config, options: { target?
     }
     const res = await run({ args });
     if (res.exitCode !== 0) {
-        log.error('build failed.');
+        log.panic('build failed.');
     }
 }

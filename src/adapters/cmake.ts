@@ -1,33 +1,71 @@
+import { cmake, log, util } from '../lib/index.ts';
+import { fs } from '../../deps.ts';
 import {
+    AdapterBuildOptions,
+    AdapterConfigureResult,
     AdapterDesc,
-    BuildType,
-    cmake,
+    BuildMode,
     Compiler,
     Config,
-    Context,
-    host,
+    Generator,
     Language,
-    log,
-    proj,
     Project,
-    StringArrayFunc,
-    StringRecordFunc,
+    Scope,
     Target,
-    TargetArrayItems,
-    TargetRecordItems,
-    util,
-} from '../../mod.ts';
+} from '../types.ts';
 
 export const cmakeAdapter: AdapterDesc = {
     name: 'cmake',
-    configure: configure,
-    build: build,
+    configure,
+    generate,
+    build,
 };
 
-export async function configure(project: Project, config: Config) {
-    const cmakeListsPath = `${project.dir}/CMakeLists.txt`;
-    const cmakePresetsPath = `${project.dir}/CMakePresets.json`;
-    log.info(`writing ${cmakeListsPath}`);
+const helloSource = `
+#include <stdio.h>
+int main() {
+  printf("Hello World!\\n);
+  return 0;
+}
+`;
+
+const cmakeConfigSource = `
+cmake_minimum_required(VERSION 4.0)
+project(hello C CXX)
+add_executable(hello hello.c)
+file(WRITE cmake_config.json "{\\"CMAKE_C_COMPILER_ID\\":\\"\${CMAKE_C_COMPILER_ID}\\",\\"CMAKE_HOST_SYSTEM_NAME\\":\\"\${CMAKE_HOST_SYSTEM_NAME}\\",\\"CMAKE_SYSTEM_PROCESSOR\\":\\"\${CMAKE_SYTEM_PROCESSOR}\\"}\\n")
+`;
+
+export async function configure(project: Project, config: Config): Promise<AdapterConfigureResult> {
+    const configDir = project.configDir(config.name);
+    const configPath = `${configDir}/cmake_config.json`;
+    if (!util.fileExists(configPath)) {
+        fs.ensureDirSync(configDir);
+        // run a dummy cmake generator to obtain runtime config params
+        const helloPath = `${configDir}/hello.c`;
+        Deno.writeTextFileSync(helloPath, helloSource, { create: true });
+
+        const cmakePath = `${configDir}/CMakeLists.txt`;
+        Deno.writeTextFileSync(cmakePath, cmakeConfigSource, { create: true });
+
+        const cmakePresetsPath = `${configDir}/CMakePresets.json`;
+        const cmakePresetsSource = genCMakePresetsJson(project, config, configDir, configDir);
+        Deno.writeTextFileSync(cmakePresetsPath, cmakePresetsSource, { create: true });
+
+        const res = await cmake.run({ cwd: configDir, args: ['--preset', config.name], stderr: 'piped' });
+        if (res.exitCode !== 0) {
+            log.panic(`cmake returned with exit code ${res.exitCode}, stderr: \n\n${res.stderr}`);
+        }
+    }
+    const configJson = (await import(configPath, { with: { type: 'json' } })).default;
+    return {
+        compiler: fromCmakeCompiler(configJson.CMAKE_C_COMPILER_ID),
+    };
+}
+
+export async function generate(project: Project, config: Config): Promise<void> {
+    const cmakeListsPath = `${project.dir()}/CMakeLists.txt`;
+    const cmakePresetsPath = `${project.dir()}/CMakePresets.json`;
     try {
         Deno.writeTextFileSync(
             cmakeListsPath,
@@ -35,26 +73,150 @@ export async function configure(project: Project, config: Config) {
             { create: true },
         );
     } catch (err) {
-        log.error(`Failed writing ${cmakeListsPath}: ${err.message}`);
+        log.panic(`Failed writing ${cmakeListsPath}: `, err);
     }
-    log.info(`writing ${cmakePresetsPath}`);
     try {
         Deno.writeTextFileSync(
             cmakePresetsPath,
-            genCMakePresetsJson(project, config),
+            genCMakePresetsJson(project, config, project.buildDir(), project.distDir()),
             { create: true },
         );
     } catch (err) {
-        log.error(`Failed writing CMakePresets.json: ${err.message}`);
+        log.panic('Failed writing CMakePresets.json: ', err);
     }
-    await cmake.configure(project, config);
+    await cmake.generate(project, config);
 }
 
-export async function build(project: Project, config: Config, options: { buildTarget?: string; forceRebuild?: boolean }) {
-    if (!util.fileExists(`${util.buildDir(project, config)}/CMakeCache.txt`)) {
-        await configure(project, config);
+export async function build(project: Project, config: Config, options: AdapterBuildOptions): Promise<void> {
+    if (!util.fileExists(`${project.buildDir()}/CMakeCache.txt`)) {
+        await generate(project, config);
     }
-    await cmake.build(project, config, options);
+    await cmake.build(options);
+}
+
+function genCMakePresetsJson(project: Project, config: Config, buildDir: string, distDir: string): string {
+    const preset = {
+        version: 3,
+        cmakeMinimumRequired: {
+            major: 4,
+            minor: 0,
+            patch: 0,
+        },
+        configurePresets: genConfigurePresets(project, config, buildDir, distDir),
+        buildPresets: genBuildPresets(config),
+    };
+    return JSON.stringify(preset, null, 2);
+}
+
+function fromCmakeCompiler(str: string): Compiler {
+    if (str === 'AppleClang') {
+        return 'appleclang';
+    } else if (str === 'Clang') {
+        return 'clang';
+    } else if (str === 'GNU') {
+        return 'gcc';
+    } else if (str === 'MSVC') {
+        return 'msvc';
+    } else {
+        return 'unknown-compiler';
+    }
+}
+
+function asCmakeGenerator(g: Generator | undefined): string | undefined {
+    switch (g) {
+        case 'make':
+            return 'Unix Makefiles';
+        case 'ninja':
+            return 'Ninja';
+        case 'ninja-multi-config':
+            return 'Ninja Multi-Config';
+        case 'xcode':
+            return 'Xcode';
+        default:
+            return undefined;
+    }
+}
+
+function asCmakeScope(scope: Scope): string {
+    return ` ${scope.toUpperCase()}`;
+}
+
+function asCmakeBuildMode(buildMode: BuildMode): string {
+    if (buildMode === 'debug') {
+        return 'Debug';
+    } else {
+        return 'Release';
+    }
+}
+
+function isMultiConfigGenerator(config: Config): boolean {
+    switch (config.generator) {
+        case 'make':
+        case 'ninja':
+            return false;
+        case 'vstudio':
+        case 'ninja-multi-config':
+        case 'xcode':
+            return true;
+        default:
+            return config.platform === 'windows';
+    }
+}
+
+function resolveCacheVariable(val: string | boolean): string | { type: 'BOOL'; value: 'ON' | 'OFF' } {
+    if (typeof val === 'string') {
+        return val;
+    } else {
+        return {
+            type: 'BOOL',
+            value: val ? 'ON' : 'OFF',
+        };
+    }
+}
+
+function genConfigurePresets(project: Project, config: Config, buildDir: string, distDir: string): unknown[] {
+    const res = [];
+    if (util.validConfigForPlatform(config, project.hostPlatform())) {
+        res.push({
+            name: config.name,
+            displayName: config.name,
+            binaryDir: buildDir,
+            generator: asCmakeGenerator(config.generator),
+            toolchainFile: config.toolchainFile,
+            cacheVariables: genCacheVariables(project, config, distDir),
+            environment: config.environment,
+        });
+    } else {
+        log.panic(`config '${config.name} is not valid for platform '${project.hostPlatform()}'`);
+    }
+    return res;
+}
+
+function genCacheVariables(project: Project, config: Config, distDir: string): Record<string, unknown> {
+    const res: Record<string, unknown> = {};
+    if (!isMultiConfigGenerator(config)) {
+        res.CMAKE_BUILD_TYPE = asCmakeBuildMode(config.buildMode);
+    }
+    if (config.platform !== 'android') {
+        res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = distDir;
+    }
+    const cmakeVariables = util.deduplicate([...config.cmakeVariables, ...project.cmakeVariables()]);
+    for (const cmakeVariable of cmakeVariables) {
+        res[cmakeVariable.name] = resolveCacheVariable(cmakeVariable.value);
+    }
+    return res;
+}
+
+function genBuildPresets(config: Config): unknown[] {
+    if (isMultiConfigGenerator(config)) {
+        return [
+            { name: 'default', configurePreset: config.name, configuration: asCmakeBuildMode(config.buildMode) },
+            { name: 'debug', configurePreset: config.name, configuration: asCmakeBuildMode('debug') },
+            { name: 'release', configurePreset: config.name, configuration: asCmakeBuildMode('release') },
+        ];
+    } else {
+        return [{ name: 'default', configurePreset: config.name }];
+    }
 }
 
 function genCMakeListsTxt(project: Project, config: Config): string {
@@ -64,171 +226,117 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genCompileDefinitions(project, config);
     str += genCompileOptions(project, config);
     str += genLinkOptions(project, config);
-    str += genAllJobsTarget(project, config);
-    for (const target of project.targets) {
-        if (proj.isTargetEnabled(project, config, target)) {
-            str += genTarget(project, config, target);
-            str += genTargetDependencies(project, config, target);
-            str += genTargetIncludeDirectories(project, config, target);
-            str += genTargetCompileDefinitions(project, config, target);
-            str += genTargetCompileOptions(project, config, target);
-            str += genTargetLinkOptions(project, config, target);
-            str += genTargetJobDependencies(project, config, target);
-        }
+    str += genAllJobsTarget(project);
+    for (const target of project.targets()) {
+        str += genTarget(project, config, target);
+        str += genTargetDependencies(target);
+        str += genTargetIncludeDirectories(target);
+        str += genTargetCompileDefinitions(target);
+        str += genTargetCompileOptions(target);
+        str += genTargetLinkOptions(target);
+        str += genTargetJobDependencies(target);
     }
     return str;
 }
 
 function genProlog(project: Project, config: Config): string {
     let str = '';
-    str += 'cmake_minimum_required(VERSION 3.20)\n';
-    str += `project(${project.name} C CXX)\n`;
+    str += 'cmake_minimum_required(VERSION 4.0)\n';
+    str += `project(${project.name()} C CXX)\n`;
     str += 'set(GLOBAL PROPERTY USE_FOLDERS ON)\n';
     str += 'set(CMAKE_CONFIGURATION_TYPES Debug Release)\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
-    const aliasMap = util.buildConfigAliasMap(project, config);
-    for (const includePath of config.cmakeIncludes) {
-        str += `include("${util.resolvePath(aliasMap, includePath)}")\n`;
+    for (const includeDir of config.cmakeIncludes) {
+        str += `include("${includeDir}")\n`;
     }
     return str;
 }
 
-function compilerId(compiler: Compiler): string {
-    switch (compiler) {
-        case 'msvc':
-            return 'MSVC';
-        case 'gcc':
-            return 'GNU';
-        case 'clang':
-            return 'Clang';
-        case 'appleclang':
-            return 'AppleClang';
-        case 'unknown-compiler':
-            return 'UNKNOWN-COMPILER';
-    }
-}
-
-function languageId(language: Language): string {
-    switch (language) {
+function expr(l: Language | undefined, m: BuildMode | undefined, str: string): string {
+    switch (l) {
         case 'c':
-            return 'C';
+            str = `$<$<COMPILE_LANGUAGE:C>:${str}>`;
+            break;
         case 'cxx':
-            return 'CXX';
+            str = `$<$<COMPILE_LANGUAGE:CXX>:${str}>`;
+            break;
     }
-}
-
-function languages(): Language[] {
-    return ['c', 'cxx'];
-}
-
-function generatorExpressionLanguageCompiler(language: Language, compiler: Compiler, items: string[]): string {
-    return `"$<$<COMPILE_LANG_AND_ID:${languageId(language)},${compilerId(compiler)}>:${items.join(';')}>"`;
-}
-
-function generatorExpressionCompiler(compiler: Compiler, items: string[]): string {
-    return `"$<$<C_COMPILER_ID:${compilerId(compiler)}>:${items.join(';')}>"`;
-}
-
-function genGlobalArrayItemsLanguageCompiler(
-    project: Project,
-    config: Config,
-    statement: string,
-    items: StringArrayFunc[] | string[],
-    itemsAreFilePaths: boolean,
-    useConfigAliases: boolean,
-): string {
-    let str = '';
-    const aliasMap = useConfigAliases ? util.buildConfigAliasMap(project, config) : util.buildProjectAliasMap(project, config);
-    for (const language of languages()) {
-        for (const compiler of config.compilers) {
-            const ctx: Context = {
-                project,
-                config,
-                compiler,
-                language,
-                aliasMap,
-                host: { platform: host.platform(), arch: host.arch() },
-            };
-            const resolvedItems = proj.resolveProjectStringArray(items, ctx, itemsAreFilePaths);
-            if (resolvedItems.length > 0) {
-                str += `${statement}(${generatorExpressionLanguageCompiler(language, compiler, resolvedItems)})\n`;
-            }
-        }
-    }
-    return str;
-}
-
-function genGlobalRecordItemsLanguageCompiler(
-    project: Project,
-    config: Config,
-    statement: string,
-    items: StringRecordFunc[] | Record<string, string>,
-    itemsAreFilePaths: boolean,
-    useConfigAliases: boolean,
-): string {
-    let str = '';
-    const aliasMap = useConfigAliases ? util.buildConfigAliasMap(project, config) : util.buildProjectAliasMap(project, config);
-    for (const language of languages()) {
-        for (const compiler of config.compilers) {
-            const ctx: Context = {
-                project,
-                config,
-                compiler,
-                language,
-                aliasMap,
-                host: { platform: host.platform(), arch: host.arch() },
-            };
-            const resolvedItems = proj.resolveProjectStringRecord(items, ctx, itemsAreFilePaths);
-            if (Object.keys(resolvedItems).length > 0) {
-                const resolvedItemsString = Object.entries(resolvedItems).map(([key, val]) => `${key}=${val}`);
-                str += `${statement}(${generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)})\n`;
-            }
-        }
+    switch (m) {
+        case 'debug':
+            str = `$<$<CONFIG:DEBUG>:${str}>`;
+            break;
+        case 'release':
+            str = `$<$<CONFIG:RELEASE>:${str}>`;
+            break;
     }
     return str;
 }
 
 function genIncludeDirectories(project: Project, config: Config): string {
     let str = '';
-    str += genGlobalArrayItemsLanguageCompiler(project, config, 'include_directories', project.includeDirectories, true, false);
-    str += genGlobalArrayItemsLanguageCompiler(project, config, 'include_directories', config.includeDirectories, true, true);
+    const items = [...project.includeDirectories(), ...config.includeDirectories];
+    items.forEach((item) =>
+        str += `include_directories(${item.system ? 'SYSTEM ' : ''}"${expr(item.language, item.buildMode, item.dir)}")\n`
+    );
     return str;
 }
 
 function genCompileDefinitions(project: Project, config: Config): string {
     let str = '';
-    str += genGlobalRecordItemsLanguageCompiler(project, config, 'add_compile_definitions', project.compileDefinitions, false, false);
-    str += genGlobalRecordItemsLanguageCompiler(project, config, 'add_compile_definitions', config.compileDefinitions, false, true);
+    const items = util.deduplicate([...config.compileDefinitions, ...project.compileDefinitions()]);
+    if (items.length > 0) {
+        str += 'add_compile_definitions(';
+        str += items.map((item) => `${expr(item.language, item.buildMode, `${item.name}=${item.val}`)}`).join(' ');
+        str += ')\n';
+    }
     return str;
 }
 
 function genCompileOptions(project: Project, config: Config): string {
     let str = '';
-    str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_compile_options', project.compileOptions, false, false);
-    str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_compile_options', config.compileOptions, false, true);
+    const items = [...project.compileOptions(), ...config.compileOptions];
+    if (items.length > 0) {
+        str += 'add_compile_options(';
+        str += items.map((item) => `${expr(item.language, item.buildMode, item.opt)}`).join(' ');
+        str += ')\n';
+    }
     return str;
 }
 
 function genLinkOptions(project: Project, config: Config): string {
     let str = '';
-    str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_link_options', project.linkOptions, false, false);
-    str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_link_options', config.linkOptions, false, true);
+    const items = [...project.linkOptions(), ...config.linkOptions];
+    if (items.length > 0) {
+        str += 'add_link_options(';
+        str += items.map((item) => `${expr(undefined, item.buildMode, item.opt)}`).join(' ');
+        str += ')\n';
+    }
+    return str;
+}
+
+function genAllJobsTarget(project: Project): string {
+    let str = '';
+    // first check if there are any jobs
+    let hasJobs: boolean = false;
+    for (const target of project.targets()) {
+        if (target.jobs.length > 0) {
+            hasJobs = true;
+            break;
+        }
+    }
+    if (hasJobs) {
+        str += `find_program(DENO deno REQUIRED)\n`;
+        str +=
+            `add_custom_target(ALL_JOBS COMMAND \${DENO} run --allow-all --no-config fibs.ts runjobs WORKING_DIRECTORY ${project.dir()})\n`;
+    }
     return str;
 }
 
 function genTarget(project: Project, config: Config, target: Target): string {
     let str = '';
-    const ctx: Context = {
-        project,
-        config,
-        target,
-        aliasMap: util.buildTargetAliasMap(project, config, target),
-        host: { platform: host.platform(), arch: host.arch() },
-    };
-    const sources = proj.resolveTargetStringArray(target.sources, ctx, true);
-
     // get any job outputs which need to be added as target sources
+    /* FIXME: handle job outputs!
     const jobOutputs = proj.resolveTargetJobs(ctx).flatMap((job) => {
         if (job.addOutputsToTargetSources) {
             return job.outputs;
@@ -241,8 +349,9 @@ function genTarget(project: Project, config: Config, target: Target): string {
     for (const path of jobOutputs) {
         util.ensureFile(path);
     }
+    */
 
-    const targetSources = [...sources, ...jobOutputs];
+    const targetSources = [...target.sources /*, ...jobOutputs*/];
     const targetSourcesStr = targetSources.join(' ');
     let subtype = '';
     switch (target.type) {
@@ -267,266 +376,79 @@ function genTarget(project: Project, config: Config, target: Target): string {
             str += `add_library(${target.name} INTERFACE ${targetSourcesStr})\n`;
             break;
     }
-    const aliasMap = util.buildTargetAliasMap(project, config, target);
-    str += `source_group(TREE ${util.resolvePath(aliasMap, target.importDir, target.dir)} FILES ${sources.join(' ')})\n`;
+    const targetSourceDir = util.resolveTargetScopePath('@targetsources:', {
+        rootDir: project.dir(),
+        config: { name: config.name, platform: config.platform },
+        target: { name: target.name, dir: target.dir, type: target.type, importDir: target.importDir },
+    });
+    str += `source_group(TREE "${targetSourceDir}" FILES ${target.sources.join(' ')})\n`;
+    /* FIXME
     if (jobOutputs.length > 0) {
         str += `source_group(gen FILES ${jobOutputs.join(' ')})\n`;
     }
+    */
     return str;
 }
 
-function genTargetDependencies(project: Project, config: Config, target: Target): string {
+function genTargetDependencies(target: Target): string {
     let str = '';
-    const aliasMap = util.buildTargetAliasMap(project, config, target);
-    for (const compiler of config.compilers) {
-        const ctx: Context = {
-            project,
-            config,
-            target,
-            compiler,
-            aliasMap,
-            host: { platform: host.platform(), arch: host.arch() },
-        };
-        const libs = [
-            ...proj.resolveTargetStringArray(target.deps, ctx, false),
-            ...proj.resolveTargetStringArray(target.libs, ctx, false),
-        ];
-        if (libs.length > 0) {
-            let type = '';
-            if (target.type === 'interface') {
-                type = ' INTERFACE';
-            }
-            str += `target_link_libraries(${target.name}${type} ${generatorExpressionCompiler(compiler, libs)})\n`;
-        }
+    const libs = [...target.deps, ...target.libs];
+    if (libs.length > 0) {
+        const scope = target.type === 'interface' ? ' INTERFACE' : '';
+        str += `target_link_libraries(${target.name}${scope} ${libs.join(' ')})\n`;
     }
     return str;
 }
 
-function genTargetArrayItems(
-    project: Project,
-    config: Config,
-    target: Target,
-    statement: string,
-    items: TargetArrayItems,
-    itemsAreFilePaths: boolean,
-): string {
+function genTargetIncludeDirectories(target: Target): string {
     let str = '';
-    const aliasMap = util.buildTargetAliasMap(project, config, target);
-    for (const language of languages()) {
-        for (const compiler of config.compilers) {
-            const ctx: Context = {
-                project,
-                config,
-                target,
-                compiler,
-                language,
-                aliasMap,
-                host: { platform: host.platform(), arch: host.arch() },
-            };
-            const resolvedItems = proj.resolveTargetArrayItems(items, ctx, itemsAreFilePaths);
-            if (resolvedItems.interface.length > 0) {
-                str += `${statement}(${target.name} INTERFACE ${
-                    generatorExpressionLanguageCompiler(language, compiler, resolvedItems.interface)
-                })\n`;
-            }
-            if (resolvedItems.private.length > 0) {
-                str += `${statement}(${target.name} PRIVATE ${
-                    generatorExpressionLanguageCompiler(language, compiler, resolvedItems.private)
-                })\n`;
-            }
-            if (resolvedItems.public.length > 0) {
-                str += `${statement}(${target.name} PUBLIC ${
-                    generatorExpressionLanguageCompiler(language, compiler, resolvedItems.public)
-                })\n`;
-            }
-        }
-    }
+    target.includeDirectories.forEach((item) => {
+        const sys = item.system ? ' SYSTEM' : '';
+        const scope = asCmakeScope(item.scope);
+        str += `target_include_directories(${target.name}${sys}${scope} "${expr(item.language, item.buildMode, item.dir)}")\n`;
+    });
     return str;
 }
 
-function genTargetRecordItems(
-    project: Project,
-    config: Config,
-    target: Target,
-    statement: string,
-    items: TargetRecordItems,
-    itemsAreFilePaths: boolean,
-): string {
+function genTargetCompileDefinitions(target: Target): string {
     let str = '';
-    const aliasMap = util.buildTargetAliasMap(project, config, target);
-    for (const language of languages()) {
-        for (const compiler of config.compilers) {
-            const ctx: Context = {
-                project,
-                config,
-                target,
-                compiler,
-                language,
-                aliasMap,
-                host: { platform: host.platform(), arch: host.arch() },
-            };
-            const resolvedItems = proj.resolveTargetRecordItems(items, ctx, itemsAreFilePaths);
-            if (Object.keys(resolvedItems.interface).length > 0) {
-                const resolvedItemsString = Object.entries(resolvedItems.interface).map(([key, val]) => `${key}=${val}`);
-                str += `${statement}(${target.name} INTERFACE ${
-                    generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
-                })\n`;
-            }
-            if (Object.keys(resolvedItems.private).length > 0) {
-                const resolvedItemsString = Object.entries(resolvedItems.private).map(([key, val]) => `${key}=${val}`);
-                str += `${statement}(${target.name} PRIVATE ${
-                    generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
-                })\n`;
-            }
-            if (Object.keys(resolvedItems.public).length > 0) {
-                const resolvedItemsString = Object.entries(resolvedItems.public).map(([key, val]) => `${key}=${val}`);
-                str += `${statement}(${target.name} PUBLIC ${
-                    generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
-                })\n`;
-            }
-        }
+    const items = target.compileDefinitions;
+    if (items.length > 0) {
+        str += `target_compile_definitions(${target.name}`;
+        str += items.map((item) => `${asCmakeScope(item.scope)} ${expr(item.language, item.buildMode, `${item.name}=${item.val}`)}`).join(
+            ' ',
+        );
+        str += ')\n';
     }
     return str;
 }
 
-function genTargetIncludeDirectories(project: Project, config: Config, target: Target): string {
-    return genTargetArrayItems(project, config, target, 'target_include_directories', target.includeDirectories, true);
-}
-
-function genTargetCompileDefinitions(project: Project, config: Config, target: Target): string {
-    return genTargetRecordItems(project, config, target, 'target_compile_definitions', target.compileDefinitions, false);
-}
-
-function genTargetCompileOptions(project: Project, config: Config, target: Target): string {
-    return genTargetArrayItems(project, config, target, 'target_compile_options', target.compileOptions, false);
-}
-
-function genTargetLinkOptions(project: Project, config: Config, target: Target): string {
-    return genTargetArrayItems(project, config, target, 'target_link_options', target.linkOptions, false);
-}
-
-function genAllJobsTarget(project: Project, config: Config): string {
+function genTargetCompileOptions(target: Target): string {
     let str = '';
-    // first check if there are any jobs
-    let hasJobs: boolean = false;
-    for (const target of project.targets) {
-        if (target.jobs.length > 0) {
-            hasJobs = true;
-            break;
-        }
-    }
-    if (hasJobs) {
-        str += `find_program(DENO deno REQUIRED)\n`;
-        str +=
-            `add_custom_target(ALL_JOBS COMMAND \${DENO} run --allow-all --no-config fibs.ts runjobs WORKING_DIRECTORY ${project.dir})\n`;
+    const items = target.compileOptions;
+    if (items.length > 0) {
+        str += `target_compile_options(${target.name}`;
+        str += items.map((item) => `${asCmakeScope(item.scope)} ${expr(item.language, item.buildMode, item.opt)}`).join(' ');
+        str += ')\n';
     }
     return str;
 }
 
-function genTargetJobDependencies(project: Project, config: Config, target: Target) {
+function genTargetLinkOptions(target: Target): string {
+    let str = '';
+    const items = target.linkOptions;
+    if (items.length > 0) {
+        str += `target_link_options(${target.name}`;
+        str += items.map((item) => `${asCmakeScope(item.scope)} ${expr(undefined, item.buildMode, item.opt)}`).join(' ');
+        str += ')\n';
+    }
+    return str;
+}
+
+function genTargetJobDependencies(target: Target) {
     let str = '';
     if (target.jobs.length > 0) {
         str += `add_dependencies(${target.name} ALL_JOBS)\n`;
     }
     return str;
-}
-
-function genCMakePresetsJson(project: Project, config: Config): string {
-    let preset: any = {
-        version: 3,
-        cmakeMinimumRequired: {
-            major: 3,
-            minor: 21,
-            patch: 0,
-        },
-        configurePresets: genConfigurePresets(project, config),
-        buildPresets: genBuildPresets(project, config),
-    };
-    return JSON.stringify(preset, null, 2);
-}
-
-function genConfigurePresets(project: Project, config: Config): any[] {
-    const res = [];
-    if (util.validConfigForPlatform(config, host.platform())) {
-        const aliasMap = util.buildConfigAliasMap(project, config);
-        res.push({
-            name: config.name,
-            displayName: config.name,
-            binaryDir: util.buildDir(project, config),
-            generator: config.generator,
-            toolchainFile: (config.toolchainFile !== undefined) ? util.resolveAlias(aliasMap, config.toolchainFile) : undefined,
-            cacheVariables: genCacheVariables(project, config),
-            environment: config.environment,
-        });
-    } else {
-        log.error(`config '${config.name} is not valid for platform '${host.platform()}`);
-    }
-    return res;
-}
-
-function asCMakeBuildType(buildType: BuildType): string {
-    switch (buildType) {
-        case 'debug':
-            return 'Debug';
-        case 'release':
-            return 'Release';
-    }
-}
-
-function isMultiConfigGenerator(config: Config): boolean {
-    if (config.generator === undefined) {
-        return config.platform === 'windows';
-    } else {
-        if (config.generator.startsWith('Visual Studio')) {
-            return true;
-        } else if (config.generator === 'Ninja Multi-Config') {
-            return true;
-        } else if (config.generator === 'Xcode') {
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
-
-function resolveCacheVariable(val: string | boolean, aliasMap: Record<string, string>): any {
-    if (typeof val === 'boolean') {
-        return {
-            type: 'BOOL',
-            value: val ? 'ON' : 'OFF',
-        };
-    } else {
-        return util.resolveAlias(aliasMap, val);
-    }
-}
-
-function genCacheVariables(project: Project, config: Config): Record<string, any> {
-    let res: Record<string, any> = {};
-    if (!isMultiConfigGenerator(config)) {
-        res.CMAKE_BUILD_TYPE = asCMakeBuildType(config.buildType);
-    }
-    if (config.platform !== 'android') {
-        res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = util.distDir(project, config);
-    }
-    const projectAliasMap = util.buildProjectAliasMap(project, config);
-    for (const key in project.cmakeVariables) {
-        res[key] = resolveCacheVariable(project.cmakeVariables[key], projectAliasMap);
-    }
-    const configAliasMap = util.buildConfigAliasMap(project, config);
-    for (const key in config.cmakeVariables) {
-        res[key] = resolveCacheVariable(config.cmakeVariables[key], configAliasMap);
-    }
-    return res;
-}
-
-function genBuildPresets(project: Project, config: Config): any[] {
-    if (isMultiConfigGenerator(config)) {
-        return [
-            { name: 'default', configurePreset: config.name, configuration: asCMakeBuildType(config.buildType) },
-            { name: 'debug', configurePreset: config.name, configuration: asCMakeBuildType('debug') },
-            { name: 'release', configurePreset: config.name, configuration: asCMakeBuildType('release') },
-        ];
-    } else {
-        return [{ name: 'default', configurePreset: config.name }];
-    }
 }
