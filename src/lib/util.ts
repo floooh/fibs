@@ -270,6 +270,12 @@ export function ensureImportsDir(project: Project): string {
     return path;
 }
 
+export function ensureSdkDir(project: Project): string {
+    const path = project.sdkDir();
+    fs.ensureDirSync(path);
+    return path;
+}
+
 export function validConfigForPlatform(config: Config, platform: string): boolean {
     // cross-compilation configs are valid on all platforms
     // FIXME: how to deal with cmake's integrated cross-platform support
