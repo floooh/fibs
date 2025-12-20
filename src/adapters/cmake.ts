@@ -7,8 +7,10 @@ import {
     BuildMode,
     Compiler,
     Config,
+    Generator,
     Language,
     Project,
+    Scope,
     Target,
 } from '../types.ts';
 
@@ -120,8 +122,8 @@ function fromCmakeCompiler(str: string): Compiler {
     }
 }
 
-function asCmakeGenerator(config: Config): string | undefined {
-    switch (config.generator) {
+function asCmakeGenerator(g: Generator | undefined): string | undefined {
+    switch (g) {
         case 'make':
             return 'Unix Makefiles';
         case 'ninja':
@@ -133,6 +135,13 @@ function asCmakeGenerator(config: Config): string | undefined {
         default:
             return undefined;
     }
+}
+
+function asCmakeScope(scope: Scope | undefined): string {
+    if (scope === undefined) {
+        return '';
+    }
+    return ` ${scope.toUpperCase()}`;
 }
 
 function asCmakeBuildMode(buildMode: BuildMode): string {
@@ -175,7 +184,7 @@ function genConfigurePresets(project: Project, config: Config, buildDir: string,
             name: config.name,
             displayName: config.name,
             binaryDir: buildDir,
-            generator: asCmakeGenerator(config),
+            generator: asCmakeGenerator(config.generator),
             toolchainFile: config.toolchainFile,
             cacheVariables: genCacheVariables(project, config, distDir),
             environment: config.environment,
@@ -194,7 +203,7 @@ function genCacheVariables(project: Project, config: Config, distDir: string): R
     if (config.platform !== 'android') {
         res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = distDir;
     }
-    const cmakeVariables = [...project.cmakeVariables(), ...config.cmakeVariables];
+    const cmakeVariables = util.deduplicate([...config.cmakeVariables, ...project.cmakeVariables()]);
     for (const cmakeVariable of cmakeVariables) {
         res[cmakeVariable.name] = resolveCacheVariable(cmakeVariable.value);
     }
@@ -223,12 +232,12 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genAllJobsTarget(project);
     for (const target of project.targets()) {
         str += genTarget(project, config, target);
-        //str += genTargetDependencies(project, config, target);
-        //str += genTargetIncludeDirectories(project, config, target);
-        //str += genTargetCompileDefinitions(project, config, target);
-        //str += genTargetCompileOptions(project, config, target);
-        //str += genTargetLinkOptions(project, config, target);
-        //str += genTargetJobDependencies(project, config, target);
+        str += genTargetDependencies(target);
+        str += genTargetIncludeDirectories(target);
+        str += genTargetCompileDefinitions(target);
+        str += genTargetCompileOptions(target);
+        str += genTargetLinkOptions(target);
+        str += genTargetJobDependencies(target);
     }
     return str;
 }
@@ -271,19 +280,17 @@ function genIncludeDirectories(project: Project, config: Config): string {
     let str = '';
     const items = [...project.includeDirectories(), ...config.includeDirectories];
     items.forEach((item) =>
-        str += `include_directories(${item.system ? 'SYSTEM ' : ''}"${
-            expr(item.language, item.buildMode, item.dir)
-        }")\n`
+        str += `include_directories(${item.system ? 'SYSTEM ' : ''}"${expr(item.language, item.buildMode, item.dir)}")\n`
     );
     return str;
 }
 
 function genCompileDefinitions(project: Project, config: Config): string {
     let str = '';
-    const items = [...project.compileDefinitions(), ...config.compileDefinitions];
+    const items = util.deduplicate([...config.compileDefinitions, ...project.compileDefinitions()]);
     if (items.length > 0) {
         str += 'add_compile_definitions(';
-        str += items.map((item) => `${expr(item.language, item.buildMode, `"${item.key}=${item.val}"`)}`).join(' ');
+        str += items.map((item) => `${expr(item.language, item.buildMode, `"${item.name}=${item.val}"`)}`).join(' ');
         str += ')\n';
     }
     return str;
@@ -305,7 +312,7 @@ function genLinkOptions(project: Project, config: Config): string {
     const items = [...project.linkOptions(), ...config.linkOptions];
     if (items.length > 0) {
         str += 'add_link_options(';
-        str += items.map((item) => `${item.opt}`).join(' ');
+        str += items.map((item) => `${expr(undefined, item.buildMode, item.opt)}`).join(' ');
         str += ')\n';
     }
     return str;
@@ -386,292 +393,65 @@ function genTarget(project: Project, config: Config, target: Target): string {
     return str;
 }
 
-/*
-export async function build(
-    project: Project,
-    config: Config,
-    options: { buildTarget?: string; forceRebuild?: boolean },
-) {
-    if (!util.fileExists(`${util.buildDir(project, config)}/CMakeCache.txt`)) {
-        await configure(project, config);
-    }
-    await cmake.build(project, config, options);
-}
-
-function compilerId(compiler: Compiler): string {
-    switch (compiler) {
-        case 'msvc':
-            return 'MSVC';
-        case 'gcc':
-            return 'GNU';
-        case 'clang':
-            return 'Clang';
-        case 'appleclang':
-            return 'AppleClang';
-        case 'unknown-compiler':
-            return 'UNKNOWN-COMPILER';
-    }
-}
-
-function languageId(language: Language): string {
-    switch (language) {
-        case 'c':
-            return 'C';
-        case 'cxx':
-            return 'CXX';
-    }
-}
-
-function languages(): Language[] {
-    return ['c', 'cxx'];
-}
-
-function generatorExpressionLanguageCompiler(language: Language, compiler: Compiler, items: string[]): string {
-    return `"$<$<COMPILE_LANG_AND_ID:${languageId(language)},${compilerId(compiler)}>:${items.join(';')}>"`;
-}
-
-function generatorExpressionCompiler(compiler: Compiler, items: string[]): string {
-    return `"$<$<C_COMPILER_ID:${compilerId(compiler)}>:${items.join(';')}>"`;
-}
-
-function genGlobalArrayItemsLanguageCompiler(
-    project: Project,
-    config: Config,
-    statement: string,
-    items: StringArrayFunc[] | string[],
-    itemsAreFilePaths: boolean,
-    useConfigAliases: boolean,
-): string {
+function genTargetDependencies(target: Target): string {
     let str = '';
-    const aliasMap = useConfigAliases
-        ? util.buildConfigAliasMap(project, config)
-        : util.buildProjectAliasMap(project, config);
-    for (const language of languages()) {
-        for (const compiler of config.compilers) {
-            const ctx: Context = {
-                project,
-                config,
-                compiler,
-                language,
-                aliasMap,
-                host: { platform: host.platform(), arch: host.arch() },
-            };
-            const resolvedItems = proj.resolveProjectStringArray(items, ctx, itemsAreFilePaths);
-            if (resolvedItems.length > 0) {
-                str += `${statement}(${generatorExpressionLanguageCompiler(language, compiler, resolvedItems)})\n`;
-            }
-        }
+    const libs = [...target.deps, target.libs];
+    if (libs.length > 0) {
+        const scope = target.type === 'interface' ? ' INTERFACE' : '';
+        str += `target_link_libraries(${target.name}${scope} ${libs.join(' ')})\n`;
     }
     return str;
 }
 
-function genGlobalRecordItemsLanguageCompiler(
-    project: Project,
-    config: Config,
-    statement: string,
-    items: StringRecordFunc[] | Record<string, string>,
-    itemsAreFilePaths: boolean,
-    useConfigAliases: boolean,
-): string {
+function genTargetIncludeDirectories(target: Target): string {
     let str = '';
-    const aliasMap = useConfigAliases
-        ? util.buildConfigAliasMap(project, config)
-        : util.buildProjectAliasMap(project, config);
-    for (const language of languages()) {
-        for (const compiler of config.compilers) {
-            const ctx: Context = {
-                project,
-                config,
-                compiler,
-                language,
-                aliasMap,
-                host: { platform: host.platform(), arch: host.arch() },
-            };
-            const resolvedItems = proj.resolveProjectStringRecord(items, ctx, itemsAreFilePaths);
-            if (Object.keys(resolvedItems).length > 0) {
-                const resolvedItemsString = Object.entries(resolvedItems).map(([key, val]) => `${key}=${val}`);
-                str += `${statement}(${
-                    generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
-                })\n`;
-            }
-        }
+    target.includeDirectories.forEach((item) => {
+        const sys = item.system ? ' SYSTEM' : '';
+        const scope = asCmakeScope(item.scope);
+        str += `target_include_directories(${target.name}${sys}${scope} "${expr(item.language, item.buildMode, item.dir)}")\n`;
+    });
+    return str;
+}
+
+function genTargetCompileDefinitions(target: Target): string {
+    let str = '';
+    const items = target.compileDefinitions;
+    if (items.length > 0) {
+        str += `target_compile_definitions(${target.name}`;
+        str += items.map((item) => `${asCmakeScope(item.scope)} ${expr(item.language, item.buildMode, `"${item.name}=${item.val}"`)}`).join(
+            ' ',
+        );
+        str += ')\n';
     }
     return str;
 }
 
-function genCompileOptions(project: Project, config: Config): string {
+function genTargetCompileOptions(target: Target): string {
     let str = '';
-    str += genGlobalArrayItemsLanguageCompiler(
-        project,
-        config,
-        'add_compile_options',
-        project.compileOptions,
-        false,
-        false,
-    );
-    str += genGlobalArrayItemsLanguageCompiler(
-        project,
-        config,
-        'add_compile_options',
-        config.compileOptions,
-        false,
-        true,
-    );
-    return str;
-}
-
-function genLinkOptions(project: Project, config: Config): string {
-    let str = '';
-    str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_link_options', project.linkOptions, false, false);
-    str += genGlobalArrayItemsLanguageCompiler(project, config, 'add_link_options', config.linkOptions, false, true);
-    return str;
-}
-
-function genTargetDependencies(project: Project, config: Config, target: Target): string {
-    let str = '';
-    const aliasMap = util.buildTargetAliasMap(project, config, target);
-    for (const compiler of config.compilers) {
-        const ctx: Context = {
-            project,
-            config,
-            target,
-            compiler,
-            aliasMap,
-            host: { platform: host.platform(), arch: host.arch() },
-        };
-        const libs = [
-            ...proj.resolveTargetStringArray(target.deps, ctx, false),
-            ...proj.resolveTargetStringArray(target.libs, ctx, false),
-        ];
-        if (libs.length > 0) {
-            let type = '';
-            if (target.type === 'interface') {
-                type = ' INTERFACE';
-            }
-            str += `target_link_libraries(${target.name}${type} ${generatorExpressionCompiler(compiler, libs)})\n`;
-        }
+    const items = target.compileOptions;
+    if (items.length > 0) {
+        str += `target_compile_options(${target.name}`;
+        str += items.map((item) => `${asCmakeScope(item.scope)} ${expr(item.language, item.buildMode, item.opt)}`).join(' ');
+        str += ')\n';
     }
     return str;
 }
 
-function genTargetArrayItems(
-    project: Project,
-    config: Config,
-    target: Target,
-    statement: string,
-    items: TargetArrayItems,
-    itemsAreFilePaths: boolean,
-): string {
+function genTargetLinkOptions(target: Target): string {
     let str = '';
-    const aliasMap = util.buildTargetAliasMap(project, config, target);
-    for (const language of languages()) {
-        for (const compiler of config.compilers) {
-            const ctx: Context = {
-                project,
-                config,
-                target,
-                compiler,
-                language,
-                aliasMap,
-                host: { platform: host.platform(), arch: host.arch() },
-            };
-            const resolvedItems = proj.resolveTargetArrayItems(items, ctx, itemsAreFilePaths);
-            if (resolvedItems.interface.length > 0) {
-                str += `${statement}(${target.name} INTERFACE ${
-                    generatorExpressionLanguageCompiler(language, compiler, resolvedItems.interface)
-                })\n`;
-            }
-            if (resolvedItems.private.length > 0) {
-                str += `${statement}(${target.name} PRIVATE ${
-                    generatorExpressionLanguageCompiler(language, compiler, resolvedItems.private)
-                })\n`;
-            }
-            if (resolvedItems.public.length > 0) {
-                str += `${statement}(${target.name} PUBLIC ${
-                    generatorExpressionLanguageCompiler(language, compiler, resolvedItems.public)
-                })\n`;
-            }
-        }
+    const items = target.linkOptions;
+    if (items.length > 0) {
+        str += `target_link_options(${target.name}`;
+        str += items.map((item) => `${asCmakeScope(item.scope)} ${expr(undefined, item.buildMode, item.opt)}`).join(' ');
+        str += ')\n';
     }
     return str;
 }
 
-function genTargetRecordItems(
-    project: Project,
-    config: Config,
-    target: Target,
-    statement: string,
-    items: TargetRecordItems,
-    itemsAreFilePaths: boolean,
-): string {
-    let str = '';
-    const aliasMap = util.buildTargetAliasMap(project, config, target);
-    for (const language of languages()) {
-        for (const compiler of config.compilers) {
-            const ctx: Context = {
-                project,
-                config,
-                target,
-                compiler,
-                language,
-                aliasMap,
-                host: { platform: host.platform(), arch: host.arch() },
-            };
-            const resolvedItems = proj.resolveTargetRecordItems(items, ctx, itemsAreFilePaths);
-            if (Object.keys(resolvedItems.interface).length > 0) {
-                const resolvedItemsString = Object.entries(resolvedItems.interface).map(([key, val]) =>
-                    `${key}=${val}`
-                );
-                str += `${statement}(${target.name} INTERFACE ${
-                    generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
-                })\n`;
-            }
-            if (Object.keys(resolvedItems.private).length > 0) {
-                const resolvedItemsString = Object.entries(resolvedItems.private).map(([key, val]) => `${key}=${val}`);
-                str += `${statement}(${target.name} PRIVATE ${
-                    generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
-                })\n`;
-            }
-            if (Object.keys(resolvedItems.public).length > 0) {
-                const resolvedItemsString = Object.entries(resolvedItems.public).map(([key, val]) => `${key}=${val}`);
-                str += `${statement}(${target.name} PUBLIC ${
-                    generatorExpressionLanguageCompiler(language, compiler, resolvedItemsString)
-                })\n`;
-            }
-        }
-    }
-    return str;
-}
-
-function genTargetIncludeDirectories(project: Project, config: Config, target: Target): string {
-    return genTargetArrayItems(project, config, target, 'target_include_directories', target.includeDirectories, true);
-}
-
-function genTargetCompileDefinitions(project: Project, config: Config, target: Target): string {
-    return genTargetRecordItems(
-        project,
-        config,
-        target,
-        'target_compile_definitions',
-        target.compileDefinitions,
-        false,
-    );
-}
-
-function genTargetCompileOptions(project: Project, config: Config, target: Target): string {
-    return genTargetArrayItems(project, config, target, 'target_compile_options', target.compileOptions, false);
-}
-
-function genTargetLinkOptions(project: Project, config: Config, target: Target): string {
-    return genTargetArrayItems(project, config, target, 'target_link_options', target.linkOptions, false);
-}
-
-function genTargetJobDependencies(project: Project, config: Config, target: Target) {
+function genTargetJobDependencies(target: Target) {
     let str = '';
     if (target.jobs.length > 0) {
         str += `add_dependencies(${target.name} ALL_JOBS)\n`;
     }
     return str;
 }
-
-*/

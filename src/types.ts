@@ -192,8 +192,7 @@ export type CompileDefinitionsDesc = {
     language?: Language;
     buildMode?: BuildMode;
 };
-export type CompileDefinition = ImportedItem & {
-    key: string;
+export type CompileDefinition = NamedItem & ImportedItem & {
     val: string;
     scope?: Scope;
     language?: Language;
@@ -285,22 +284,6 @@ export type Import = NamedItem & ImportedItem & {
     // each import can have multiple modules
     modules: FibsModule[];
 };
-
-export type TargetArrayItemsDesc = {
-    interface?: string[];
-    private?: string[];
-    public?: string[];
-};
-
-export type TargetArrayItems = Required<TargetArrayItemsDesc>;
-
-export type TargetRecordItemsDesc = {
-    interface?: Record<string, string>;
-    private?: Record<string, string>;
-    public?: Record<string, string>;
-};
-
-export type TargetRecordItems = Required<TargetRecordItemsDesc>;
 
 export type TargetJob = {
     job: string;

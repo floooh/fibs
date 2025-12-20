@@ -477,15 +477,17 @@ function resolveConfigCmakeVariables(configurer: ConfigurerImpl, c: ConfigDesc):
     if (c.cmakeVariables === undefined) {
         return [];
     }
-    return Object.entries(c.cmakeVariables).map<CmakeVariable>(([key, val]) => ({
-        name: key,
-        value: (typeof val !== 'string') ? val : util.resolveConfigScopePath(val, {
-            rootDir: configurer.rootDir,
-            config: { name: c.name, platform: c.platform, importDir: configurer.importDir },
-        }),
-        importDir: configurer.importDir,
-        importModule: configurer.importModule,
-    }));
+    return util.deduplicate(
+        Object.entries(c.cmakeVariables).map<CmakeVariable>(([key, val]) => ({
+            name: key,
+            value: (typeof val !== 'string') ? val : util.resolveConfigScopePath(val, {
+                rootDir: configurer.rootDir,
+                config: { name: c.name, platform: c.platform, importDir: configurer.importDir },
+            }),
+            importDir: configurer.importDir,
+            importModule: configurer.importModule,
+        })),
+    );
 }
 
 function resolveConfigIncludeDirectories(configurer: ConfigurerImpl, c: ConfigDesc): IncludeDirectory[] {
@@ -560,9 +562,9 @@ function resolveConfigCompileDefinitions(configurer: ConfigurerImpl, c: ConfigDe
     if (c.compileDefinitions === undefined) {
         return [];
     }
-    return c.compileDefinitions.flatMap((items) =>
+    return util.deduplicate(c.compileDefinitions.flatMap((items) =>
         Object.entries(items.defs).map(([key, val]) => ({
-            key,
+            name: key,
             val,
             scope: items.scope,
             language: items.language,
@@ -570,22 +572,24 @@ function resolveConfigCompileDefinitions(configurer: ConfigurerImpl, c: ConfigDe
             importDir: configurer.importDir,
             importModule: configurer.importModule,
         }))
-    );
+    ));
 }
 
 function resolveBuilderCompileDefinitions(builders: BuilderImpl[]): CompileDefinition[] {
-    return builders.flatMap((builder) =>
-        builder._compileDefinitions.flatMap((items) =>
-            Object.entries(items.defs).map(([key, val]) => ({
-                key,
-                val,
-                scope: items.scope,
-                language: items.language,
-                buildMode: items.buildMode,
-                importDir: builder._importDir,
-                importModule: builder._importModule,
-            }))
-        )
+    return util.deduplicate(
+        builders.flatMap((builder) =>
+            builder._compileDefinitions.flatMap((items) =>
+                Object.entries(items.defs).map(([key, val]) => ({
+                    name: key,
+                    val,
+                    scope: items.scope,
+                    language: items.language,
+                    buildMode: items.buildMode,
+                    importDir: builder._importDir,
+                    importModule: builder._importModule,
+                }))
+            )
+        ),
     );
 }
 
@@ -593,9 +597,9 @@ function resolveTargetCompileDefinitions(builder: BuilderImpl, t: TargetDesc): C
     if (t.compileDefinitions === undefined) {
         return [];
     }
-    return t.compileDefinitions.flatMap((items) =>
+    return util.deduplicate(t.compileDefinitions.flatMap((items) =>
         Object.entries(items.defs).map(([key, val]) => ({
-            key,
+            name: key,
             val,
             scope: items.scope,
             language: items.language,
@@ -603,7 +607,7 @@ function resolveTargetCompileDefinitions(builder: BuilderImpl, t: TargetDesc): C
             importDir: builder._importDir,
             importModule: builder._importModule,
         }))
-    );
+    ));
 }
 
 function resolveConfigCompileOptions(configurer: ConfigurerImpl, c: ConfigDesc): CompileOption[] {

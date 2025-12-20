@@ -11,7 +11,7 @@
         "useTabs": false,
         "indentWidth": 4,
         "singleQuote": true,
-        "lineWidth": 120,
+        "lineWidth": 140,
         "proseWrap": "never"
     },
     "lint": {
