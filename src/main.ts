@@ -13,7 +13,6 @@ export async function fibs(importMeta: ImportMeta) {
     }
     // special 'reset' command to wipe .fibs directory (useful when imports are broken)
     const rootDir = Deno.cwd().replaceAll('\\', '/');
-    log.info(`### Deno cwd is: ${rootDir}`);
     const rootPath = `${rootDir}/fibs.ts`;
     let skipCmd = false;
     if (Deno.args[0] === 'reset') {
