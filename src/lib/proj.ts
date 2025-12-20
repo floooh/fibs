@@ -503,7 +503,7 @@ function resolveConfigIncludeDirectories(configurer: ConfigurerImpl, c: ConfigDe
             }),
             importDir: configurer.importDir,
             importModule: configurer.importModule,
-            scope: items.scope,
+            scope: items.scope ?? 'public',
             system: items.system ?? false,
             language: items.language,
             buildMode: items.buildMode,
@@ -522,7 +522,7 @@ function resolveBuilderIncludeDirectories(builders: BuilderImpl[], project: Proj
                 }),
                 importDir: builder._importDir,
                 importModule: builder._importModule,
-                scope: items.scope,
+                scope: items.scope ?? 'public',
                 system: items.system ?? false,
                 language: items.language,
                 buildMode: items.buildMode,
@@ -566,7 +566,7 @@ function resolveConfigCompileDefinitions(configurer: ConfigurerImpl, c: ConfigDe
         Object.entries(items.defs).map(([key, val]) => ({
             name: key,
             val,
-            scope: items.scope,
+            scope: items.scope ?? 'public',
             language: items.language,
             buildMode: items.buildMode,
             importDir: configurer.importDir,
@@ -582,7 +582,7 @@ function resolveBuilderCompileDefinitions(builders: BuilderImpl[]): CompileDefin
                 Object.entries(items.defs).map(([key, val]) => ({
                     name: key,
                     val,
-                    scope: items.scope,
+                    scope: items.scope ?? 'public',
                     language: items.language,
                     buildMode: items.buildMode,
                     importDir: builder._importDir,
@@ -601,7 +601,7 @@ function resolveTargetCompileDefinitions(builder: BuilderImpl, t: TargetDesc): C
         Object.entries(items.defs).map(([key, val]) => ({
             name: key,
             val,
-            scope: items.scope,
+            scope: items.scope ?? 'public',
             language: items.language,
             buildMode: items.buildMode,
             importDir: builder._importDir,
@@ -617,7 +617,7 @@ function resolveConfigCompileOptions(configurer: ConfigurerImpl, c: ConfigDesc):
     return c.compileOptions.flatMap((items) =>
         items.opts.map((opt) => ({
             opt,
-            scope: items.scope,
+            scope: items.scope ?? 'public',
             language: items.language,
             buildMode: items.buildMode,
             importDir: configurer.importDir,
@@ -631,7 +631,7 @@ function resolveBuilderCompileOptions(builders: BuilderImpl[]): CompileOption[] 
         builder._compileOptions.flatMap((items) =>
             items.opts.map((opt) => ({
                 opt,
-                scope: items.scope,
+                scope: items.scope ?? 'public',
                 language: items.language,
                 buildMode: items.buildMode,
                 importDir: builder._importDir,
@@ -648,7 +648,7 @@ function resolveTargetCompileOptions(builder: BuilderImpl, t: TargetDesc): Compi
     return t.compileOptions.flatMap((items) =>
         items.opts.map((opt) => ({
             opt,
-            scope: items.scope,
+            scope: items.scope ?? 'public',
             language: items.language,
             buildMode: items.buildMode,
             importDir: builder._importDir,
@@ -664,7 +664,7 @@ function resolveConfigLinkOptions(configurer: ConfigurerImpl, c: ConfigDesc): Li
     return c.linkOptions.flatMap((items) =>
         items.opts.map((opt) => ({
             opt,
-            scope: items.scope,
+            scope: items.scope ?? 'public',
             importDir: configurer.importDir,
             importModule: configurer.importModule,
         }))
@@ -676,7 +676,7 @@ function resolveBuilderLinkOptions(builders: BuilderImpl[]): LinkOption[] {
         builder._linkOptions.flatMap((items) =>
             items.opts.map((opt) => ({
                 opt,
-                scope: items.scope,
+                scope: items.scope ?? 'public',
                 importDir: builder._importDir,
                 importModule: builder._importModule,
             }))
@@ -691,7 +691,7 @@ function resolveTargetLinkOptions(builder: BuilderImpl, t: TargetDesc): LinkOpti
     return t.linkOptions.flatMap((items) =>
         items.opts.map((opt) => ({
             opt,
-            scope: items.scope,
+            scope: items.scope ?? 'public',
             importDir: builder._importDir,
             importModule: builder._importModule,
         }))

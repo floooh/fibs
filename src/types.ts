@@ -180,7 +180,7 @@ export type IncludeDirectoriesDesc = {
 };
 export type IncludeDirectory = ImportedItem & {
     dir: string;
-    scope?: Scope;
+    scope: Scope;
     system: boolean;
     language?: Language;
     buildMode?: BuildMode;
@@ -194,7 +194,7 @@ export type CompileDefinitionsDesc = {
 };
 export type CompileDefinition = NamedItem & ImportedItem & {
     val: string;
-    scope?: Scope;
+    scope: Scope;
     language?: Language;
     buildMode?: BuildMode;
 };
@@ -207,7 +207,7 @@ export type CompileOptionsDesc = {
 };
 export type CompileOption = ImportedItem & {
     opt: string;
-    scope?: Scope;
+    scope: Scope;
     language?: Language;
     buildMode?: BuildMode;
 };
@@ -219,7 +219,7 @@ export type LinkOptionsDesc = {
 };
 export type LinkOption = ImportedItem & {
     opt: string;
-    scope?: Scope;
+    scope: Scope;
     buildMode?: BuildMode;
 };
 

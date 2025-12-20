@@ -137,10 +137,7 @@ function asCmakeGenerator(g: Generator | undefined): string | undefined {
     }
 }
 
-function asCmakeScope(scope: Scope | undefined): string {
-    if (scope === undefined) {
-        return '';
-    }
+function asCmakeScope(scope: Scope): string {
     return ` ${scope.toUpperCase()}`;
 }
 
@@ -290,7 +287,7 @@ function genCompileDefinitions(project: Project, config: Config): string {
     const items = util.deduplicate([...config.compileDefinitions, ...project.compileDefinitions()]);
     if (items.length > 0) {
         str += 'add_compile_definitions(';
-        str += items.map((item) => `${expr(item.language, item.buildMode, `"${item.name}=${item.val}"`)}`).join(' ');
+        str += items.map((item) => `${expr(item.language, item.buildMode, `${item.name}=${item.val}`)}`).join(' ');
         str += ')\n';
     }
     return str;
@@ -395,7 +392,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
 
 function genTargetDependencies(target: Target): string {
     let str = '';
-    const libs = [...target.deps, target.libs];
+    const libs = [...target.deps, ...target.libs];
     if (libs.length > 0) {
         const scope = target.type === 'interface' ? ' INTERFACE' : '';
         str += `target_link_libraries(${target.name}${scope} ${libs.join(' ')})\n`;
@@ -418,7 +415,7 @@ function genTargetCompileDefinitions(target: Target): string {
     const items = target.compileDefinitions;
     if (items.length > 0) {
         str += `target_compile_definitions(${target.name}`;
-        str += items.map((item) => `${asCmakeScope(item.scope)} ${expr(item.language, item.buildMode, `"${item.name}=${item.val}"`)}`).join(
+        str += items.map((item) => `${asCmakeScope(item.scope)} ${expr(item.language, item.buildMode, `${item.name}=${item.val}`)}`).join(
             ' ',
         );
         str += ')\n';
