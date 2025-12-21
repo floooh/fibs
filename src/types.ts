@@ -127,6 +127,7 @@ export type TargetBuilder = {
     addSources(sources: string[]): void;
     addDependencies(dep: string[]): void;
     addLibraries(lib: string[]): void;
+    addFrameworks(lib: string[]): void;
     addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
     addIncludeDirectories(dirs: string[]): void;
     addCompileDefinitions(defs: CompileDefinitionsDesc): void;
@@ -327,6 +328,7 @@ export type TargetDesc = NamedItem & {
     sources: string[];
     deps?: string[];
     libs?: string[];
+    frameworks?: string[];
     includeDirectories?: IncludeDirectoriesDesc[];
     compileDefinitions?: CompileDefinitionsDesc[];
     compileOptions?: CompileOptionsDesc[];
@@ -340,6 +342,7 @@ export type Target = NamedItem & ImportedItem & {
     sources: string[];
     deps: string[];
     libs: string[];
+    frameworks: string[];
     includeDirectories: IncludeDirectory[];
     compileDefinitions: CompileDefinition[];
     compileOptions: CompileOption[];

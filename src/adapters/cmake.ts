@@ -390,10 +390,15 @@ function genTarget(project: Project, config: Config, target: Target): string {
 
 function genTargetDependencies(target: Target): string {
     let str = '';
+    const scope = target.type === 'interface' ? ' INTERFACE' : '';
     const libs = [...target.deps, ...target.libs];
     if (libs.length > 0) {
-        const scope = target.type === 'interface' ? ' INTERFACE' : '';
         str += `target_link_libraries(${target.name}${scope} ${libs.join(' ')})\n`;
+    }
+    // macOS frameworks need special formatting
+    const fws = target.frameworks;
+    if (fws.length > 0) {
+        str += `target_link_libraries(${target.name}${scope} ${fws.map((fw) => `"-framework ${fw}"`).join(' ')})\n`;
     }
     return str;
 }

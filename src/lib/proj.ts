@@ -590,6 +590,7 @@ function resolveTargets(builders: BuilderImpl[], project: ProjectImpl, config: C
             sources: resolveTargetSources(builder, project, config, t),
             deps: t.deps ?? [],
             libs: t.libs ?? [],
+            frameworks: t.frameworks ?? [],
             includeDirectories: resolveTargetIncludeDirectories(builder, project, config, t),
             compileDefinitions: resolveTargetCompileDefinitions(builder, t),
             compileOptions: resolveTargetCompileOptions(builder, t),

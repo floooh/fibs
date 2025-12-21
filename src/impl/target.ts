@@ -23,6 +23,7 @@ export class TargetBuilderImpl implements TargetBuilder {
             sources: [],
             deps: [],
             libs: [],
+            frameworks: [],
             includeDirectories: [],
             compileDefinitions: [],
             compileOptions: [],
@@ -49,6 +50,10 @@ export class TargetBuilderImpl implements TargetBuilder {
 
     addLibraries(libs: string[]): void {
         this.desc.libs!.push(...libs);
+    }
+
+    addFrameworks(frameworks: string[]): void {
+        this.desc.frameworks!.push(...frameworks);
     }
 
     addIncludeDirectories(dirs: IncludeDirectoriesDesc | string[]): void {
