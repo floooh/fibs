@@ -1,4 +1,5 @@
 export type Configurer = {
+    addImportOptions(func: (p: Project) => Record<string, unknown>): void;
     addImport(imp: ImportDesc): void;
     addCommand(cmd: CommandDesc): void;
     addJob(job: JobBuilderDesc): void;
@@ -56,6 +57,8 @@ export type Project = {
     compileDefinitions(): CompileDefinition[];
     compileOptions(): CompileOption[];
     linkOptions(): LinkOption[];
+
+    importOption(name: string): unknown;
 
     findSetting(name: string | undefined): Setting | undefined;
     setting(name: string): Setting;
@@ -117,7 +120,7 @@ export type Builder = BuilderProject & {
 
     projectDir(): string;
     selfDir(): string;
-    importOption(name: string): unknown | undefined;
+    importOption(name: string): unknown;
 };
 
 export type TargetBuilder = {
@@ -304,13 +307,11 @@ export type ImportDesc = NamedItem & {
     url: string;
     ref?: string;
     files?: string[];
-    options?: (p: Project) => Record<string, unknown>;
 };
 
 export type Import = NamedItem & ImportedItem & {
     url: string;
     ref: string | undefined;
-    optionsFunc?: (p: Project) => Record<string, unknown>;
     importErrors: unknown[];
     // each import can have multiple modules
     modules: FibsModule[];

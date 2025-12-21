@@ -34,7 +34,6 @@ export class BuilderImpl implements Builder {
     _project: Project;
     _name: string | undefined;
     _importDir: string;
-    _importOptions: Record<string, unknown>;
     _cmakeVariables: CmakeVariableDesc[] = [];
     _cmakeIncludes: string[] = [];
     _targets: TargetDesc[] = [];
@@ -43,10 +42,9 @@ export class BuilderImpl implements Builder {
     _compileOptions: CompileOptionsDesc[] = [];
     _linkOptions: LinkOptionsDesc[] = [];
 
-    constructor(project: Project, importDir: string, importOptions: Record<string, unknown>) {
+    constructor(project: Project, importDir: string) {
         this._project = project;
         this._importDir = importDir;
-        this._importOptions = importOptions;
     }
     setName(name: string): void {
         this._name = name;
@@ -102,8 +100,8 @@ export class BuilderImpl implements Builder {
             this._linkOptions.push({ opts });
         }
     }
-    importOption(name: string): unknown | undefined {
-        return this._importOptions[name];
+    importOption(name: string): unknown {
+        return this._project.importOption(name);
     }
     name(): string {
         return this._project.name();

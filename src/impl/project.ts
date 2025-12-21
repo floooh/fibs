@@ -29,6 +29,7 @@ export class ProjectImpl implements Project {
     _rootModule: FibsModule;
     _rootDir: string;
     _compiler: Compiler = 'unknown-compiler';
+    _importOptions: Record<string, unknown> = {};
     _cmakeVariables: CmakeVariable[] = [];
     _cmakeIncludes: CmakeInclude[] = [];
     _includeDirectories: IncludeDirectory[] = [];
@@ -194,6 +195,10 @@ export class ProjectImpl implements Project {
 
     linkOptions(): LinkOption[] {
         return this._linkOptions;
+    }
+
+    importOption(name: string): unknown {
+        return this._importOptions[name];
     }
 
     findSetting(name: string | undefined): Setting | undefined {

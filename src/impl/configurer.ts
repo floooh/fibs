@@ -9,6 +9,7 @@ import {
     JobBuilderDesc,
     OpenerDesc,
     Platform,
+    Project,
     RunnerDesc,
     SettingDesc,
     ToolDesc,
@@ -23,6 +24,7 @@ type ImportExtra = {
 export class ConfigurerImpl implements Configurer {
     _rootDir: string;
     _importDir: string;
+    _importOptionsFuncs: ((p: Project) => Record<string, unknown>)[] = [];
     _commands: CommandDesc[] = [];
     _jobs: JobBuilderDesc[] = [];
     _tools: ToolDesc[] = [];
@@ -78,6 +80,10 @@ export class ConfigurerImpl implements Configurer {
 
     distDir(configName: string): string {
         return util.distDir(this._rootDir, configName);
+    }
+
+    addImportOptions(func: (p: Project) => Record<string, unknown>): void {
+        this._importOptionsFuncs.push(func);
     }
 
     addImport(imp: ImportDesc): void {

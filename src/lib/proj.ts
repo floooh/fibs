@@ -272,19 +272,14 @@ function doBuildSetup(project: ProjectImpl, config: Config): void {
     for (const imp of projectImpl.imports()) {
         for (const module of imp.modules) {
             if (module.build) {
-                // first resolve import options
-                let importOptions: Record<string, unknown> = {};
-                if (imp.optionsFunc) {
-                    importOptions = imp.optionsFunc(project);
-                }
-                const builder = new BuilderImpl(project, imp.importDir, importOptions);
+                const builder = new BuilderImpl(project, imp.importDir);
                 module.build(builder);
                 builders.push(builder);
             }
         }
     }
     if (projectImpl._rootModule.build) {
-        const builder = new BuilderImpl(project, projectImpl._rootDir, {});
+        const builder = new BuilderImpl(project, projectImpl._rootDir);
         projectImpl._rootModule.build(builder);
         // root module builder defines the project name
         if (builder._name) {
@@ -310,6 +305,8 @@ function resolveConfigureItems(configurers: ConfigurerImpl[], project: ProjectIm
     project._openers = resolveOpeners(reversed);
     project._adapters = resolveAdapters(reversed);
     project._configs = resolveConfigs(reversed, project);
+    // keep this last!
+    project._importOptions = resolveImportOptions(reversed, project);
 }
 
 function resolveBuildItems(builders: BuilderImpl[], project: ProjectImpl, config: Config): void {
@@ -343,7 +340,6 @@ function resolveImports(configurers: ConfigurerImpl[]): Import[] {
             url: i.url,
             ref: i.ref,
             modules: i.importModules ?? [],
-            optionsFunc: i.options,
             options: {},
         }))
     ));
@@ -441,6 +437,16 @@ function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Co
             validate: c.validate ?? (() => ({ valid: true, hints: [] })),
         }))
     ));
+}
+
+function resolveImportOptions(configurers: ConfigurerImpl[], project: ProjectImpl): Record<string, unknown> {
+    let res: Record<string, unknown> = {};
+    configurers.forEach((configurer) => {
+        configurer._importOptionsFuncs.forEach((func) => {
+            res = { ...res, ...func(project) };
+        });
+    });
+    return res;
 }
 
 function resolveBuilderIncludeDirectories(builders: BuilderImpl[], project: ProjectImpl): IncludeDirectory[] {
