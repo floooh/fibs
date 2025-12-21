@@ -220,7 +220,7 @@ function genBuildPresets(config: Config): unknown[] {
 
 function genCMakeListsTxt(project: Project, config: Config): string {
     let str = '';
-    str += genProlog(project, config);
+    str += genProlog(project);
     str += genIncludeDirectories(project);
     str += genCompileDefinitions(project);
     str += genCompileOptions(project);
@@ -247,7 +247,7 @@ function genProlog(project: Project): string {
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     for (const includeDir of project.cmakeIncludes()) {
-        str += `include("${includeDir}")\n`;
+        str += `include("${includeDir.path}")\n`;
     }
     return str;
 }

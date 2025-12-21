@@ -139,7 +139,7 @@ export function resolvePath(fsPath: string, opts: {
             };
         }
     }
-    if ((defaultAlias !== undefined) && !fsPath.startsWith('@')) {
+    if (!path.isAbsolute(fsPath) && !fsPath.startsWith('@') && (defaultAlias !== undefined)) {
         fsPath = `${defaultAlias}:${fsPath}`;
     }
     if (fsPath.startsWith('@')) {
