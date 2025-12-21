@@ -218,8 +218,22 @@ async function doConfigure(rootModule: FibsModule, project: ProjectImpl): Promis
     // finally configure the builtins
     configurers.push(configureBuiltins(project));
 
-    resolveConfigureItems(configurers, project);
+    // resolve needs to happen in reverse order, this allows the builtin config to be
+    // overridden by imports, and imports to be overridden by the root project
+    configurers.reverse();
+    project._settings = resolveSettings(configurers);
+    project._imports = resolveImports(configurers);
+    project._commands = resolveCommands(configurers);
+    project._jobs = resolveJobs(configurers);
+    project._tools = resolveTools(configurers);
+    project._runners = resolveRunners(configurers);
+    project._openers = resolveOpeners(configurers);
+    project._adapters = resolveAdapters(configurers);
+    project._configs = resolveConfigs(configurers, project);
+    // load the active config before resolving import options!
     settings.load(project);
+    // resolving config options needs to happen after active config is known
+    project._importOptions = resolveImportOptions(configurers, project);
 }
 
 function configureBuiltins(project: ProjectImpl): ConfigurerImpl {
@@ -289,27 +303,6 @@ function doBuildSetup(project: ProjectImpl, config: Config): void {
     } else {
         log.panic(`root project fibs.ts must export a 'build' function`);
     }
-    resolveBuildItems(builders, project, config);
-}
-
-function resolveConfigureItems(configurers: ConfigurerImpl[], project: ProjectImpl): void {
-    // resolve in reverse order, this allows the builtin config to be
-    // overriden by imports, and imports to be overriden by the root project
-    const reversed = configurers.toReversed();
-    project._settings = resolveSettings(reversed);
-    project._imports = resolveImports(reversed);
-    project._commands = resolveCommands(reversed);
-    project._jobs = resolveJobs(reversed);
-    project._tools = resolveTools(reversed);
-    project._runners = resolveRunners(reversed);
-    project._openers = resolveOpeners(reversed);
-    project._adapters = resolveAdapters(reversed);
-    project._configs = resolveConfigs(reversed, project);
-    // keep this last!
-    project._importOptions = resolveImportOptions(reversed, project);
-}
-
-function resolveBuildItems(builders: BuilderImpl[], project: ProjectImpl, config: Config): void {
     project._includeDirectories = resolveBuilderIncludeDirectories(builders, project);
     project._compileDefinitions = resolveBuilderCompileDefinitions(builders);
     project._compileOptions = resolveBuilderCompileOptions(builders);
