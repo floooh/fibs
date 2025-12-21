@@ -206,7 +206,7 @@ async function doConfigure(rootModule: FibsModule, project: ProjectImpl): Promis
     const configurers: ConfigurerImpl[] = [];
 
     // start configuration at the root object to gather imports
-    const rootConfigurer = new ConfigurerImpl(project.dir(), project.dir(), {});
+    const rootConfigurer = new ConfigurerImpl(project.dir(), project.dir());
     if (rootModule.configure) {
         rootModule.configure(rootConfigurer);
     }
@@ -223,7 +223,7 @@ async function doConfigure(rootModule: FibsModule, project: ProjectImpl): Promis
 }
 
 function configureBuiltins(project: ProjectImpl): ConfigurerImpl {
-    const configurer = new ConfigurerImpl(project.dir(), project.dir(), {});
+    const configurer = new ConfigurerImpl(project.dir(), project.dir());
     configurer.addSetting({
         name: 'config',
         default: host.defaultConfig(),
@@ -255,7 +255,7 @@ async function configureRecurseImports(
             for (const module of modules) {
                 // record the actual import modules in the parent importDesc
                 importDesc.importModules.push(module);
-                const childConfigurer = new ConfigurerImpl(project.dir(), dir, importDesc.options ?? {});
+                const childConfigurer = new ConfigurerImpl(project.dir(), dir);
                 childConfigurer._importErrors = importErrors;
                 res.push(childConfigurer);
                 if (module.configure) {
@@ -272,7 +272,12 @@ function doBuildSetup(project: ProjectImpl, config: Config): void {
     for (const imp of projectImpl.imports()) {
         for (const module of imp.modules) {
             if (module.build) {
-                const builder = new BuilderImpl(project, imp.importDir, imp.options);
+                // first resolve import options
+                let importOptions: Record<string, unknown> = {};
+                if (imp.optionsFunc) {
+                    importOptions = imp.optionsFunc(project);
+                }
+                const builder = new BuilderImpl(project, imp.importDir, importOptions);
                 module.build(builder);
                 builders.push(builder);
             }
@@ -338,7 +343,8 @@ function resolveImports(configurers: ConfigurerImpl[]): Import[] {
             url: i.url,
             ref: i.ref,
             modules: i.importModules ?? [],
-            options: i.options ?? {},
+            optionsFunc: i.options,
+            options: {},
         }))
     ));
 }

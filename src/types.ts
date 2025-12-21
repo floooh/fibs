@@ -9,7 +9,6 @@ export type Configurer = {
     addSetting(setting: SettingDesc): void;
     addConfig(config: ConfigDesc): void;
 
-    importOption(name: string): unknown | undefined;
     hostPlatform(): Platform;
     hostArch(): Arch;
     projectDir(): string;
@@ -305,13 +304,13 @@ export type ImportDesc = NamedItem & {
     url: string;
     ref?: string;
     files?: string[];
-    options?: Record<string, unknown>;
+    options?: (p: Project) => Record<string, unknown>;
 };
 
 export type Import = NamedItem & ImportedItem & {
     url: string;
     ref: string | undefined;
-    options: Record<string, unknown>;
+    optionsFunc?: (p: Project) => Record<string, unknown>;
     importErrors: unknown[];
     // each import can have multiple modules
     modules: FibsModule[];
