@@ -1,5 +1,4 @@
 export type Configurer = {
-    addCmakeVariable(name: string, value: string | boolean): void;
     addImport(imp: ImportDesc): void;
     addCommand(cmd: CommandDesc): void;
     addJob(job: JobBuilderDesc): void;
@@ -43,6 +42,7 @@ export type Project = {
 
     settings(): Setting[];
     cmakeVariables(): CmakeVariable[];
+    cmakeIncludes(): CmakeInclude[];
     configs(): Config[];
     targets(): Target[];
     adapters(): Adapter[];
@@ -99,10 +99,12 @@ export type Project = {
 
 type BuilderProject = Omit<
     Project,
-    'targets' | 'includeDirectories' | 'compileDefinitions' | 'compileOptions' | 'linkOptions'
+    'targets' | 'includeDirectories' | 'compileDefinitions' | 'compileOptions' | 'linkOptions' | 'cmakeVariables' | 'cmakeIncludes' | 'dir'
 >;
 export type Builder = BuilderProject & {
     setName(name: string): void;
+    addCmakeVariable(name: string, value: string | boolean): void;
+    addCmakeInclude(path: string): void;
     addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
     addIncludeDirectories(dirs: string[]): void;
     addCompileDefinitions(defs: CompileDefinitionsDesc): void;
@@ -114,6 +116,8 @@ export type Builder = BuilderProject & {
     addTarget(target: TargetDesc): void;
     addTarget(name: string, type: TargetType, fn: (t: TargetBuilder) => void): void;
 
+    projectDir(): string;
+    selfDir(): string;
     importOption(name: string): unknown | undefined;
 };
 
@@ -180,6 +184,8 @@ export type CmakeVariableDesc = NamedItem & {
     value: string | boolean;
 };
 export type CmakeVariable = ImportedItem & CmakeVariableDesc;
+
+export type CmakeInclude = ImportedItem & { path: string };
 
 export type IncludeDirectoriesDesc = {
     dirs: string[];
@@ -274,14 +280,8 @@ export type ConfigDesc = NamedItem & {
     generator?: Generator;
     arch?: Arch;
     toolchainFile?: string;
-    cmakeIncludes?: string[];
-    cmakeVariables?: Record<string, string | boolean>;
     environment?: Record<string, string>;
     options?: Record<string, unknown>;
-    includeDirectories?: IncludeDirectoriesDesc[];
-    compileDefinitions?: CompileDefinitionsDesc[];
-    compileOptions?: CompileOptionsDesc[];
-    linkOptions?: LinkOptionsDesc[];
     compilers?: Compiler[];
     validate?(project: Project): { valid: boolean; hints: string[] };
 };
@@ -294,14 +294,8 @@ export type Config = NamedItem & ImportedItem & {
     generator?: Generator;
     arch?: Arch;
     toolchainFile?: string;
-    cmakeIncludes: string[];
-    cmakeVariables: CmakeVariable[];
     environment: Record<string, string>;
     options: Record<string, unknown>;
-    includeDirectories: IncludeDirectory[];
-    compileDefinitions: CompileDefinition[];
-    compileOptions: CompileOption[];
-    linkOptions: LinkOption[];
     compilers: Compiler[];
     validate(project: Project): { valid: boolean; hints: string[] };
 };

@@ -152,11 +152,6 @@ export function resolvePath(fsPath: string, opts: {
     return fsPath;
 }
 
-export function resolveProjectScopePath(path: string, opts: { rootDir: string; defaultAlias?: string }): string {
-    const { rootDir, defaultAlias } = opts;
-    return resolvePath(path, { rootDir, defaultAlias, selfDir: rootDir });
-}
-
 export function resolveModuleScopePath(
     path: string,
     opts: { rootDir: string; defaultAlias?: string; moduleDir: string },

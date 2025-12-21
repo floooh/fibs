@@ -1,6 +1,7 @@
 import {
     Adapter,
     Arch,
+    CmakeInclude,
     CmakeVariable,
     Command,
     CompileDefinition,
@@ -29,6 +30,7 @@ export class ProjectImpl implements Project {
     _rootDir: string;
     _compiler: Compiler = 'unknown-compiler';
     _cmakeVariables: CmakeVariable[] = [];
+    _cmakeIncludes: CmakeInclude[] = [];
     _includeDirectories: IncludeDirectory[] = [];
     _compileDefinitions: CompileDefinition[] = [];
     _compileOptions: CompileOption[] = [];
@@ -136,6 +138,10 @@ export class ProjectImpl implements Project {
 
     cmakeVariables(): CmakeVariable[] {
         return this._cmakeVariables;
+    }
+
+    cmakeIncludes(): CmakeInclude[] {
+        return this._cmakeIncludes;
     }
 
     configs(): Config[] {

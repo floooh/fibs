@@ -3,7 +3,7 @@ import {
     Adapter,
     Arch,
     Builder,
-    CmakeVariable,
+    CmakeVariableDesc,
     Command,
     CompileDefinitionsDesc,
     CompileOptionsDesc,
@@ -35,6 +35,8 @@ export class BuilderImpl implements Builder {
     _name: string | undefined;
     _importDir: string;
     _importOptions: Record<string, unknown>;
+    _cmakeVariables: CmakeVariableDesc[] = [];
+    _cmakeIncludes: string[] = [];
     _targets: TargetDesc[] = [];
     _includeDirectories: IncludeDirectoriesDesc[] = [];
     _compileDefinitions: CompileDefinitionsDesc[] = [];
@@ -62,6 +64,15 @@ export class BuilderImpl implements Builder {
             log.panic(`duplicate target: ${target.name}`);
         }
         this._targets.push(target);
+    }
+    addCmakeVariable(name: string, value: string | boolean): void {
+        if (util.find(name, this._cmakeVariables)) {
+            log.panic(`duplicate cmake variable: ${name}`);
+        }
+        this._cmakeVariables.push({ name, value });
+    }
+    addCmakeInclude(path: string): void {
+        this._cmakeIncludes.push(path);
     }
     addIncludeDirectories(dirs: IncludeDirectoriesDesc | string[]): void {
         if (isIncludeDirectoriesDesc(dirs)) {
@@ -112,8 +123,11 @@ export class BuilderImpl implements Builder {
     hostArch(): Arch {
         return this._project.hostArch();
     }
-    dir(): string {
+    projectDir(): string {
         return this._project.dir();
+    }
+    selfDir(): string {
+        return this._importDir;
     }
     fibsDir(): string {
         return this._project.fibsDir();
@@ -144,9 +158,6 @@ export class BuilderImpl implements Builder {
     }
     settings(): Setting[] {
         return this._project.settings();
-    }
-    cmakeVariables(): CmakeVariable[] {
-        return this._project.cmakeVariables();
     }
     configs(): Config[] {
         return this._project.configs();

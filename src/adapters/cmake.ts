@@ -200,8 +200,7 @@ function genCacheVariables(project: Project, config: Config, distDir: string): R
     if (config.platform !== 'android') {
         res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = distDir;
     }
-    const cmakeVariables = util.deduplicate([...config.cmakeVariables, ...project.cmakeVariables()]);
-    for (const cmakeVariable of cmakeVariables) {
+    for (const cmakeVariable of project.cmakeVariables()) {
         res[cmakeVariable.name] = resolveCacheVariable(cmakeVariable.value);
     }
     return res;
@@ -222,10 +221,10 @@ function genBuildPresets(config: Config): unknown[] {
 function genCMakeListsTxt(project: Project, config: Config): string {
     let str = '';
     str += genProlog(project, config);
-    str += genIncludeDirectories(project, config);
-    str += genCompileDefinitions(project, config);
-    str += genCompileOptions(project, config);
-    str += genLinkOptions(project, config);
+    str += genIncludeDirectories(project);
+    str += genCompileDefinitions(project);
+    str += genCompileOptions(project);
+    str += genLinkOptions(project);
     str += genAllJobsTarget(project);
     for (const target of project.targets()) {
         str += genTarget(project, config, target);
@@ -239,7 +238,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     return str;
 }
 
-function genProlog(project: Project, config: Config): string {
+function genProlog(project: Project): string {
     let str = '';
     str += 'cmake_minimum_required(VERSION 4.0)\n';
     str += `project(${project.name()} C CXX)\n`;
@@ -247,7 +246,7 @@ function genProlog(project: Project, config: Config): string {
     str += 'set(CMAKE_CONFIGURATION_TYPES Debug Release)\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
-    for (const includeDir of config.cmakeIncludes) {
+    for (const includeDir of project.cmakeIncludes()) {
         str += `include("${includeDir}")\n`;
     }
     return str;
@@ -273,18 +272,17 @@ function expr(l: Language | undefined, m: BuildMode | undefined, str: string): s
     return str;
 }
 
-function genIncludeDirectories(project: Project, config: Config): string {
+function genIncludeDirectories(project: Project): string {
     let str = '';
-    const items = [...project.includeDirectories(), ...config.includeDirectories];
-    items.forEach((item) =>
+    project.includeDirectories().forEach((item) =>
         str += `include_directories(${item.system ? 'SYSTEM ' : ''}"${expr(item.language, item.buildMode, item.dir)}")\n`
     );
     return str;
 }
 
-function genCompileDefinitions(project: Project, config: Config): string {
+function genCompileDefinitions(project: Project): string {
     let str = '';
-    const items = util.deduplicate([...config.compileDefinitions, ...project.compileDefinitions()]);
+    const items = project.compileDefinitions();
     if (items.length > 0) {
         str += 'add_compile_definitions(';
         str += items.map((item) => `${expr(item.language, item.buildMode, `${item.name}=${item.val}`)}`).join(' ');
@@ -293,9 +291,9 @@ function genCompileDefinitions(project: Project, config: Config): string {
     return str;
 }
 
-function genCompileOptions(project: Project, config: Config): string {
+function genCompileOptions(project: Project): string {
     let str = '';
-    const items = [...project.compileOptions(), ...config.compileOptions];
+    const items = project.compileOptions();
     if (items.length > 0) {
         str += 'add_compile_options(';
         str += items.map((item) => `${expr(item.language, item.buildMode, item.opt)}`).join(' ');
@@ -304,9 +302,9 @@ function genCompileOptions(project: Project, config: Config): string {
     return str;
 }
 
-function genLinkOptions(project: Project, config: Config): string {
+function genLinkOptions(project: Project): string {
     let str = '';
-    const items = [...project.linkOptions(), ...config.linkOptions];
+    const items = project.linkOptions();
     if (items.length > 0) {
         str += 'add_link_options(';
         str += items.map((item) => `${expr(undefined, item.buildMode, item.opt)}`).join(' ');

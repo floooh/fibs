@@ -1,12 +1,12 @@
 import { host, log, settings, util } from './index.ts';
 import {
     Adapter,
+    CmakeInclude,
     CmakeVariable,
     Command,
     CompileDefinition,
     CompileOption,
     Config,
-    ConfigDesc,
     FibsModule,
     Import,
     IncludeDirectory,
@@ -229,8 +229,6 @@ function configureBuiltins(project: ProjectImpl): ConfigurerImpl {
         default: host.defaultConfig(),
         validate: () => ({ valid: true, hint: '' }),
     });
-    configurer.addCmakeVariable('CMAKE_C_STANDARD', '99');
-    configurer.addCmakeVariable('CMAKE_CXX_STANDARD', '14');
     builtinCommands.forEach((command) => configurer.addCommand(command));
     builtinAdapters.forEach((adapter) => configurer.addAdapter(adapter));
     builtinConfigs.forEach((config) => configurer.addConfig(config));
@@ -298,7 +296,6 @@ function resolveConfigureItems(configurers: ConfigurerImpl[], project: ProjectIm
     // resolve in reverse order, this allows the builtin config to be
     // overriden by imports, and imports to be overriden by the root project
     const reversed = configurers.toReversed();
-    project._cmakeVariables = resolveCmakeVariables(reversed);
     project._settings = resolveSettings(reversed);
     project._imports = resolveImports(reversed);
     project._commands = resolveCommands(reversed);
@@ -315,19 +312,9 @@ function resolveBuildItems(builders: BuilderImpl[], project: ProjectImpl, config
     project._compileDefinitions = resolveBuilderCompileDefinitions(builders);
     project._compileOptions = resolveBuilderCompileOptions(builders);
     project._linkOptions = resolveBuilderLinkOptions(builders);
+    project._cmakeVariables = resolveCmakeVariables(builders, project);
+    project._cmakeIncludes = resolveCmakeIncludes(builders, project);
     project._targets = resolveTargets(builders, project, config);
-}
-
-function resolveCmakeVariables(configurers: ConfigurerImpl[]): CmakeVariable[] {
-    return util.deduplicate(configurers.flatMap((configurer) =>
-        configurer._cmakeVariables.map((v) => ({
-            name: v.name,
-            importDir: configurer._importDir,
-            value: (typeof v.value !== 'string') ? v.value : util.resolveProjectScopePath(v.value, {
-                rootDir: configurer._rootDir,
-            }),
-        }))
-    ));
 }
 
 function resolveSettings(configurers: ConfigurerImpl[]): Setting[] {
@@ -442,61 +429,12 @@ function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Co
                     config: { name: c.name, platform: c.platform, importDir: configurer._importDir },
                 })
                 : undefined,
-            cmakeIncludes: c.cmakeIncludes
-                ? c.cmakeIncludes.map((path) => {
-                    return util.resolveConfigScopePath(path, {
-                        rootDir: project.dir(),
-                        config: { name: c.name, platform: c.platform, importDir: configurer._importDir },
-                    });
-                })
-                : [],
-            cmakeVariables: resolveConfigCmakeVariables(configurer, c),
             environment: c.environment ?? {},
             options: c.options ?? {},
-            includeDirectories: resolveConfigIncludeDirectories(configurer, c),
-            compileDefinitions: resolveConfigCompileDefinitions(configurer, c),
-            compileOptions: resolveConfigCompileOptions(configurer, c),
-            linkOptions: resolveConfigLinkOptions(configurer, c),
             compilers: c.compilers ?? [],
             validate: c.validate ?? (() => ({ valid: true, hints: [] })),
         }))
     ));
-}
-
-function resolveConfigCmakeVariables(configurer: ConfigurerImpl, c: ConfigDesc): CmakeVariable[] {
-    if (c.cmakeVariables === undefined) {
-        return [];
-    }
-    return util.deduplicate(
-        Object.entries(c.cmakeVariables).map<CmakeVariable>(([key, val]) => ({
-            name: key,
-            value: (typeof val !== 'string') ? val : util.resolveConfigScopePath(val, {
-                rootDir: configurer._rootDir,
-                config: { name: c.name, platform: c.platform, importDir: configurer._importDir },
-            }),
-            importDir: configurer._importDir,
-        })),
-    );
-}
-
-function resolveConfigIncludeDirectories(configurer: ConfigurerImpl, c: ConfigDesc): IncludeDirectory[] {
-    if (c.includeDirectories === undefined) {
-        return [];
-    }
-    return c.includeDirectories.flatMap((items) =>
-        items.dirs.map((dir) => ({
-            dir: util.resolveConfigScopePath(dir, {
-                rootDir: configurer._rootDir,
-                defaultAlias: '@self',
-                config: { name: c.name, platform: c.platform, importDir: configurer._importDir },
-            }),
-            importDir: configurer._importDir,
-            scope: items.scope ?? 'public',
-            system: items.system ?? false,
-            language: items.language,
-            buildMode: items.buildMode,
-        }))
-    );
 }
 
 function resolveBuilderIncludeDirectories(builders: BuilderImpl[], project: ProjectImpl): IncludeDirectory[] {
@@ -544,22 +482,6 @@ function resolveTargetIncludeDirectories(
     );
 }
 
-function resolveConfigCompileDefinitions(configurer: ConfigurerImpl, c: ConfigDesc): CompileDefinition[] {
-    if (c.compileDefinitions === undefined) {
-        return [];
-    }
-    return util.deduplicate(c.compileDefinitions.flatMap((items) =>
-        Object.entries(items.defs).map(([key, val]) => ({
-            name: key,
-            val,
-            scope: items.scope ?? 'public',
-            language: items.language,
-            buildMode: items.buildMode,
-            importDir: configurer._importDir,
-        }))
-    ));
-}
-
 function resolveBuilderCompileDefinitions(builders: BuilderImpl[]): CompileDefinition[] {
     return util.deduplicate(
         builders.flatMap((builder) =>
@@ -593,21 +515,6 @@ function resolveTargetCompileDefinitions(builder: BuilderImpl, t: TargetDesc): C
     ));
 }
 
-function resolveConfigCompileOptions(configurer: ConfigurerImpl, c: ConfigDesc): CompileOption[] {
-    if (c.compileOptions === undefined) {
-        return [];
-    }
-    return c.compileOptions.flatMap((items) =>
-        items.opts.map((opt) => ({
-            opt,
-            scope: items.scope ?? 'public',
-            language: items.language,
-            buildMode: items.buildMode,
-            importDir: configurer._importDir,
-        }))
-    );
-}
-
 function resolveBuilderCompileOptions(builders: BuilderImpl[]): CompileOption[] {
     return builders.flatMap((builder) =>
         builder._compileOptions.flatMap((items) =>
@@ -633,19 +540,6 @@ function resolveTargetCompileOptions(builder: BuilderImpl, t: TargetDesc): Compi
             language: items.language,
             buildMode: items.buildMode,
             importDir: builder._importDir,
-        }))
-    );
-}
-
-function resolveConfigLinkOptions(configurer: ConfigurerImpl, c: ConfigDesc): LinkOption[] {
-    if (c.linkOptions === undefined) {
-        return [];
-    }
-    return c.linkOptions.flatMap((items) =>
-        items.opts.map((opt) => ({
-            opt,
-            scope: items.scope ?? 'public',
-            importDir: configurer._importDir,
         }))
     );
 }
@@ -703,4 +597,30 @@ function resolveTargets(builders: BuilderImpl[], project: ProjectImpl, config: C
             jobs: t.jobs ?? [],
         }))
     ));
+}
+
+function resolveCmakeVariables(builders: BuilderImpl[], project: ProjectImpl): CmakeVariable[] {
+    return util.deduplicate(builders.flatMap((builder) =>
+        builder._cmakeVariables.map((v) => ({
+            name: v.name,
+            importDir: builder._importDir,
+            value: (typeof v.value !== 'string') ? v.value : util.resolveModuleScopePath(v.value, {
+                rootDir: project.dir(),
+                moduleDir: builder._importDir,
+            }),
+        }))
+    ));
+}
+
+function resolveCmakeIncludes(builders: BuilderImpl[], project: ProjectImpl): CmakeInclude[] {
+    return builders.flatMap((builder) =>
+        builder._cmakeIncludes.map((path) => ({
+            importDir: builder._importDir,
+            path: util.resolveModuleScopePath(path, {
+                rootDir: project.dir(),
+                defaultAlias: '@self',
+                moduleDir: builder._importDir,
+            }),
+        }))
+    );
 }

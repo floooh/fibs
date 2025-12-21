@@ -1,7 +1,6 @@
 import {
     AdapterDesc,
     Arch,
-    CmakeVariableDesc,
     CommandDesc,
     ConfigDesc,
     Configurer,
@@ -25,9 +24,6 @@ export class ConfigurerImpl implements Configurer {
     _rootDir: string;
     _importDir: string;
     _importOptions: Record<string, unknown>;
-    _importErrors: unknown[] = [];
-    _cmakeVariables: CmakeVariableDesc[] = [];
-    _imports: (ImportDesc & ImportExtra)[] = [];
     _commands: CommandDesc[] = [];
     _jobs: JobBuilderDesc[] = [];
     _tools: ToolDesc[] = [];
@@ -36,6 +32,9 @@ export class ConfigurerImpl implements Configurer {
     _configs: ConfigDesc[] = [];
     _adapters: AdapterDesc[] = [];
     _settings: SettingDesc[] = [];
+
+    _imports: (ImportDesc & ImportExtra)[] = [];
+    _importErrors: unknown[] = [];
 
     constructor(rootDir: string, importDir: string, importOptions: Record<string, unknown>) {
         this._rootDir = rootDir;
@@ -57,6 +56,10 @@ export class ConfigurerImpl implements Configurer {
 
     projectDir(): string {
         return this._rootDir;
+    }
+
+    selfDir(): string {
+        return this._importDir;
     }
 
     fibsDir(): string {
@@ -81,13 +84,6 @@ export class ConfigurerImpl implements Configurer {
 
     distDir(configName: string): string {
         return util.distDir(this._rootDir, configName);
-    }
-
-    addCmakeVariable(name: string, value: string | boolean): void {
-        if (util.find(name, this._cmakeVariables)) {
-            log.panic(`duplicate cmake variable: ${name}`);
-        }
-        this._cmakeVariables.push({ name, value });
     }
 
     addImport(imp: ImportDesc): void {
