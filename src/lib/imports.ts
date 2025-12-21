@@ -48,7 +48,8 @@ export async function importModulesFromDir(
         importErrors: [],
         modules: [],
     };
-    const files = importDesc.files ? importDesc.files : ['fibs.ts'];
+    const defaultFiles = util.fileExists(`${dir}/fibs.ts`) ? ['fibs.ts'] : [];
+    const files = importDesc.files ? importDesc.files : defaultFiles;
     const settledResults = await Promise.allSettled<FibsModule>(files.map((file) => {
         return import(`file://${dir}/${file}`);
     }));
