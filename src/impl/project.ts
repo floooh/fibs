@@ -29,6 +29,7 @@ export class ProjectImpl implements Project {
     _rootModule: FibsModule;
     _rootDir: string;
     _compiler: Compiler = 'unknown-compiler';
+    _importOptionsFuncs: ((p: Project) => Record<string, unknown>)[] = [];
     _importOptions: Record<string, unknown> = {};
     _cmakeVariables: CmakeVariable[] = [];
     _cmakeIncludes: CmakeInclude[] = [];

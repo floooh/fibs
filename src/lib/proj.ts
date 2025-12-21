@@ -230,10 +230,8 @@ async function doConfigure(rootModule: FibsModule, project: ProjectImpl): Promis
     project._openers = resolveOpeners(configurers);
     project._adapters = resolveAdapters(configurers);
     project._configs = resolveConfigs(configurers, project);
-    // load the active config before resolving import options!
+    project._importOptionsFuncs = resolveImportOptionsFuncs(configurers);
     settings.load(project);
-    // resolving config options needs to happen after active config is known
-    project._importOptions = resolveImportOptions(configurers, project);
 }
 
 function configureBuiltins(project: ProjectImpl): ConfigurerImpl {
@@ -282,6 +280,15 @@ async function configureRecurseImports(
 }
 
 function doBuildSetup(project: ProjectImpl, config: Config): void {
+    // resolve import options
+    project._importOptionsFuncs.forEach((func) => {
+        project._importOptions = {
+            ...project._importOptions,
+            ...func(project),
+        };
+    });
+
+    // call build method on all imports
     const builders: BuilderImpl[] = [];
     for (const imp of projectImpl.imports()) {
         for (const module of imp.modules) {
@@ -292,6 +299,7 @@ function doBuildSetup(project: ProjectImpl, config: Config): void {
             }
         }
     }
+    // ... and finally on the root module
     if (projectImpl._rootModule.build) {
         const builder = new BuilderImpl(project, projectImpl._rootDir);
         projectImpl._rootModule.build(builder);
@@ -303,6 +311,8 @@ function doBuildSetup(project: ProjectImpl, config: Config): void {
     } else {
         log.panic(`root project fibs.ts must export a 'build' function`);
     }
+
+    // resolve all builder results into the project
     project._includeDirectories = resolveBuilderIncludeDirectories(builders, project);
     project._compileDefinitions = resolveBuilderCompileDefinitions(builders);
     project._compileOptions = resolveBuilderCompileOptions(builders);
@@ -432,14 +442,8 @@ function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Co
     ));
 }
 
-function resolveImportOptions(configurers: ConfigurerImpl[], project: ProjectImpl): Record<string, unknown> {
-    let res: Record<string, unknown> = {};
-    configurers.forEach((configurer) => {
-        configurer._importOptionsFuncs.forEach((func) => {
-            res = { ...res, ...func(project) };
-        });
-    });
-    return res;
+function resolveImportOptionsFuncs(configurers: ConfigurerImpl[]): ((p: Project) => Record<string, unknown>)[] {
+    return configurers.flatMap((configurer) => configurer._importOptionsFuncs);
 }
 
 function resolveBuilderIncludeDirectories(builders: BuilderImpl[], project: ProjectImpl): IncludeDirectory[] {
