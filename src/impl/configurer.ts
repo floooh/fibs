@@ -23,7 +23,6 @@ type ImportExtra = {
 
 export class ConfigurerImpl implements Configurer {
     _rootDir: string;
-    _importModule: FibsModule;
     _importDir: string;
     _importOptions: Record<string, unknown>;
     _importErrors: unknown[] = [];
@@ -38,10 +37,9 @@ export class ConfigurerImpl implements Configurer {
     _adapters: AdapterDesc[] = [];
     _settings: SettingDesc[] = [];
 
-    constructor(rootDir: string, importDir: string, importModule: FibsModule, importOptions: Record<string, unknown>) {
+    constructor(rootDir: string, importDir: string, importOptions: Record<string, unknown>) {
         this._rootDir = rootDir;
         this._importDir = importDir;
-        this._importModule = importModule;
         this._importOptions = importOptions;
     }
 

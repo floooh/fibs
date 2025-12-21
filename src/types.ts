@@ -110,7 +110,7 @@ export type Builder = BuilderProject & {
     addCompileOptions(opts: CompileOptionsDesc): void;
     addCompileOptions(opts: string[]): void;
     addLinkOptions(opts: LinkOptionsDesc): void;
-    addLinkOptions(opts: string[]): void
+    addLinkOptions(opts: string[]): void;
     addTarget(target: TargetDesc): void;
     addTarget(name: string, type: TargetType, fn: (t: TargetBuilder) => void): void;
 
@@ -174,7 +174,6 @@ export type NamedItem = {
 
 export type ImportedItem = {
     importDir: string;
-    importModule: FibsModule;
 };
 
 export type CmakeVariableDesc = NamedItem & {
@@ -191,9 +190,9 @@ export type IncludeDirectoriesDesc = {
 };
 export function isIncludeDirectoriesDesc(val: unknown): val is IncludeDirectoriesDesc {
     return val !== null &&
-           typeof val === 'object' &&
-           'dirs' in val &&
-           Array.isArray(val.dirs);
+        typeof val === 'object' &&
+        'dirs' in val &&
+        Array.isArray(val.dirs);
 }
 export type IncludeDirectory = ImportedItem & {
     dir: string;

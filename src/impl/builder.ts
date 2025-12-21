@@ -9,9 +9,12 @@ import {
     CompileOptionsDesc,
     Compiler,
     Config,
-    FibsModule,
     Import,
     IncludeDirectoriesDesc,
+    isCompileDefinitionsDesc,
+    isCompileOptionsDesc,
+    isIncludeDirectoriesDesc,
+    isLinkOptionsDesc,
     JobBuilder,
     LinkOptionsDesc,
     Opener,
@@ -24,10 +27,6 @@ import {
     TargetDesc,
     TargetType,
     Tool,
-    isCompileDefinitionsDesc,
-    isIncludeDirectoriesDesc,
-    isCompileOptionsDesc,
-    isLinkOptionsDesc,
 } from '../types.ts';
 import { TargetBuilderImpl } from './target.ts';
 
@@ -35,7 +34,6 @@ export class BuilderImpl implements Builder {
     _project: Project;
     _name: string | undefined;
     _importDir: string;
-    _importModule: FibsModule;
     _importOptions: Record<string, unknown>;
     _targets: TargetDesc[] = [];
     _includeDirectories: IncludeDirectoriesDesc[] = [];
@@ -43,10 +41,9 @@ export class BuilderImpl implements Builder {
     _compileOptions: CompileOptionsDesc[] = [];
     _linkOptions: LinkOptionsDesc[] = [];
 
-    constructor(project: Project, importDir: string, importModule: FibsModule, importOptions: Record<string, unknown>) {
+    constructor(project: Project, importDir: string, importOptions: Record<string, unknown>) {
         this._project = project;
         this._importDir = importDir;
-        this._importModule = importModule;
         this._importOptions = importOptions;
     }
     setName(name: string): void {
