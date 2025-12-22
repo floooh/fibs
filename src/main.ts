@@ -1,5 +1,5 @@
 import { log, util } from './lib/index.ts';
-import { assertFibsModule, Project } from './types.ts';
+import { assertFibsModule, type Project } from './types.ts';
 import { resetCmd } from './commands/reset.ts';
 import { configure } from './lib/proj.ts';
 

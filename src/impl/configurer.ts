@@ -1,4 +1,4 @@
-import {
+import type {
     AdapterDesc,
     Arch,
     CommandDesc,

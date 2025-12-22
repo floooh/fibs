@@ -1,5 +1,5 @@
 import { git, imports, log } from '../lib/index.ts';
-import { CommandDesc, Project } from '../types.ts';
+import type { CommandDesc, Project } from '../types.ts';
 
 export const updateCmd: CommandDesc = { name: 'update', help, run };
 

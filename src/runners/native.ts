@@ -1,5 +1,5 @@
 import { util } from '../lib/index.ts';
-import { Config, Project, RunnerDesc, RunOptions, Target } from '../types.ts';
+import type { Config, Project, RunnerDesc, RunOptions, Target } from '../types.ts';
 
 export const nativeRunner: RunnerDesc = { name: 'native', run };
 

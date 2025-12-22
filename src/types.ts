@@ -318,9 +318,11 @@ export type Import = NamedItem & ImportedItem & {
     modules: FibsModule[];
 };
 
+export type JobArgs = Record<string, unknown>;
+
 export type TargetJob = {
     job: string;
-    args: unknown;
+    args: JobArgs;
 };
 
 export type TargetDesc = NamedItem & {
@@ -355,8 +357,8 @@ export type JobFunc = (project: Project) => Job;
 
 export type JobBuilderDesc = NamedItem & {
     help(): void;
-    validate(args: unknown): { valid: boolean; hints: string[] };
-    build(args: unknown): JobFunc;
+    validate(args: JobArgs): { valid: boolean; hints: string[] };
+    build(args: JobArgs): JobFunc;
 };
 
 export type JobBuilder = ImportedItem & JobBuilderDesc;
@@ -365,8 +367,8 @@ export type Job = NamedItem & {
     inputs: string[];
     outputs: string[];
     addOutputsToTargetSources: boolean;
-    args: unknown;
-    func: (inputs: string[], output: string[], args: unknown) => Promise<void>;
+    args: JobArgs;
+    func: (inputs: string[], output: string[], args: JobArgs) => Promise<void>;
 };
 
 export type CommandDesc = NamedItem & {

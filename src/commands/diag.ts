@@ -1,5 +1,5 @@
 import { conf, host, imports, log, proj } from '../lib/index.ts';
-import { CommandDesc, Project } from '../types.ts';
+import type { CommandDesc, Project } from '../types.ts';
 import { colors } from '../../deps.ts';
 
 export const diagCmd: CommandDesc = { name: 'diag', help, run };

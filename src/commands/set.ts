@@ -1,5 +1,5 @@
 import { log, settings } from '../lib/index.ts';
-import { CommandDesc, Project } from '../types.ts';
+import type { CommandDesc, Project } from '../types.ts';
 
 export const setCmd: CommandDesc = { name: 'set', help, run };
 

@@ -1,4 +1,4 @@
-import { Arch } from '../types.ts';
+import type { Arch } from '../types.ts';
 
 export function platform(): 'macos' | 'windows' | 'linux' {
     switch (Deno.build.os) {

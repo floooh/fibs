@@ -1,5 +1,5 @@
 import { imports, log } from '../lib/index.ts';
-import { CommandDesc, Project, TargetType } from '../types.ts';
+import type { CommandDesc, Project, TargetType } from '../types.ts';
 import { colors } from '../../deps.ts';
 
 export const listCmd: CommandDesc = { name: 'list', help, run };

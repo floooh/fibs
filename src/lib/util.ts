@@ -1,4 +1,4 @@
-import { Config, NamedItem, Platform, Project, RunOptions, RunResult, TargetType } from '../types.ts';
+import type { Config, JobArgs, NamedItem, Platform, Project, RunOptions, RunResult, TargetType } from '../types.ts';
 import { log } from './index.ts';
 import { fs, path } from '../../deps.ts';
 
@@ -318,7 +318,7 @@ export function isBooleanArray(val: unknown): val is boolean[] {
  * @returns validation result (either valid, or a string array with hints what's wrong)
  */
 export function validateArgs(
-    args: object,
+    args: JobArgs,
     expected: Record<
         string,
         { type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]'; optional: boolean }

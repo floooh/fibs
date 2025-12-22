@@ -1,5 +1,5 @@
 import { util } from '../lib/index.ts';
-import { Config, OpenerDesc, Project } from '../types.ts';
+import type { Config, OpenerDesc, Project } from '../types.ts';
 
 export const xcodeOpener: OpenerDesc = {
     name: 'xcode',

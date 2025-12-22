@@ -1,5 +1,5 @@
 import { host, log } from '../lib/index.ts';
-import { Config, OpenerDesc, Project } from '../types.ts';
+import type { Config, OpenerDesc, Project } from '../types.ts';
 import { run } from '../tools/vscode.ts';
 import { fs } from '../../deps.ts';
 

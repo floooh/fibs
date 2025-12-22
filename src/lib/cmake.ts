@@ -1,5 +1,5 @@
 import { log, util } from './index.ts';
-import { Config, Project, RunOptions, RunResult } from '../types.ts';
+import type { Config, Project, RunOptions, RunResult } from '../types.ts';
 
 export async function run(options: RunOptions): Promise<RunResult> {
     try {

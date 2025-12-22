@@ -1,5 +1,5 @@
 import { log, util } from './index.ts';
-import { RunOptions, RunResult } from '../types.ts';
+import type { RunOptions, RunResult } from '../types.ts';
 import { fs, path } from '../../deps.ts';
 
 export async function run(options: RunOptions): Promise<RunResult> {

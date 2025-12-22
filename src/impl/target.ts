@@ -1,16 +1,16 @@
 import {
-    CompileDefinitionsDesc,
-    CompileOptionsDesc,
-    IncludeDirectoriesDesc,
+    type CompileDefinitionsDesc,
+    type CompileOptionsDesc,
+    type IncludeDirectoriesDesc,
     isCompileDefinitionsDesc,
     isCompileOptionsDesc,
     isIncludeDirectoriesDesc,
     isLinkOptionsDesc,
-    LinkOptionsDesc,
-    TargetBuilder,
-    TargetDesc,
-    TargetJob,
-    TargetType,
+    type LinkOptionsDesc,
+    type TargetBuilder,
+    type TargetDesc,
+    type TargetJob,
+    type TargetType,
 } from '../types.ts';
 
 export class TargetBuilderImpl implements TargetBuilder {

@@ -1,5 +1,5 @@
 import { git, log, util } from './index.ts';
-import { FibsModule, Import, ImportDesc, Project } from '../types.ts';
+import type { FibsModule, Import, ImportDesc, Project } from '../types.ts';
 
 export async function fetchImport(
     project: Project,

@@ -1,5 +1,5 @@
 import { imports, log } from '../lib/index.ts';
-import { CommandDesc, Project } from '../types.ts';
+import type { CommandDesc, Project } from '../types.ts';
 
 export const unlinkCmd: CommandDesc = { name: 'unlink', help, run };
 
