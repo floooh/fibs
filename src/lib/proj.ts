@@ -288,8 +288,14 @@ function doBuildSetup(project: ProjectImpl, config: Config): void {
         };
     });
 
-    // call build method on all imports
     const builders: BuilderImpl[] = [];
+
+    // setup a 'bottom builder' with builtins
+    const bottomBuilder = new BuilderImpl(project, projectImpl._rootDir);
+    bottomBuilder.addCmakeVariable('CMAKE_RUNTIME_OUTPUT_DIRECTORY', bottomBuilder.distDir());
+    builders.push(bottomBuilder);
+
+    // call build method on all imports
     for (const imp of projectImpl.imports()) {
         for (const module of imp.modules) {
             if (module.build) {

@@ -49,7 +49,7 @@ export async function configure(project: Project, config: Config): Promise<Adapt
         Deno.writeTextFileSync(cmakePath, cmakeConfigSource, { create: true });
 
         const cmakePresetsPath = `${configDir}/CMakePresets.json`;
-        const cmakePresetsSource = genCMakePresetsJson(project, config, configDir, configDir);
+        const cmakePresetsSource = genCMakePresetsJson(project, config, configDir);
         Deno.writeTextFileSync(cmakePresetsPath, cmakePresetsSource, { create: true });
 
         const res = await cmake.run({ cwd: configDir, args: ['--preset', config.name], stderr: 'piped' });
@@ -78,7 +78,7 @@ export async function generate(project: Project, config: Config): Promise<void> 
     try {
         Deno.writeTextFileSync(
             cmakePresetsPath,
-            genCMakePresetsJson(project, config, project.buildDir(), project.distDir()),
+            genCMakePresetsJson(project, config, project.buildDir()),
             { create: true },
         );
     } catch (err) {
@@ -94,7 +94,7 @@ export async function build(project: Project, config: Config, options: AdapterBu
     await cmake.build(options);
 }
 
-function genCMakePresetsJson(project: Project, config: Config, buildDir: string, distDir: string): string {
+function genCMakePresetsJson(project: Project, config: Config, buildDir: string): string {
     const preset = {
         version: 3,
         cmakeMinimumRequired: {
@@ -102,7 +102,7 @@ function genCMakePresetsJson(project: Project, config: Config, buildDir: string,
             minor: 0,
             patch: 0,
         },
-        configurePresets: genConfigurePresets(project, config, buildDir, distDir),
+        configurePresets: genConfigurePresets(project, config, buildDir),
         buildPresets: genBuildPresets(config),
     };
     return JSON.stringify(preset, null, 2);
@@ -174,7 +174,7 @@ function resolveCacheVariable(val: string | boolean): string | { type: 'BOOL'; v
     }
 }
 
-function genConfigurePresets(project: Project, config: Config, buildDir: string, distDir: string): unknown[] {
+function genConfigurePresets(project: Project, config: Config, buildDir: string): unknown[] {
     const res = [];
     if (util.validConfigForPlatform(config, project.hostPlatform())) {
         res.push({
@@ -183,7 +183,7 @@ function genConfigurePresets(project: Project, config: Config, buildDir: string,
             binaryDir: buildDir,
             generator: asCmakeGenerator(config.generator),
             toolchainFile: config.toolchainFile,
-            cacheVariables: genCacheVariables(project, config, distDir),
+            cacheVariables: genCacheVariables(project, config),
             environment: config.environment,
         });
     } else {
@@ -192,13 +192,10 @@ function genConfigurePresets(project: Project, config: Config, buildDir: string,
     return res;
 }
 
-function genCacheVariables(project: Project, config: Config, distDir: string): Record<string, unknown> {
+function genCacheVariables(project: Project, config: Config): Record<string, unknown> {
     const res: Record<string, unknown> = {};
     if (!isMultiConfigGenerator(config)) {
         res.CMAKE_BUILD_TYPE = asCmakeBuildMode(config.buildMode);
-    }
-    if (config.platform !== 'android') {
-        res.CMAKE_RUNTIME_OUTPUT_DIRECTORY = distDir;
     }
     for (const cmakeVariable of project.cmakeVariables()) {
         res[cmakeVariable.name] = resolveCacheVariable(cmakeVariable.value);
