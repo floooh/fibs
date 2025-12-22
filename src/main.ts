@@ -3,7 +3,7 @@ import { assertFibsModule, Project } from './types.ts';
 import { resetCmd } from './commands/reset.ts';
 import { configure } from './lib/proj.ts';
 
-export async function fibs(importMeta: ImportMeta) {
+export async function main(importMeta: ImportMeta) {
     if (!importMeta.main) {
         return;
     }
