@@ -145,6 +145,9 @@ export class BuilderImpl implements Builder {
     importsDir(): string {
         return this._project.importsDir();
     }
+    importDir(importName: string): string {
+        return this._project.importDir(importName);
+    }
     targetBuildDir(targetName: string, configName?: string): string {
         return this._project.targetBuildDir(targetName, configName);
     }

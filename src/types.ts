@@ -36,6 +36,7 @@ export type Project = {
     buildDir(configName?: string): string;
     distDir(configName?: string): string;
     importsDir(): string;
+    importDir(importName: string): string;
     targetBuildDir(targetName: string, configName?: string): string;
     targetDistDir(targetName: string, configName?: string): string;
     targetAssetsDir(targetName: string, configName?: string): string;
