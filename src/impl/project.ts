@@ -94,10 +94,10 @@ export class ProjectImpl implements Project {
         return util.importsDir(this._rootDir);
     }
 
-    importDir(importName: string): string {
+    importDir(importName: string): string | undefined {
         const imp = util.find(importName, this._imports);
         if (imp === undefined) {
-            log.panic(`unknown import '${importName}, (run 'fibs list imports')`);
+            return undefined;
         }
         return imp.importDir;
     }
