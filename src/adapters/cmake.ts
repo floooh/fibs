@@ -224,7 +224,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genLinkOptions(project);
     str += genAllJobsTarget(project);
     for (const target of project.targets()) {
-        str += genTarget(project, config, target);
+        str += genTarget(config, target);
         str += genTargetDependencies(target);
         str += genTargetIncludeDirectories(target);
         str += genTargetCompileDefinitions(target);
@@ -328,7 +328,7 @@ function genAllJobsTarget(project: Project): string {
     return str;
 }
 
-function genTarget(project: Project, config: Config, target: Target): string {
+function genTarget(config: Config, target: Target): string {
     let str = '';
     // get any job outputs which need to be added as target sources
     /* FIXME: handle job outputs!
@@ -371,12 +371,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
             str += `add_library(${target.name} INTERFACE ${targetSourcesStr})\n`;
             break;
     }
-    const targetSourceDir = util.resolveTargetScopePath('@targetdir:', {
-        rootDir: project.dir(),
-        config: { name: config.name, platform: config.platform },
-        target: { name: target.name, dir: target.dir, type: target.type, importDir: target.importDir },
-    });
-    str += `source_group(TREE ${targetSourceDir} FILES ${target.sources.join(' ')})\n`;
+    str += `source_group(TREE ${target.dir} FILES ${target.sources.join(' ')})\n`;
     /* FIXME
     if (jobOutputs.length > 0) {
         str += `source_group(gen FILES ${jobOutputs.join(' ')})\n`;

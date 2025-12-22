@@ -14,23 +14,6 @@ export function findIndex<T extends NamedItem>(name: string, items: T[]): number
     return (index === -1) ? undefined : index;
 }
 
-export function addOrReplace<T extends NamedItem>(items: T[], item: T) {
-    const index = findIndex(item.name, items);
-    if (index === undefined) {
-        items.push(item);
-    } else {
-        items[index] = item;
-    }
-}
-
-export function deduplicate<T extends NamedItem>(items: T[]): T[] {
-    const res: T[] = [];
-    for (const item of items) {
-        addOrReplace(res, item);
-    }
-    return res;
-}
-
 export function fileExists(path: string): boolean {
     try {
         const res = Deno.statSync(path);
@@ -107,89 +90,6 @@ export function targetAssetDir(
     } else {
         return distDir(rootDir, configName);
     }
-}
-
-export function resolvePath(fsPath: string, opts: {
-    rootDir: string;
-    defaultAlias?: string;
-    config?: { name: string; platform: Platform };
-    target?: { name: string; dir?: string; type: TargetType };
-    selfDir: string;
-}): string {
-    const { rootDir, defaultAlias, config, target, selfDir } = opts;
-    let aliasMap: Record<string, string> = {
-        '@root:': rootDir,
-        '@sdks:': sdkDir(rootDir),
-        '@imports:': importsDir(rootDir),
-        '@self:': selfDir,
-    };
-    if (config !== undefined) {
-        aliasMap = {
-            ...aliasMap,
-            '@build:': buildDir(rootDir, config.name),
-            '@dist:': distDir(rootDir, config.name),
-        };
-        if (target !== undefined) {
-            aliasMap = {
-                ...aliasMap,
-                '@targetdir:': (target.dir !== undefined) ? target.dir : selfDir,
-                '@targetbuild:': targetBuildDir(rootDir, config.name, target.name),
-                '@targetdist:': targetDistDir(rootDir, config.name, target.name, config.platform, target.type),
-                '@targetassets:': targetAssetDir(rootDir, config.name, target.name, config.platform, target.type),
-            };
-        }
-    }
-    if (!path.isAbsolute(fsPath) && !fsPath.startsWith('@') && (defaultAlias !== undefined)) {
-        fsPath = `${defaultAlias}:${fsPath}`;
-    }
-    if (fsPath.startsWith('@')) {
-        for (const k in aliasMap) {
-            if (fsPath.startsWith(k)) {
-                fsPath = fsPath.replace(k, `${aliasMap[k]}/`.replace('//', '/'));
-            }
-        }
-    }
-    return fsPath;
-}
-
-export function resolveModuleScopePath(
-    path: string,
-    opts: { rootDir: string; defaultAlias?: string; moduleDir: string },
-): string {
-    const { rootDir, defaultAlias, moduleDir } = opts;
-    return resolvePath(path, { rootDir, defaultAlias, selfDir: moduleDir });
-}
-
-export function resolveConfigScopePath(
-    path: string,
-    opts: { rootDir: string; defaultAlias?: string; config: { name: string; platform: Platform; importDir: string } },
-): string {
-    const { rootDir, defaultAlias, config } = opts;
-    return resolvePath(path, {
-        rootDir,
-        defaultAlias,
-        config: { name: config.name, platform: config.platform },
-        selfDir: config.importDir,
-    });
-}
-
-export function resolveTargetScopePath(
-    path: string,
-    opts: {
-        rootDir: string;
-        defaultAlias?: string;
-        config: { name: string; platform: Platform };
-        target: { name: string; dir?: string; type: TargetType; importDir: string };
-    },
-): string {
-    const { rootDir, defaultAlias, config, target } = opts;
-    return resolvePath(path, {
-        rootDir,
-        defaultAlias,
-        config: { name: config.name, platform: config.platform },
-        target: { name: target.name, dir: target.dir, type: target.type },
-        selfDir: target.importDir,
-    });
 }
 
 export function ensureFile(filePath: string) {
