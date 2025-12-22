@@ -23,6 +23,7 @@ import type {
     TargetJob,
     TargetType,
     Tool,
+    Job,
 } from '../types.ts';
 import { ProjectImpl } from '../impl/project.ts';
 import { ConfigurerImpl } from '../impl/configurer.ts';
@@ -185,17 +186,35 @@ export function validateTargetJob(
     return res;
 }
 
-export async function runJobs(_target: Target) {
-    log.info(`proj.runJobs() called`);
-    /* FIXME
-    const ctx: Context = {
-        project,
-        config,
-        target,
-        aliasMap: util.buildTargetAliasMap(project, config, target),
-        host: { platform: host.platform(), arch: host.arch() },
-    };
-    const jobs = resolveTargetJobs(ctx);
+function resolveTargetJobs(project: Project, config: Config, target: Target): Job[] {
+    const res: Job[] = [];
+    target.jobs.forEach((j) => {
+        const jobBuilder = util.find(j.job, project.jobs());
+        if (jobBuilder) {
+            const jobFunc = jobBuilder.build(j.args);
+            const job = jobFunc(project, target);
+            job.inputs = job.inputs.map((inp) => resolveTargetScopePath(inp, {
+                rootDir: project.dir(),
+                defaultAlias: '@targetdir',
+                config: { name: config.name, platform: config.platform },
+                target: { name: target.name, dir: target.dir, type: target.type, importDir: target.importDir },
+            }));
+            job.outputs = job.outputs.map((outp) => resolveTargetScopePath((outp), {
+                rootDir: project.dir(),
+                defaultAlias: '@targetdir',
+                config: { name: config.name, platform: config.platform },
+                target: { name: target.name, dir: target.dir, type: target.type, importDir: target.importDir },
+            }));
+            res.push(job);
+        } else {
+            log.warn(`resolveTargetJobs: job ${j.job} used in target ${target.name} not found!`)
+        }
+    });
+    return res;
+}
+
+export async function runJobs(project: Project, config: Config, target: Target) {
+    const jobs = resolveTargetJobs(project, config, target);
     for (const job of jobs) {
         try {
             await job.func(job.inputs, job.outputs, job.args);
@@ -203,7 +222,6 @@ export async function runJobs(_target: Target) {
             log.panic(`job '${job.name}' in target '${target.name}' failed with ${err}`);
         }
     }
-    */
 }
 
 async function doConfigure(rootModule: FibsModule, project: ProjectImpl): Promise<void> {

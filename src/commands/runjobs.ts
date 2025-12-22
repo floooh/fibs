@@ -12,5 +12,7 @@ function help() {
 }
 
 async function run(project: Project) {
-    await Promise.all(project.targets().map((target): Promise<void> => proj.runJobs(target)));
+    await Promise.all(project.targets().map(async (target): Promise<void> => {
+        proj.runJobs(project, project.activeConfig(), target);
+    }));
 }
