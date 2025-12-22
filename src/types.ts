@@ -353,7 +353,7 @@ export type Target = NamedItem & ImportedItem & {
     jobs: TargetJob[];
 };
 
-export type JobFunc = (project: Project) => Job;
+export type JobFunc = (project: Project, t: Target) => Job;
 
 export type JobBuilderDesc = NamedItem & {
     help(): void;
@@ -368,7 +368,8 @@ export type Job = NamedItem & {
     outputs: string[];
     addOutputsToTargetSources: boolean;
     args: JobArgs;
-    func: (inputs: string[], output: string[], args: JobArgs) => Promise<void>;
+    // deno-lint-ignore no-explicit-any
+    func: (inputs: string[], output: string[], args: any) => Promise<void>;
 };
 
 export type CommandDesc = NamedItem & {
