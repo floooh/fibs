@@ -376,7 +376,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
         config: { name: config.name, platform: config.platform },
         target: { name: target.name, dir: target.dir, type: target.type, importDir: target.importDir },
     });
-    str += `source_group(TREE "${targetSourceDir}" FILES ${target.sources.join(' ')})\n`;
+    str += `source_group(TREE ${targetSourceDir} FILES ${target.sources.join(' ')})\n`;
     /* FIXME
     if (jobOutputs.length > 0) {
         str += `source_group(gen FILES ${jobOutputs.join(' ')})\n`;
