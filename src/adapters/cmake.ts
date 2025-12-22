@@ -1,6 +1,6 @@
-import { cmake, log, util } from '../lib/index.ts';
+import { cmake, log, proj, util } from '../lib/index.ts';
 import { fs } from '../../deps.ts';
-import {
+import type {
     AdapterBuildOptions,
     AdapterConfigureResult,
     AdapterDesc,
@@ -224,7 +224,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genLinkOptions(project);
     str += genAllJobsTarget(project);
     for (const target of project.targets()) {
-        str += genTarget(config, target);
+        str += genTarget(project, config, target);
         str += genTargetDependencies(target);
         str += genTargetIncludeDirectories(target);
         str += genTargetCompileDefinitions(target);
@@ -328,11 +328,8 @@ function genAllJobsTarget(project: Project): string {
     return str;
 }
 
-function genTarget(config: Config, target: Target): string {
-    let str = '';
-    // get any job outputs which need to be added as target sources
-    /* FIXME: handle job outputs!
-    const jobOutputs = proj.resolveTargetJobs(ctx).flatMap((job) => {
+function genTarget(project: Project, config: Config, target: Target): string {
+    const jobOutputs = proj.resolveTargetJobs(project, config, target).flatMap((job) => {
         if (job.addOutputsToTargetSources) {
             return job.outputs;
         } else {
@@ -344,9 +341,9 @@ function genTarget(config: Config, target: Target): string {
     for (const path of jobOutputs) {
         util.ensureFile(path);
     }
-    */
 
-    const targetSources = [...target.sources /*, ...jobOutputs*/];
+    let str = '';
+    const targetSources = [...target.sources, ...jobOutputs];
     const targetSourcesStr = targetSources.join(' ');
     let subtype = '';
     switch (target.type) {
@@ -372,11 +369,9 @@ function genTarget(config: Config, target: Target): string {
             break;
     }
     str += `source_group(TREE ${target.dir} FILES ${target.sources.join(' ')})\n`;
-    /* FIXME
     if (jobOutputs.length > 0) {
         str += `source_group(gen FILES ${jobOutputs.join(' ')})\n`;
     }
-    */
     return str;
 }
 

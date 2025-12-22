@@ -10,6 +10,7 @@ import type {
     FibsModule,
     Import,
     IncludeDirectory,
+    Job,
     JobBuilder,
     LinkOption,
     NamedItem,
@@ -23,7 +24,6 @@ import type {
     TargetJob,
     TargetType,
     Tool,
-    Job,
 } from '../types.ts';
 import { ProjectImpl } from '../impl/project.ts';
 import { ConfigurerImpl } from '../impl/configurer.ts';
@@ -186,28 +186,32 @@ export function validateTargetJob(
     return res;
 }
 
-function resolveTargetJobs(project: Project, config: Config, target: Target): Job[] {
+export function resolveTargetJobs(project: Project, config: Config, target: Target): Job[] {
     const res: Job[] = [];
     target.jobs.forEach((j) => {
         const jobBuilder = util.find(j.job, project.jobs());
         if (jobBuilder) {
             const jobFunc = jobBuilder.build(j.args);
             const job = jobFunc(project, target);
-            job.inputs = job.inputs.map((inp) => resolveTargetScopePath(inp, {
-                rootDir: project.dir(),
-                defaultAlias: '@targetdir',
-                config: { name: config.name, platform: config.platform },
-                target: { name: target.name, dir: target.dir, type: target.type, importDir: target.importDir },
-            }));
-            job.outputs = job.outputs.map((outp) => resolveTargetScopePath((outp), {
-                rootDir: project.dir(),
-                defaultAlias: '@targetdir',
-                config: { name: config.name, platform: config.platform },
-                target: { name: target.name, dir: target.dir, type: target.type, importDir: target.importDir },
-            }));
+            job.inputs = job.inputs.map((inp) =>
+                resolveTargetScopePath(inp, {
+                    rootDir: project.dir(),
+                    defaultAlias: '@targetdir',
+                    config: { name: config.name, platform: config.platform },
+                    target: { name: target.name, dir: target.dir, type: target.type, importDir: target.importDir },
+                })
+            );
+            job.outputs = job.outputs.map((outp) =>
+                resolveTargetScopePath(outp, {
+                    rootDir: project.dir(),
+                    defaultAlias: '@targetdir',
+                    config: { name: config.name, platform: config.platform },
+                    target: { name: target.name, dir: target.dir, type: target.type, importDir: target.importDir },
+                })
+            );
             res.push(job);
         } else {
-            log.warn(`resolveTargetJobs: job ${j.job} used in target ${target.name} not found!`)
+            log.warn(`resolveTargetJobs: job ${j.job} used in target ${target.name} not found!`);
         }
     });
     return res;
