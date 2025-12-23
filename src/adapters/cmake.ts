@@ -219,6 +219,7 @@ function genBuildPresets(config: Config): unknown[] {
 function genCMakeListsTxt(project: Project, config: Config): string {
     let str = '';
     str += genProlog(project);
+    str += genMisc(project);
     str += genIncludeDirectories(project);
     str += genCompileDefinitions(project);
     str += genCompileOptions(project);
@@ -232,9 +233,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
         str += genTargetCompileOptions(target);
         str += genTargetLinkOptions(target);
         str += genTargetJobDependencies(target);
-        if (project.isMsvc()) {
-            str += genTargetMsvcSpecialties(project, target);
-        }
+        str += genTargetMisc(project, target);
     }
     return str;
 }
@@ -447,13 +446,32 @@ function genTargetJobDependencies(target: Target) {
     return str;
 }
 
-function genTargetMsvcSpecialties(project: Project, target: Target) {
+function genMisc(project: Project) {
     let str = '';
-    if ((target.type === 'plain-exe') || (target.type === 'windowed-exe')) {
-        // set debug output directory to the target dist dir
-        str += `set_target_properties(${target.name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${project.targetDistDir(target.name)})\n`;
-        // write a custom command which copies any linked DLLs into the target dist dir
-        str += `add_custom_command(TARGET ${target.name} POST_BUILD COMMAND "\${CMAKE_COMMAND}" -E copy -t "$<TARGET_FILE_DIR:${target.name}>" "$<TARGET_RUNTIME_DLLS:${target.name}>" USES_TERMINAL COMMAND_EXPAND_LISTS)\n`;
+    // Linux pthread handling
+    if (project.isLinux()) {
+        str += `set(THREADS_PREFER_PTHREAD_FLAG TRUE)\n`;
+        str += `find_package(Threads)\n`;
+    }
+    return str;
+}
+
+function genTargetMisc(project: Project, target: Target) {
+    let str = '';
+    if (project.isMsvc()) {
+        if ((target.type === 'plain-exe') || (target.type === 'windowed-exe')) {
+            // set debug output directory to the target dist dir
+            str += `set_target_properties(${target.name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${project.targetDistDir(target.name)})\n`;
+            // write a custom command which copies any linked DLLs into the target dist dir
+            str +=
+                `add_custom_command(TARGET ${target.name} POST_BUILD COMMAND "\${CMAKE_COMMAND}" -E copy -t "$<TARGET_FILE_DIR:${target.name}>" "$<TARGET_RUNTIME_DLLS:${target.name}>" USES_TERMINAL COMMAND_EXPAND_LISTS)\n`;
+        }
+    }
+    if (project.isLinux()) {
+        if ((target.type === 'plain-exe') || (target.type === 'windowed-exe')) {
+            // optional -pthread flag
+            str += `target_link_libraries(${target.name} PRIVATE Threads::Threads)\n`;
+        }
     }
     return str;
 }
