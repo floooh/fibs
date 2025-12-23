@@ -91,7 +91,8 @@ export async function build(project: Project, config: Config, options: AdapterBu
     if (!util.fileExists(`${project.buildDir()}/CMakeCache.txt`)) {
         await generate(project, config);
     }
-    await cmake.build(options);
+    const { buildTarget, forceRebuild } = options;
+    await cmake.build({ target: buildTarget, forceRebuild: forceRebuild});
 }
 
 function genCMakePresetsJson(project: Project, config: Config, buildDir: string): string {
