@@ -330,7 +330,7 @@ function genAllJobsTarget(project: Project): string {
 }
 
 function genTarget(project: Project, config: Config, target: Target): string {
-    const jobOutputs = proj.resolveTargetJobs(project, config, target).flatMap((job) => {
+    const jobOutputs = proj.resolveTargetJobs(project, target).flatMap((job) => {
         if (job.addOutputsToTargetSources) {
             return job.outputs;
         } else {
