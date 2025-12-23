@@ -302,6 +302,8 @@ function doBuildSetup(project: ProjectImpl): void {
     // setup a 'bottom builder' with builtins
     const bottomBuilder = new BuilderImpl(project, projectImpl._rootDir);
     bottomBuilder.addCmakeVariable('CMAKE_RUNTIME_OUTPUT_DIRECTORY', bottomBuilder.distDir());
+    bottomBuilder.addCmakeVariable('CMAKE_C_STANDARD', '11');
+    bottomBuilder.addCmakeVariable('CMAKE_CXX_STANDARD', '14');
     builders.push(bottomBuilder);
 
     // call build method on all imports
@@ -610,7 +612,7 @@ function resolveCmakeVariables(builders: BuilderImpl[]): CmakeVariable[] {
         builder._cmakeVariables.map((v) => ({
             name: v.name,
             importDir: builder._importDir,
-            value: (typeof v.value !== 'string') ? v.value : resolvePath(builder._importDir, v.value),
+            value: v.value,
         }))
     ));
 }
