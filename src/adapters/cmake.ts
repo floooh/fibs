@@ -470,7 +470,7 @@ function genTargetMisc(project: Project, target: Target) {
     if (project.isLinux()) {
         if ((target.type === 'plain-exe') || (target.type === 'windowed-exe')) {
             // optional -pthread flag
-            str += `target_link_libraries(${target.name} PRIVATE Threads::Threads)\n`;
+            str += `target_link_libraries(${target.name} Threads::Threads)\n`;
         }
     }
     return str;
