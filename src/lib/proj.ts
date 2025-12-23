@@ -282,7 +282,7 @@ async function configureRecurseImports(
                 if (module.configure) {
                     module.configure(childConfigurer);
                 }
-                configureRecurseImports(childConfigurer, project, res);
+                await configureRecurseImports(childConfigurer, project, res);
             }
         }
     }
