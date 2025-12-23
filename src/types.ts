@@ -353,12 +353,10 @@ export type Target = NamedItem & ImportedItem & {
     jobs: TargetJob[];
 };
 
-export type JobFunc = (project: Project, t: Target) => Job;
-
 export type JobBuilderDesc = NamedItem & {
     help(): void;
     validate(args: JobArgs): { valid: boolean; hints: string[] };
-    build(args: JobArgs): JobFunc;
+    build(project: Project, target: Target, args: JobArgs): Job;
 };
 
 export type JobBuilder = ImportedItem & JobBuilderDesc;

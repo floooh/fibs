@@ -191,8 +191,7 @@ export function resolveTargetJobs(project: Project, config: Config, target: Targ
     target.jobs.forEach((j) => {
         const jobBuilder = util.find(j.job, project.jobs());
         if (jobBuilder) {
-            const jobFunc = jobBuilder.build(j.args);
-            const job = jobFunc(project, target);
+            const job = jobBuilder.build(project, target, j.args);
             job.inputs = job.inputs.map((inp) =>
                 resolveTargetScopePath(inp, {
                     rootDir: project.dir(),
