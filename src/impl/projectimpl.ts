@@ -94,10 +94,10 @@ export class ProjectImpl implements Project {
         return util.importsDir(this._rootDir);
     }
 
-    importDir(importName: string): string | undefined {
+    importDir(importName: string): string {
         const imp = util.find(importName, this._imports);
         if (imp === undefined) {
-            return undefined;
+            log.panic(`Project.importDir(): unknown import name ${importName}`);
         }
         return imp.importDir;
     }
@@ -121,6 +121,14 @@ export class ProjectImpl implements Project {
             configName = this.activeConfig().name;
         }
         return util.distDir(this._rootDir, configName);
+    }
+
+    targetDir(targetName: string): string {
+        const target = util.find(targetName, this._targets);
+        if (target === undefined) {
+            log.panic(`Project.targetDir(): Unknown target ${targetName}`);
+        }
+        return target.dir;
     }
 
     targetBuildDir(targetName: string, configName?: string): string {

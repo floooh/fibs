@@ -32,6 +32,14 @@ export class TargetBuilderImpl implements TargetBuilder {
         };
     }
 
+    name(): string {
+        return this.desc.name;
+    }
+
+    type(): TargetType {
+        return this.desc.type;
+    }
+
     setDir(dir: string): void {
         this.desc.dir = dir;
     }

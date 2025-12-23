@@ -36,7 +36,8 @@ export type Project = {
     buildDir(configName?: string): string;
     distDir(configName?: string): string;
     importsDir(): string;
-    importDir(importName: string): string | undefined;
+    importDir(importName: string): string;
+    targetDir(targetName: string): string;
     targetBuildDir(targetName: string, configName?: string): string;
     targetDistDir(targetName: string, configName?: string): string;
     targetAssetsDir(targetName: string, configName?: string): string;
@@ -125,6 +126,8 @@ export type Builder = BuilderProject & {
 };
 
 export type TargetBuilder = {
+    name(): string;
+    type(): TargetType;
     setDir(dir: string): void;
     addSource(source: string): void;
     addSources(sources: string[]): void;
@@ -341,7 +344,7 @@ export type TargetDesc = NamedItem & {
 
 export type Target = NamedItem & ImportedItem & {
     type: TargetType;
-    dir?: string;
+    dir: string;
     sources: string[];
     deps: string[];
     libs: string[];

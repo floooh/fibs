@@ -145,12 +145,11 @@ export class BuilderImpl implements Builder {
     importsDir(): string {
         return this._project.importsDir();
     }
-    importDir(importName: string): string | undefined {
-        const res = this._project.importDir(importName);
-        if (res === undefined) {
-            log.warn(`Builder.importDir(): unknown import ${importName}`);
-        }
-        return res;
+    importDir(importName: string): string {
+        return this._project.importDir(importName);
+    }
+    targetDir(targetName: string): string {
+        return this._project.targetDir(targetName);
     }
     targetBuildDir(targetName: string, configName?: string): string {
         return this._project.targetBuildDir(targetName, configName);
