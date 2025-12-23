@@ -28,7 +28,7 @@ import {
     type TargetType,
     type Tool,
 } from '../types.ts';
-import { TargetBuilderImpl } from './target.ts';
+import { TargetBuilderImpl } from './targetbuilderimpl.ts';
 
 export class BuilderImpl implements Builder {
     _project: Project;

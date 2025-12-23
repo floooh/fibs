@@ -25,9 +25,9 @@ import type {
     TargetType,
     Tool,
 } from '../types.ts';
-import { ProjectImpl } from '../impl/project.ts';
-import { ConfigurerImpl } from '../impl/configurer.ts';
-import { BuilderImpl } from '../impl/builder.ts';
+import { ProjectImpl } from '../impl/projectimpl.ts';
+import { ConfigurerImpl } from '../impl/configurerimpl.ts';
+import { BuilderImpl } from '../impl/builderimpl.ts';
 import { builtinAdapters } from '../adapters/index.ts';
 import { builtinConfigs } from '../configs/index.ts';
 import { builtinOpeners } from '../openers/index.ts';

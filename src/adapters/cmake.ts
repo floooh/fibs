@@ -92,7 +92,7 @@ export async function build(project: Project, config: Config, options: AdapterBu
         await generate(project, config);
     }
     const { buildTarget, forceRebuild } = options;
-    await cmake.build({ target: buildTarget, forceRebuild: forceRebuild});
+    await cmake.build({ target: buildTarget, forceRebuild: forceRebuild });
 }
 
 function genCMakePresetsJson(project: Project, config: Config, buildDir: string): string {
