@@ -449,9 +449,11 @@ function genTargetJobDependencies(target: Target) {
 
 function genTargetMsvcSpecialties(project: Project, target: Target) {
     let str = '';
-    // set debug output directory to the target dist dir
-    str += `set_target_properties(${target.name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${project.targetDistDir(target.name)})\n`;
-    // write a custom command which copies any linked DLLs into the target dist dir
-    str += `add_custom_command(TARGET ${target.name} POST_BUILD COMMAND "\${CMAKE_COMMAND}" -E copy -t "$<TARGET_FILE_DIR:${target.name}>" "$<TARGET_RUNTIME_DLLS:${target.name}>" USES_TERMINAL COMMAND_EXPAND_LISTS)\n`;
+    if ((target.type === 'plain-exe') || (target.type === 'windowed-exe')) {
+        // set debug output directory to the target dist dir
+        str += `set_target_properties(${target.name} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${project.targetDistDir(target.name)})\n`;
+        // write a custom command which copies any linked DLLs into the target dist dir
+        str += `add_custom_command(TARGET ${target.name} POST_BUILD COMMAND "\${CMAKE_COMMAND}" -E copy -t "$<TARGET_FILE_DIR:${target.name}>" "$<TARGET_RUNTIME_DLLS:${target.name}>" USES_TERMINAL COMMAND_EXPAND_LISTS)\n`;
+    }
     return str;
 }
