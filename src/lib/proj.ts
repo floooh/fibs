@@ -631,7 +631,8 @@ function resolvePath(rootDir: string, maybeRelativePath: string): string {
     if (path.isAbsolute(maybeRelativePath)) {
         return maybeRelativePath;
     }
-    return path.join(rootDir, maybeRelativePath);
+    // NOTE: do *NOT* use path.join() since this will use backslashes on Windows
+    return `${rootDir}/${maybeRelativePath}`;
 }
 
 /*
