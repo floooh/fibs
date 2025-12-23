@@ -242,6 +242,18 @@ export class ProjectImpl implements Project {
         return config;
     }
 
+    findCompileDefinition(name: string): CompileDefinition | undefined {
+        // first look through targets, then in the global definitions
+        for (const t of this._targets) {
+            const def = util.find(name, t.compileDefinitions);
+            if (def !== undefined) {
+                return def;
+            }
+        }
+        // finally search in global definitions
+        return util.find(name, this._compileDefinitions);
+    }
+
     findTarget(name: string | undefined): Target | undefined {
         return util.find(name, this._targets);
     }

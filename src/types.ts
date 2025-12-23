@@ -62,6 +62,9 @@ export type Project = {
 
     importOption(name: string): unknown;
 
+    /** also searches targets */
+    findCompileDefinition(name: string): CompileDefinition | undefined;
+
     findSetting(name: string | undefined): Setting | undefined;
     setting(name: string): Setting;
     findConfig(name: string | undefined): Config | undefined;
@@ -103,7 +106,15 @@ export type Project = {
 
 type BuilderProject = Omit<
     Project,
-    'targets' | 'includeDirectories' | 'compileDefinitions' | 'compileOptions' | 'linkOptions' | 'cmakeVariables' | 'cmakeIncludes' | 'dir'
+    | 'targets'
+    | 'includeDirectories'
+    | 'compileDefinitions'
+    | 'compileOptions'
+    | 'linkOptions'
+    | 'cmakeVariables'
+    | 'cmakeIncludes'
+    | 'dir'
+    | 'findCompileDefinition'
 >;
 export type Builder = BuilderProject & {
     setName(name: string): void;
