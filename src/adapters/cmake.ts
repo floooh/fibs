@@ -30,7 +30,7 @@ int main() {
 `;
 
 const cmakeConfigSource = `
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.21)
 project(hello C CXX)
 add_executable(hello hello.c)
 file(WRITE cmake_config.json "{\\"CMAKE_C_COMPILER_ID\\":\\"\${CMAKE_C_COMPILER_ID}\\",\\"CMAKE_HOST_SYSTEM_NAME\\":\\"\${CMAKE_HOST_SYSTEM_NAME}\\",\\"CMAKE_SYSTEM_PROCESSOR\\":\\"\${CMAKE_SYTEM_PROCESSOR}\\"}\\n")
@@ -99,8 +99,8 @@ function genCMakePresetsJson(project: Project, config: Config, buildDir: string)
     const preset = {
         version: 3,
         cmakeMinimumRequired: {
-            major: 4,
-            minor: 0,
+            major: 3,
+            minor: 21,
             patch: 0,
         },
         configurePresets: genConfigurePresets(project, config, buildDir),
@@ -241,7 +241,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
 
 function genProlog(project: Project): string {
     let str = '';
-    str += 'cmake_minimum_required(VERSION 4.0)\n';
+    str += 'cmake_minimum_required(VERSION 3.21)\n';
     str += `project(${project.name()} C CXX)\n`;
     str += 'set(GLOBAL PROPERTY USE_FOLDERS ON)\n';
     str += 'set(CMAKE_CONFIGURATION_TYPES Debug Release)\n';
