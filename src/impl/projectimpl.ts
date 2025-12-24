@@ -54,68 +54,37 @@ export class ProjectImpl implements Project {
         this._rootDir = rootDir;
     }
 
-    name(): string {
-        return this._name;
-    }
-
-    activeConfig(): Config {
-        return this.config(settings.get(this, 'config'));
-    }
-
-    compiler(): Compiler {
-        return this._compiler;
-    }
-
-    platform(): Platform {
-        return this.activeConfig().platform;
-    }
-
+    //=== IConfigPhaseInfo
     hostPlatform(): Platform {
         return host.platform();
     }
-
     hostArch(): Arch {
         return host.arch();
     }
-
     dir(): string {
         return this._rootDir;
     }
-
     fibsDir(): string {
         return util.fibsDir(this._rootDir);
     }
-
     sdkDir(): string {
         return util.sdkDir(this._rootDir);
     }
-
     importsDir(): string {
         return util.importsDir(this._rootDir);
     }
-
-    importDir(importName: string): string {
-        const imp = util.find(importName, this._imports);
-        if (imp === undefined) {
-            log.panic(`Project.importDir(): unknown import name ${importName}`);
-        }
-        return imp.importDir;
-    }
-
     configDir(configName?: string): string {
         if (configName === undefined) {
             configName = this.activeConfig().name;
         }
         return util.configDir(this._rootDir, configName);
     }
-
     buildDir(configName?: string): string {
         if (configName === undefined) {
             configName = this.activeConfig().name;
         }
         return util.buildDir(this._rootDir, configName);
     }
-
     distDir(configName?: string): string {
         if (configName === undefined) {
             configName = this.activeConfig().name;
@@ -123,125 +92,242 @@ export class ProjectImpl implements Project {
         return util.distDir(this._rootDir, configName);
     }
 
-    targetDir(targetName: string): string {
-        const target = util.find(targetName, this._targets);
-        if (target === undefined) {
-            log.panic(`Project.targetDir(): Unknown target ${targetName}`);
+    //=== IBuildPhaseInfo
+    activeConfig(): Config {
+        return this.config(settings.get(this, 'config'));
+    }
+    platform(): Platform {
+        return this.activeConfig().platform;
+    }
+    compiler(): Compiler {
+        return this._compiler;
+    }
+    importDir(importName: string): string {
+        const imp = util.find(importName, this._imports);
+        if (imp === undefined) {
+            log.panic(`Project.importDir(): unknown import name ${importName}`);
         }
-        return target.dir;
+        return imp.importDir;
+    }
+    importOption(name: string): unknown {
+        return this._importOptions[name];
+    }
+    settings(): Setting[] {
+        return this._settings;
+    }
+    configs(): Config[] {
+        return this._configs;
+    }
+    adapters(): Adapter[] {
+        return this._adapters;
+    }
+    commands(): Command[] {
+        return this._commands;
+    }
+    imports(): Import[] {
+        return this._imports;
+    }
+    tools(): Tool[] {
+        return this._tools;
+    }
+    jobs(): JobBuilder[] {
+        return this._jobs;
+    }
+    runners(): Runner[] {
+        return this._runners;
+    }
+    openers(): Opener[] {
+        return this._openers;
+    }
+    findSetting(name: string | undefined): Setting | undefined {
+        return util.find(name, this._settings);
+    }
+    findConfig(name: string | undefined): Config | undefined {
+        return util.find(name, this._configs);
+    }
+    findAdapter(name: string | undefined): Adapter | undefined {
+        return util.find(name, this._adapters);
+    }
+    findCommand(name: string | undefined): Command | undefined {
+        return util.find(name, this._commands);
+    }
+    findImport(name: string | undefined): Import | undefined {
+        return util.find(name, this._imports);
+    }
+    findTool(name: string | undefined): Tool | undefined {
+        return util.find(name, this._tools);
+    }
+    findRunner(name: string | undefined): Runner | undefined {
+        return util.find(name, this._runners);
+    }
+    findOpener(name: string | undefined): Opener | undefined {
+        return util.find(name, this._openers);
+    }
+    setting(name: string): Setting {
+        const setting = this.findSetting(name);
+        if (setting === undefined) {
+            log.panic(`unknown setting: ${name}`);
+        }
+        return setting;
+    }
+    config(name: string): Config {
+        const config = this.findConfig(name);
+        if (config === undefined) {
+            log.panic(`unknown config: ${name}`);
+        }
+        return config;
+    }
+    adapter(name: string): Adapter {
+        const adapter = this.findAdapter(name);
+        if (adapter === undefined) {
+            log.panic(`unknown adapter: ${name}`);
+        }
+        return adapter;
+    }
+    command(name: string): Command {
+        const command = this.findCommand(name);
+        if (command === undefined) {
+            log.panic(`unknown command: ${name}`);
+        }
+        return command;
+    }
+    import(name: string): Import {
+        const imp = this.findImport(name);
+        if (imp === undefined) {
+            log.panic(`unknown import: ${name}`);
+        }
+        return imp;
+    }
+    tool(name: string): Tool {
+        const tool = this.findTool(name);
+        if (tool === undefined) {
+            log.panic(`unknown tool: ${name}`);
+        }
+        return tool;
+    }
+    runner(name: string): Runner {
+        const runner = this.findRunner(name);
+        if (runner === undefined) {
+            log.panic(`unknown runner: ${name}`);
+        }
+        return runner;
+    }
+    opener(name: string): Opener {
+        const opener = this.findOpener(name);
+        if (opener === undefined) {
+            log.panic(`unknown opener: ${name}`);
+        }
+        return opener;
+    }
+    isPlatform(platform: Platform): boolean {
+        return this.platform() === platform;
+    }
+    isWindows(): boolean {
+        return this.platform() === 'windows';
+    }
+    isLinux(): boolean {
+        return this.platform() === 'linux';
+    }
+    isMacOS(): boolean {
+        return this.platform() === 'macos';
+    }
+    isIOS(): boolean {
+        return this.platform() === 'ios';
+    }
+    isAndroid(): boolean {
+        return this.platform() === 'android';
+    }
+    isWasi(): boolean {
+        return this.platform() === 'wasi';
+    }
+    isEmscripten(): boolean {
+        return this.platform() === 'emscripten';
+    }
+    isWasm(): boolean {
+        return this.isWasi() || this.isEmscripten();
+    }
+    isHostPlatform(platform: Platform): boolean {
+        return this.hostPlatform() === platform;
+    }
+    isHostWindows(): boolean {
+        return this.hostPlatform() === 'windows';
+    }
+    isHostLinux(): boolean {
+        return this.hostPlatform() === 'linux';
+    }
+    isHostMacOS(): boolean {
+        return this.hostPlatform() === 'macos';
+    }
+    isCompiler(compiler: Compiler): boolean {
+        return this._compiler === compiler;
+    }
+    isClang(): boolean {
+        return this._compiler === 'clang' || this._compiler === 'appleclang';
+    }
+    isAppleClang(): boolean {
+        return this._compiler === 'appleclang';
+    }
+    isMsvc(): boolean {
+        return this._compiler === 'msvc';
+    }
+    isGcc(): boolean {
+        return this._compiler === 'gcc';
     }
 
+    //=== IExecutePhaseInfo
+    name(): string {
+        return this._name;
+    }
+    targetSourceDir(targetName: string): string {
+        return this.target(targetName).dir;
+    }
     targetBuildDir(targetName: string, configName?: string): string {
         if (configName === undefined) {
             configName = this.activeConfig().name;
         }
         return util.targetBuildDir(this._rootDir, configName, targetName);
     }
-
     targetDistDir(targetName: string, configName?: string): string {
         const config = (configName === undefined) ? this.activeConfig() : this.config(configName);
         const target = this.target(targetName);
         return util.targetDistDir(this._rootDir, config.name, targetName, config.platform, target.type);
     }
-
     targetAssetsDir(targetName: string, configName?: string): string {
         const config = (configName === undefined) ? this.activeConfig() : this.config(configName);
         const target = this.target(targetName);
-        return util.targetAssetDir(this._rootDir, config.name, targetName, config.platform, target.type);
+        return util.targetAssetsDir(this._rootDir, config.name, targetName, config.platform, target.type);
     }
-
-    settings(): Setting[] {
-        return this._settings;
-    }
-
     cmakeVariables(): CmakeVariable[] {
         return this._cmakeVariables;
     }
-
     cmakeIncludes(): CmakeInclude[] {
         return this._cmakeIncludes;
     }
-
-    configs(): Config[] {
-        return this._configs;
-    }
-
     targets(): Target[] {
         return this._targets;
     }
-
-    adapters(): Adapter[] {
-        return this._adapters;
-    }
-
-    commands(): Command[] {
-        return this._commands;
-    }
-
-    imports(): Import[] {
-        return this._imports;
-    }
-
-    tools(): Tool[] {
-        return this._tools;
-    }
-
-    jobs(): JobBuilder[] {
-        return this._jobs;
-    }
-
-    runners(): Runner[] {
-        return this._runners;
-    }
-
-    openers(): Opener[] {
-        return this._openers;
-    }
-
     includeDirectories(): IncludeDirectory[] {
         return this._includeDirectories;
     }
-
     compileDefinitions(): CompileDefinition[] {
         return this._compileDefinitions;
     }
-
     compileOptions(): CompileOption[] {
         return this._compileOptions;
     }
-
     linkOptions(): LinkOption[] {
         return this._linkOptions;
     }
-
-    importOption(name: string): unknown {
-        return this._importOptions[name];
+    findTarget(name: string | undefined): Target | undefined {
+        return util.find(name, this._targets);
     }
-
-    findSetting(name: string | undefined): Setting | undefined {
-        return util.find(name, this._settings);
-    }
-
-    setting(name: string): Setting {
-        const setting = this.findSetting(name);
-        if (setting === undefined) {
-            log.panic(`unknown setting ${name} (run 'fibs list settings')`);
+    target(name: string): Target {
+        const target = this.findTarget(name);
+        if (target === undefined) {
+            log.panic(`unknown target ${name}`);
         }
-        return setting;
+        return target;
     }
-
-    findConfig(name: string | undefined): Config | undefined {
-        return util.find(name, this._configs);
-    }
-
-    config(name: string): Config {
-        const config = this.findConfig(name);
-        if (config === undefined) {
-            log.panic(`unknown config ${name} (run 'fibs list configs)`);
-        }
-        return config;
-    }
-
     findCompileDefinition(name: string): CompileDefinition | undefined {
         // first look through targets, then in the global definitions
         for (const t of this._targets) {
@@ -252,161 +338,5 @@ export class ProjectImpl implements Project {
         }
         // finally search in global definitions
         return util.find(name, this._compileDefinitions);
-    }
-
-    findTarget(name: string | undefined): Target | undefined {
-        return util.find(name, this._targets);
-    }
-
-    target(name: string): Target {
-        const target = this.findTarget(name);
-        if (target === undefined) {
-            log.panic(`unknown target ${name} (run 'fibs list targets)`);
-        }
-        return target;
-    }
-
-    findAdapter(name: string | undefined): Adapter | undefined {
-        return util.find(name, this._adapters);
-    }
-
-    adapter(name: string): Adapter {
-        const adapter = this.findAdapter(name);
-        if (adapter === undefined) {
-            log.panic(`unknown adapter ${name} (run 'fibs list adapters)`);
-        }
-        return adapter;
-    }
-
-    findCommand(name: string | undefined): Command | undefined {
-        return util.find(name, this._commands);
-    }
-
-    command(name: string): Command {
-        const command = this.findCommand(name);
-        if (command === undefined) {
-            log.panic(`unknown command ${name} (run 'fibs list commands)`);
-        }
-        return command;
-    }
-
-    findImport(name: string | undefined): Import | undefined {
-        return util.find(name, this._imports);
-    }
-
-    import(name: string): Import {
-        const imp = this.findImport(name);
-        if (imp === undefined) {
-            log.panic(`unknown import ${name} (run 'fibs list imports)`);
-        }
-        return imp;
-    }
-
-    findTool(name: string | undefined): Tool | undefined {
-        return util.find(name, this._tools);
-    }
-
-    tool(name: string): Tool {
-        const tool = this.findTool(name);
-        if (tool === undefined) {
-            log.panic(`unknown tool ${name} (run 'fibs list tools)`);
-        }
-        return tool;
-    }
-
-    findRunner(name: string | undefined): Runner | undefined {
-        return util.find(name, this._runners);
-    }
-
-    runner(name: string): Runner {
-        const runner = this.findRunner(name);
-        if (runner === undefined) {
-            log.panic(`unknown runner ${name} (run 'fibs list runners)`);
-        }
-        return runner;
-    }
-
-    findOpener(name: string | undefined): Opener | undefined {
-        return util.find(name, this._openers);
-    }
-
-    opener(name: string): Opener {
-        const opener = this.findOpener(name);
-        if (opener === undefined) {
-            log.panic(`unknown opener ${name} (run 'fibs list openers)`);
-        }
-        return opener;
-    }
-
-    isPlatform(platform: Platform): boolean {
-        return this.platform() === platform;
-    }
-
-    isWindows(): boolean {
-        return this.platform() === 'windows';
-    }
-
-    isLinux(): boolean {
-        return this.platform() === 'linux';
-    }
-
-    isMacOS(): boolean {
-        return this.platform() === 'macos';
-    }
-
-    isIOS(): boolean {
-        return this.platform() === 'ios';
-    }
-
-    isAndroid(): boolean {
-        return this.platform() === 'android';
-    }
-
-    isWasi(): boolean {
-        return this.platform() === 'wasi';
-    }
-
-    isEmscripten(): boolean {
-        return this.platform() === 'emscripten';
-    }
-
-    isWasm(): boolean {
-        return this.isWasi() || this.isEmscripten();
-    }
-
-    isHostPlatform(platform: Platform): boolean {
-        return this.hostPlatform() === platform;
-    }
-
-    isHostWindows(): boolean {
-        return this.hostPlatform() === 'windows';
-    }
-
-    isHostLinux(): boolean {
-        return this.hostPlatform() === 'linux';
-    }
-
-    isHostMacOS(): boolean {
-        return this.hostPlatform() === 'macos';
-    }
-
-    isCompiler(compiler: Compiler): boolean {
-        return this._compiler === compiler;
-    }
-
-    isClang(): boolean {
-        return this._compiler === 'clang' || this._compiler === 'appleclang';
-    }
-
-    isAppleClang(): boolean {
-        return this._compiler === 'appleclang';
-    }
-
-    isMsvc(): boolean {
-        return this._compiler === 'msvc';
-    }
-
-    isGcc(): boolean {
-        return this._compiler === 'gcc';
     }
 }

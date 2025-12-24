@@ -321,8 +321,8 @@ function doBuildSetup(project: ProjectImpl): void {
         const builder = new BuilderImpl(project, projectImpl._rootDir);
         projectImpl._rootModule.build(builder);
         // root module builder defines the project name
-        if (builder._name) {
-            projectImpl._name = builder._name;
+        if (builder._projectName) {
+            projectImpl._name = builder._projectName;
         }
         builders.push(builder);
     } else {

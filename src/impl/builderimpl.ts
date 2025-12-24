@@ -19,20 +19,19 @@ import {
     type LinkOptionsDesc,
     type Opener,
     type Platform,
-    type Project,
     type Runner,
     type Setting,
-    type Target,
     type TargetBuilder,
     type TargetDesc,
     type TargetType,
     type Tool,
 } from '../types.ts';
 import { TargetBuilderImpl } from './targetbuilderimpl.ts';
+import { ProjectImpl } from './projectimpl.ts';
 
 export class BuilderImpl implements Builder {
-    _project: Project;
-    _name: string | undefined;
+    _project: ProjectImpl;
+    _projectName: string | undefined;
     _importDir: string;
     _cmakeVariables: CmakeVariableDesc[] = [];
     _cmakeIncludes: string[] = [];
@@ -42,26 +41,15 @@ export class BuilderImpl implements Builder {
     _compileOptions: CompileOptionsDesc[] = [];
     _linkOptions: LinkOptionsDesc[] = [];
 
-    constructor(project: Project, importDir: string) {
+    constructor(project: ProjectImpl, importDir: string) {
         this._project = project;
         this._importDir = importDir;
     }
-    setName(name: string): void {
-        this._name = name;
+    selfDir(): string {
+        return this._importDir;
     }
-    addTarget(target: TargetDesc | string, type?: TargetType, fn?: (t: TargetBuilder) => void): void {
-        if (typeof target === 'string') {
-            if ((type === undefined) || (fn === undefined)) {
-                throw Error('Builder.addTarget argument mismatch');
-            }
-            const b = new TargetBuilderImpl(target, type);
-            fn(b);
-            target = b.desc;
-        }
-        if (util.find(target.name, this._targets)) {
-            log.panic(`duplicate target: ${target.name}`);
-        }
-        this._targets.push(target);
+    setProjectName(name: string): void {
+        this._projectName = name;
     }
     addCmakeVariable(name: string, value: string | boolean): void {
         if (util.find(name, this._cmakeVariables)) {
@@ -71,6 +59,20 @@ export class BuilderImpl implements Builder {
     }
     addCmakeInclude(path: string): void {
         this._cmakeIncludes.push(path);
+    }
+    addTarget(target: TargetDesc | string, type?: TargetType, fn?: (t: TargetBuilder) => void): void {
+        if (typeof target === 'string') {
+            if ((type === undefined) || (fn === undefined)) {
+                throw Error('Builder.addTarget argument mismatch');
+            }
+            const b = new TargetBuilderImpl(this._project, target, type);
+            fn(b);
+            target = b._desc;
+        }
+        if (util.find(target.name, this._targets)) {
+            log.panic(`duplicate target: ${target.name}`);
+        }
+        this._targets.push(target);
     }
     addIncludeDirectories(dirs: IncludeDirectoriesDesc | string[]): void {
         if (isIncludeDirectoriesDesc(dirs)) {
@@ -100,21 +102,8 @@ export class BuilderImpl implements Builder {
             this._linkOptions.push({ opts });
         }
     }
-    importOption(name: string): unknown {
-        return this._project.importOption(name);
-    }
-    name(): string {
-        return this._project.name();
-    }
-    activeConfig(): Config {
-        return this._project.activeConfig();
-    }
-    platform(): Platform {
-        return this._project.platform();
-    }
-    compiler(): Compiler {
-        return this._project.compiler();
-    }
+
+    //=== IConfigPhaseInfo
     hostPlatform(): Platform {
         return this._project.hostPlatform();
     }
@@ -124,14 +113,14 @@ export class BuilderImpl implements Builder {
     projectDir(): string {
         return this._project.dir();
     }
-    selfDir(): string {
-        return this._importDir;
-    }
     fibsDir(): string {
         return this._project.fibsDir();
     }
     sdkDir(): string {
         return this._project.sdkDir();
+    }
+    importsDir(): string {
+        return this._project.importsDir();
     }
     configDir(configName?: string): string {
         return this._project.configDir(configName);
@@ -142,23 +131,22 @@ export class BuilderImpl implements Builder {
     distDir(configName?: string): string {
         return this._project.distDir(configName);
     }
-    importsDir(): string {
-        return this._project.importsDir();
+
+    //=== IBuildPhaseInfo
+    activeConfig(): Config {
+        return this._project.activeConfig();
+    }
+    platform(): Platform {
+        return this._project.platform();
+    }
+    compiler(): Compiler {
+        return this._project.compiler();
     }
     importDir(importName: string): string {
         return this._project.importDir(importName);
     }
-    targetDir(targetName: string): string {
-        return this._project.targetDir(targetName);
-    }
-    targetBuildDir(targetName: string, configName?: string): string {
-        return this._project.targetBuildDir(targetName, configName);
-    }
-    targetDistDir(targetName: string, configName?: string): string {
-        return this._project.targetDistDir(targetName, configName);
-    }
-    targetAssetsDir(targetName: string, configName?: string): string {
-        return this._project.targetAssetsDir(targetName, configName);
+    importOption(name: string): unknown {
+        return this._project.importOption(name);
     }
     settings(): Setting[] {
         return this._project.settings();
@@ -190,53 +178,47 @@ export class BuilderImpl implements Builder {
     findSetting(name: string | undefined): Setting | undefined {
         return this._project.findSetting(name);
     }
-    setting(name: string): Setting {
-        return this._project.setting(name);
-    }
     findConfig(name: string | undefined): Config | undefined {
         return this._project.findConfig(name);
-    }
-    config(name: string): Config {
-        return this._project.config(name);
-    }
-    findTarget(name: string | undefined): Target | undefined {
-        return this._project.findTarget(name);
-    }
-    target(name: string): Target {
-        return this._project.target(name);
     }
     findAdapter(name: string | undefined): Adapter | undefined {
         return this._project.findAdapter(name);
     }
-    adapter(name: string): Adapter {
-        return this._project.adapter(name);
-    }
     findCommand(name: string | undefined): Command | undefined {
         return this._project.findCommand(name);
-    }
-    command(name: string): Command {
-        return this._project.command(name);
     }
     findImport(name: string | undefined): Import | undefined {
         return this._project.findImport(name);
     }
-    import(name: string): Import {
-        return this._project.import(name);
-    }
     findTool(name: string | undefined): Tool | undefined {
         return this._project.findTool(name);
-    }
-    tool(name: string): Tool {
-        return this._project.tool(name);
     }
     findRunner(name: string | undefined): Runner | undefined {
         return this._project.findRunner(name);
     }
-    runner(name: string): Runner {
-        return this._project.runner(name);
-    }
     findOpener(name: string | undefined): Opener | undefined {
         return this._project.findOpener(name);
+    }
+    setting(name: string): Setting {
+        return this._project.setting(name);
+    }
+    config(name: string): Config {
+        return this._project.config(name);
+    }
+    adapter(name: string): Adapter {
+        return this._project.adapter(name);
+    }
+    command(name: string): Command {
+        return this._project.command(name);
+    }
+    import(name: string): Import {
+        return this._project.import(name);
+    }
+    tool(name: string): Tool {
+        return this._project.tool(name);
+    }
+    runner(name: string): Runner {
+        return this._project.runner(name);
     }
     opener(name: string): Opener {
         return this._project.opener(name);

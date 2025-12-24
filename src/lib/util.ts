@@ -76,7 +76,7 @@ export function targetDistDir(
     }
 }
 
-export function targetAssetDir(
+export function targetAssetsDir(
     rootDir: string,
     configName: string,
     targetName: string,

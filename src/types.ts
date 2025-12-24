@@ -1,52 +1,24 @@
-export type Configurer = {
-    addImportOptions(func: (p: Project) => Record<string, unknown>): void;
-    addImport(imp: ImportDesc): void;
-    addCommand(cmd: CommandDesc): void;
-    addJob(job: JobBuilderDesc): void;
-    addTool(tool: ToolDesc): void;
-    addRunner(runner: RunnerDesc): void;
-    addOpener(opener: OpenerDesc): void;
-    addAdapter(adapter: AdapterDesc): void;
-    addSetting(setting: SettingDesc): void;
-    addConfig(config: ConfigDesc): void;
-
+type IConfigPhaseInfo = {
     hostPlatform(): Platform;
     hostArch(): Arch;
-    projectDir(): string;
     fibsDir(): string;
     sdkDir(): string;
     importsDir(): string;
-    configDir(configName: string): string;
-    buildDir(configName: string): string;
-    distDir(configName: string): string;
-};
-
-export type Project = {
-    name(): string;
-    activeConfig(): Config;
-    platform(): Platform;
-    compiler(): Compiler;
-    hostPlatform(): Platform;
-    hostArch(): Arch;
-
-    dir(): string;
-    fibsDir(): string;
-    sdkDir(): string;
     configDir(configName?: string): string;
     buildDir(configName?: string): string;
     distDir(configName?: string): string;
-    importsDir(): string;
+};
+
+type IBuildPhaseInfo = IConfigPhaseInfo & {
+    activeConfig(): Config;
+    platform(): Platform;
+    compiler(): Compiler;
+
     importDir(importName: string): string;
-    targetDir(targetName: string): string;
-    targetBuildDir(targetName: string, configName?: string): string;
-    targetDistDir(targetName: string, configName?: string): string;
-    targetAssetsDir(targetName: string, configName?: string): string;
+    importOption(name: string): unknown;
 
     settings(): Setting[];
-    cmakeVariables(): CmakeVariable[];
-    cmakeIncludes(): CmakeInclude[];
     configs(): Config[];
-    targets(): Target[];
     adapters(): Adapter[];
     commands(): Command[];
     imports(): Import[];
@@ -55,33 +27,22 @@ export type Project = {
     runners(): Runner[];
     openers(): Opener[];
 
-    includeDirectories(): IncludeDirectory[];
-    compileDefinitions(): CompileDefinition[];
-    compileOptions(): CompileOption[];
-    linkOptions(): LinkOption[];
-
-    importOption(name: string): unknown;
-
-    /** also searches targets */
-    findCompileDefinition(name: string): CompileDefinition | undefined;
-
     findSetting(name: string | undefined): Setting | undefined;
-    setting(name: string): Setting;
     findConfig(name: string | undefined): Config | undefined;
-    config(name: string): Config;
-    findTarget(name: string | undefined): Target | undefined;
-    target(name: string): Target;
     findAdapter(name: string | undefined): Adapter | undefined;
-    adapter(name: string): Adapter;
     findCommand(name: string | undefined): Command | undefined;
-    command(name: string): Command;
     findImport(name: string | undefined): Import | undefined;
-    import(name: string): Import;
     findTool(name: string | undefined): Tool | undefined;
-    tool(name: string): Tool;
     findRunner(name: string | undefined): Runner | undefined;
-    runner(name: string): Runner;
     findOpener(name: string | undefined): Opener | undefined;
+
+    setting(name: string): Setting;
+    config(name: string): Config;
+    adapter(name: string): Adapter;
+    command(name: string): Command;
+    import(name: string): Import;
+    tool(name: string): Tool;
+    runner(name: string): Runner;
     opener(name: string): Opener;
 
     isPlatform(platform: Platform): boolean;
@@ -104,22 +65,51 @@ export type Project = {
     isGcc(): boolean;
 };
 
-type BuilderProject = Omit<
-    Project,
-    | 'targets'
-    | 'includeDirectories'
-    | 'compileDefinitions'
-    | 'compileOptions'
-    | 'linkOptions'
-    | 'cmakeVariables'
-    | 'cmakeIncludes'
-    | 'dir'
-    | 'findCompileDefinition'
->;
-export type Builder = BuilderProject & {
-    setName(name: string): void;
+type IExecutePhaseInfo = IBuildPhaseInfo & {
+    name(): string;
+    targetSourceDir(targetName: string): string;
+    targetBuildDir(targetName: string, configName?: string): string;
+    targetDistDir(targetName: string, configName?: string): string;
+    targetAssetsDir(targetName: string, configName?: string): string;
+    cmakeVariables(): CmakeVariable[];
+    cmakeIncludes(): CmakeInclude[];
+    targets(): Target[];
+    includeDirectories(): IncludeDirectory[];
+    compileDefinitions(): CompileDefinition[];
+    compileOptions(): CompileOption[];
+    linkOptions(): LinkOption[];
+
+    findTarget(name: string | undefined): Target | undefined;
+    target(name: string): Target;
+
+    findCompileDefinition(name: string): CompileDefinition | undefined;
+};
+
+export type Configurer = IConfigPhaseInfo & {
+    projectDir(): string;
+    selfDir(): string;
+
+    addImportOptions(func: (p: Project) => Record<string, unknown>): void;
+    addImport(imp: ImportDesc): void;
+    addCommand(cmd: CommandDesc): void;
+    addJob(job: JobBuilderDesc): void;
+    addTool(tool: ToolDesc): void;
+    addRunner(runner: RunnerDesc): void;
+    addOpener(opener: OpenerDesc): void;
+    addAdapter(adapter: AdapterDesc): void;
+    addSetting(setting: SettingDesc): void;
+    addConfig(config: ConfigDesc): void;
+};
+
+export type Builder = IBuildPhaseInfo & {
+    projectDir(): string;
+    selfDir(): string;
+
+    setProjectName(name: string): void;
     addCmakeVariable(name: string, value: string | boolean): void;
     addCmakeInclude(path: string): void;
+    addTarget(target: TargetDesc): void;
+    addTarget(name: string, type: TargetType, fn: (t: TargetBuilder) => void): void;
     addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
     addIncludeDirectories(dirs: string[]): void;
     addCompileDefinitions(defs: CompileDefinitionsDesc): void;
@@ -128,17 +118,15 @@ export type Builder = BuilderProject & {
     addCompileOptions(opts: string[]): void;
     addLinkOptions(opts: LinkOptionsDesc): void;
     addLinkOptions(opts: string[]): void;
-    addTarget(target: TargetDesc): void;
-    addTarget(name: string, type: TargetType, fn: (t: TargetBuilder) => void): void;
-
-    projectDir(): string;
-    selfDir(): string;
-    importOption(name: string): unknown;
 };
 
 export type TargetBuilder = {
     name(): string;
     type(): TargetType;
+    buildDir(configName?: string): string;
+    distDir(configName?: string): string;
+    assetsDir(configName?: string): string;
+
     setDir(dir: string): void;
     addSource(source: string): void;
     addSources(sources: string[]): void;
@@ -155,6 +143,10 @@ export type TargetBuilder = {
     addLinkOptions(opts: string[]): void;
     addJob(job: TargetJob): void;
 };
+
+export type Project = IExecutePhaseInfo & {
+    dir(): string;
+}
 
 export type FibsModule = {
     configure?(c: Configurer): void;

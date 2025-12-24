@@ -12,12 +12,16 @@ import {
     type TargetJob,
     type TargetType,
 } from '../types.ts';
+import { ProjectImpl } from './projectimpl.ts';
+import { util } from '../lib/index.ts';
 
 export class TargetBuilderImpl implements TargetBuilder {
-    desc: TargetDesc;
+    _project: ProjectImpl;
+    _desc: TargetDesc;
 
-    constructor(name: string, type: TargetType) {
-        this.desc = {
+    constructor(project: ProjectImpl, name: string, type: TargetType) {
+        this._project = project;
+        this._desc = {
             name,
             type,
             sources: [],
@@ -33,70 +37,73 @@ export class TargetBuilderImpl implements TargetBuilder {
     }
 
     name(): string {
-        return this.desc.name;
+        return this._desc.name;
     }
-
     type(): TargetType {
-        return this.desc.type;
+        return this._desc.type;
+    }
+    buildDir(configName?: string): string {
+        if (configName === undefined) {
+            configName = this._project.activeConfig().name;
+        }
+        return util.targetBuildDir(this._project._rootDir, configName, this._desc.name);
+    }
+    distDir(configName?: string): string {
+        const config = (configName === undefined) ? this._project.activeConfig() : this._project.config(configName);
+        return util.targetDistDir(this._project._rootDir, config.name, this._desc.name, config.platform, this._desc.type);
+    }
+    assetsDir(configName?: string): string {
+        const config = (configName === undefined) ? this._project.activeConfig() : this._project.config(configName);
+        return util.targetAssetsDir(this._project._rootDir, config.name, this._desc.name, config.platform, this._desc.type);
     }
 
     setDir(dir: string): void {
-        this.desc.dir = dir;
+        this._desc.dir = dir;
     }
-
     addSource(src: string): void {
-        this.desc.sources!.push(src);
+        this._desc.sources!.push(src);
     }
-
     addSources(sources: string[]): void {
-        this.desc.sources!.push(...sources);
+        this._desc.sources!.push(...sources);
     }
-
     addDependencies(deps: string[]): void {
-        this.desc.deps!.push(...deps);
+        this._desc.deps!.push(...deps);
     }
-
     addLibraries(libs: string[]): void {
-        this.desc.libs!.push(...libs);
+        this._desc.libs!.push(...libs);
     }
-
     addFrameworks(frameworks: string[]): void {
-        this.desc.frameworks!.push(...frameworks);
+        this._desc.frameworks!.push(...frameworks);
     }
-
     addIncludeDirectories(dirs: IncludeDirectoriesDesc | string[]): void {
         if (isIncludeDirectoriesDesc(dirs)) {
-            this.desc.includeDirectories!.push(dirs);
+            this._desc.includeDirectories!.push(dirs);
         } else {
-            this.desc.includeDirectories!.push({ dirs });
+            this._desc.includeDirectories!.push({ dirs });
         }
     }
-
     addCompileDefinitions(defs: CompileDefinitionsDesc | Record<string, string>): void {
         if (isCompileDefinitionsDesc(defs)) {
-            this.desc.compileDefinitions!.push(defs);
+            this._desc.compileDefinitions!.push(defs);
         } else {
-            this.desc.compileDefinitions!.push({ defs });
+            this._desc.compileDefinitions!.push({ defs });
         }
     }
-
     addCompileOptions(opts: CompileOptionsDesc | string[]): void {
         if (isCompileOptionsDesc(opts)) {
-            this.desc.compileOptions!.push(opts);
+            this._desc.compileOptions!.push(opts);
         } else {
-            this.desc.compileOptions!.push({ opts });
+            this._desc.compileOptions!.push({ opts });
         }
     }
-
     addLinkOptions(opts: LinkOptionsDesc | string[]): void {
         if (isLinkOptionsDesc(opts)) {
-            this.desc.linkOptions!.push(opts);
+            this._desc.linkOptions!.push(opts);
         } else {
-            this.desc.linkOptions!.push({ opts });
+            this._desc.linkOptions!.push({ opts });
         }
     }
-
     addJob(job: TargetJob): void {
-        this.desc.jobs!.push(job);
+        this._desc.jobs!.push(job);
     }
 }
