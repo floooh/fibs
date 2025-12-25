@@ -372,7 +372,7 @@ export type Target = NamedItem & ImportedItem & {
 export type JobBuilderDesc = NamedItem & {
     help(): void;
     validate(args: JobArgs): { valid: boolean; hints: string[] };
-    build(project: Project, target: Target, args: JobArgs): Job;
+    build(project: Project, config: Config, target: Target, args: JobArgs): Job;
 };
 
 export type JobBuilder = ImportedItem & JobBuilderDesc;

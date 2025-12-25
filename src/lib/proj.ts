@@ -196,12 +196,12 @@ export function validateTargetJob(
     return res;
 }
 
-export function resolveTargetJobs(project: Project, target: Target): Job[] {
+export function resolveTargetJobs(project: Project, config: Config, target: Target): Job[] {
     const res: Job[] = [];
     target.jobs.forEach((j) => {
         const jobBuilder = util.find(j.job, project.jobs());
         if (jobBuilder) {
-            const job = jobBuilder.build(project, target, j.args);
+            const job = jobBuilder.build(project, config, target, j.args);
             job.inputs = job.inputs.map((inp) => resolvePath(target.dir, inp));
             job.outputs = job.outputs.map((outp) => resolvePath(target.dir, outp));
             res.push(job);
@@ -212,8 +212,8 @@ export function resolveTargetJobs(project: Project, target: Target): Job[] {
     return res;
 }
 
-export async function runJobs(project: Project, target: Target) {
-    const jobs = resolveTargetJobs(project, target);
+export async function runJobs(project: Project, config: Config, target: Target) {
+    const jobs = resolveTargetJobs(project, config, target);
     for (const job of jobs) {
         try {
             await job.func(job.inputs, job.outputs, job.args);

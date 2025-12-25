@@ -229,7 +229,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genCompileDefinitions(project);
     str += genCompileOptions(project);
     str += genLinkOptions(project);
-    str += genAllJobsTarget(project);
+    str += genAllJobsTarget(project, config);
     for (const target of project.targets()) {
         str += genTarget(project, config, target);
         str += genTargetDependencies(target);
@@ -318,7 +318,7 @@ function genLinkOptions(project: Project): string {
     return str;
 }
 
-function genAllJobsTarget(project: Project): string {
+function genAllJobsTarget(project: Project, config: Config): string {
     let str = '';
     // first check if there are any jobs
     let hasJobs: boolean = false;
@@ -331,13 +331,13 @@ function genAllJobsTarget(project: Project): string {
     if (hasJobs) {
         str += `find_program(DENO deno REQUIRED)\n`;
         str +=
-            `add_custom_target(ALL_JOBS COMMAND \${DENO} run --allow-all --no-config fibs.ts runjobs WORKING_DIRECTORY ${project.dir()})\n`;
+            `add_custom_target(ALL_JOBS COMMAND \${DENO} run --allow-all --no-config fibs.ts runjobs ${config.name} WORKING_DIRECTORY ${project.dir()})\n`;
     }
     return str;
 }
 
 function genTarget(project: Project, config: Config, target: Target): string {
-    const jobOutputs = proj.resolveTargetJobs(project, target).flatMap((job) => {
+    const jobOutputs = proj.resolveTargetJobs(project, config, target).flatMap((job) => {
         if (job.addOutputsToTargetSources) {
             return job.outputs;
         } else {
