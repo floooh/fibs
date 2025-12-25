@@ -12,10 +12,8 @@ function help() {
 }
 
 async function run(project: Project) {
-    proj.configureTargets();
-    await Promise.all(
-        project.targets().map(async (target): Promise<void> => {
-            proj.runJobs(project, target);
-        }),
-    );
+    await proj.configureTargets();
+    for (const target of project.targets()) {
+        await proj.runJobs(project, target);
+    }
 }
