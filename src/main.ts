@@ -1,7 +1,6 @@
-import { log, util } from './lib/index.ts';
+import { log, util, proj, settings } from './lib/index.ts';
 import { assertFibsModule, type Project } from './types.ts';
 import { resetCmd } from './commands/reset.ts';
-import { configure } from './lib/proj.ts';
 
 export async function main(importMeta: ImportMeta) {
     if (!importMeta.main) {
@@ -28,12 +27,13 @@ export async function main(importMeta: ImportMeta) {
         assertFibsModule(rootModule);
 
         // run configure-pass (with special-case to avoid redundant target config on changing the config)
+        const project = await proj.configure(rootModule, rootDir);
+        settings.load(project);
+
         const cmdName = Deno.args[0];
-        const configureWithTargets = cmdName != 'config';
-        const project = await configure(rootModule, rootDir, configureWithTargets);
+        const cmd = project.command(cmdName);
 
         // invoke the requested command
-        const cmd = project.command(cmdName);
         if (!skipCmd) {
             await cmd.run(project);
         }

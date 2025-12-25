@@ -1,5 +1,5 @@
 import { log, util } from './index.ts';
-import type { Config, Project } from '../types.ts';
+import type { Project, Config } from '../types.ts';
 
 export async function validate(
     project: Project,

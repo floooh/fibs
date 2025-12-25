@@ -1,4 +1,4 @@
-import { log } from '../lib/index.ts';
+import { log, proj } from '../lib/index.ts';
 import type { CommandDesc, Project } from '../types.ts';
 
 export const runCmd: CommandDesc = { name: 'run', help, run };
@@ -15,6 +15,7 @@ async function run(project: Project) {
         log.panic("no target provided (run 'fibs help run')");
     }
     const name = Deno.args[1];
+    await proj.configureTargets();
     const target = project.target(name);
     if (target.type !== 'plain-exe' && target.type !== 'windowed-exe') {
         log.panic(`target '${name}' is not an executable (run 'fibs list targets)`);

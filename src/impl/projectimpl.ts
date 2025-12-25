@@ -1,30 +1,32 @@
-import type {
-    Adapter,
-    Arch,
-    CmakeInclude,
-    CmakeVariable,
-    Command,
-    CompileDefinition,
-    CompileOption,
-    Compiler,
-    Config,
-    FibsModule,
-    Import,
-    IncludeDirectory,
-    JobBuilder,
-    LinkOption,
-    Opener,
-    Platform,
-    Project,
-    Runner,
-    Setting,
-    Target,
-    Tool,
+import {
+    type Adapter,
+    type Arch,
+    type CmakeInclude,
+    type CmakeVariable,
+    type Command,
+    type CompileDefinition,
+    type CompileOption,
+    type Compiler,
+    type Config,
+    type FibsModule,
+    type Import,
+    type IncludeDirectory,
+    type JobBuilder,
+    type LinkOption,
+    type Opener,
+    type Platform,
+    type Project,
+    type Runner,
+    type Setting,
+    type Target,
+    type Tool,
+    ProjectPhase,
 } from '../types.ts';
 import { host, log, settings, util } from '../lib/index.ts';
 import { path } from '../../deps.ts';
 
 export class ProjectImpl implements Project {
+    _phase: ProjectPhase;
     _name: string;
     _rootModule: FibsModule;
     _rootDir: string;
@@ -49,43 +51,70 @@ export class ProjectImpl implements Project {
     _settings: Setting[] = [];
 
     constructor(rootModule: FibsModule, rootDir: string) {
+        this._phase = ProjectPhase.Initial;
         this._name = path.basename(rootDir);
         this._rootModule = rootModule;
         this._rootDir = rootDir;
     }
 
+    phase(): ProjectPhase {
+        return this._phase;
+    }
+    assertPhaseExact(phase: ProjectPhase): void {
+        if (this._phase !== phase) {
+            throw new Error(`Expected project phase ${phase}, but current phase is ${this._phase}`);
+        }
+    }
+    assertPhaseAtLeast(phase: ProjectPhase): void {
+        if (this._phase < phase) {
+            throw new Error(`Expected project phase to be at least ${phase}, but current phase is ${this._phase}`);
+        }
+    }
+    setPhase(phase: ProjectPhase): void {
+        this._phase = phase;
+    }
+
     //=== IConfigPhaseInfo
     hostPlatform(): Platform {
+        this.assertPhaseAtLeast(ProjectPhase.Configure);
         return host.platform();
     }
     hostArch(): Arch {
+        this.assertPhaseAtLeast(ProjectPhase.Configure);
         return host.arch();
     }
     dir(): string {
+        this.assertPhaseAtLeast(ProjectPhase.Configure);
         return this._rootDir;
     }
     fibsDir(): string {
+        this.assertPhaseAtLeast(ProjectPhase.Configure);
         return util.fibsDir(this._rootDir);
     }
     sdkDir(): string {
+        this.assertPhaseAtLeast(ProjectPhase.Configure);
         return util.sdkDir(this._rootDir);
     }
     importsDir(): string {
+        this.assertPhaseAtLeast(ProjectPhase.Configure);
         return util.importsDir(this._rootDir);
     }
     configDir(configName?: string): string {
+        this.assertPhaseAtLeast(ProjectPhase.Configure);
         if (configName === undefined) {
             configName = this.activeConfig().name;
         }
         return util.configDir(this._rootDir, configName);
     }
     buildDir(configName?: string): string {
+        this.assertPhaseAtLeast(ProjectPhase.Configure);
         if (configName === undefined) {
             configName = this.activeConfig().name;
         }
         return util.buildDir(this._rootDir, configName);
     }
     distDir(configName?: string): string {
+        this.assertPhaseAtLeast(ProjectPhase.Configure);
         if (configName === undefined) {
             configName = this.activeConfig().name;
         }
@@ -94,15 +123,19 @@ export class ProjectImpl implements Project {
 
     //=== IBuildPhaseInfo
     activeConfig(): Config {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return this.config(settings.get(this, 'config'));
     }
     platform(): Platform {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return this.activeConfig().platform;
     }
     compiler(): Compiler {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._compiler;
     }
     importDir(importName: string): string {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         const imp = util.find(importName, this._imports);
         if (imp === undefined) {
             log.panic(`Project.importDir(): unknown import name ${importName}`);
@@ -110,57 +143,75 @@ export class ProjectImpl implements Project {
         return imp.importDir;
     }
     importOption(name: string): unknown {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._importOptions[name];
     }
     settings(): Setting[] {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._settings;
     }
     configs(): Config[] {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._configs;
     }
     adapters(): Adapter[] {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._adapters;
     }
     commands(): Command[] {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._commands;
     }
     imports(): Import[] {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._imports;
     }
     tools(): Tool[] {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._tools;
     }
     jobs(): JobBuilder[] {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._jobs;
     }
     runners(): Runner[] {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._runners;
     }
     openers(): Opener[] {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._openers;
     }
     findSetting(name: string | undefined): Setting | undefined {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._settings);
     }
     findConfig(name: string | undefined): Config | undefined {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._configs);
     }
     findAdapter(name: string | undefined): Adapter | undefined {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._adapters);
     }
     findCommand(name: string | undefined): Command | undefined {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._commands);
     }
     findImport(name: string | undefined): Import | undefined {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._imports);
     }
     findTool(name: string | undefined): Tool | undefined {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._tools);
     }
     findRunner(name: string | undefined): Runner | undefined {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._runners);
     }
     findOpener(name: string | undefined): Opener | undefined {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._openers);
     }
     setting(name: string): Setting {
@@ -276,49 +327,62 @@ export class ProjectImpl implements Project {
 
     //=== IExecutePhaseInfo
     name(): string {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         return this._name;
     }
     targetSourceDir(targetName: string): string {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         return this.target(targetName).dir;
     }
     targetBuildDir(targetName: string, configName?: string): string {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         if (configName === undefined) {
             configName = this.activeConfig().name;
         }
         return util.targetBuildDir(this._rootDir, configName, targetName);
     }
     targetDistDir(targetName: string, configName?: string): string {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         const config = (configName === undefined) ? this.activeConfig() : this.config(configName);
         const target = this.target(targetName);
         return util.targetDistDir(this._rootDir, config.name, targetName, config.platform, target.type);
     }
     targetAssetsDir(targetName: string, configName?: string): string {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         const config = (configName === undefined) ? this.activeConfig() : this.config(configName);
         const target = this.target(targetName);
         return util.targetAssetsDir(this._rootDir, config.name, targetName, config.platform, target.type);
     }
     cmakeVariables(): CmakeVariable[] {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         return this._cmakeVariables;
     }
     cmakeIncludes(): CmakeInclude[] {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         return this._cmakeIncludes;
     }
     targets(): Target[] {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         return this._targets;
     }
     includeDirectories(): IncludeDirectory[] {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         return this._includeDirectories;
     }
     compileDefinitions(): CompileDefinition[] {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         return this._compileDefinitions;
     }
     compileOptions(): CompileOption[] {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         return this._compileOptions;
     }
     linkOptions(): LinkOption[] {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         return this._linkOptions;
     }
     findTarget(name: string | undefined): Target | undefined {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         return util.find(name, this._targets);
     }
     target(name: string): Target {
@@ -329,6 +393,7 @@ export class ProjectImpl implements Project {
         return target;
     }
     findCompileDefinition(name: string): CompileDefinition | undefined {
+        this.assertPhaseAtLeast(ProjectPhase.Execute);
         // first look through targets, then in the global definitions
         for (const t of this._targets) {
             const def = util.find(name, t.compileDefinitions);

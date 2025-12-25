@@ -39,6 +39,7 @@ async function run(project: Project) {
             log.print();
         }
     };
+    await proj.configureTargets();
     await diag('fibs', diagFibs);
     await diag('tools', diagTools);
     await diag('configs', diagConfigs);

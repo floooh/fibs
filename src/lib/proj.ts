@@ -1,27 +1,28 @@
-import { host, log, settings, util } from './index.ts';
-import type {
-    Adapter,
-    CmakeInclude,
-    CmakeVariable,
-    Command,
-    CompileDefinition,
-    CompileOption,
-    Config,
-    FibsModule,
-    Import,
-    IncludeDirectory,
-    Job,
-    JobBuilder,
-    LinkOption,
-    NamedItem,
-    Opener,
-    Project,
-    Runner,
-    Setting,
-    Target,
-    TargetDesc,
-    TargetJob,
-    Tool,
+import { host, log, util } from './index.ts';
+import {
+    type Adapter,
+    type CmakeInclude,
+    type CmakeVariable,
+    type Command,
+    type CompileDefinition,
+    type CompileOption,
+    type Config,
+    type FibsModule,
+    type Import,
+    type IncludeDirectory,
+    type Job,
+    type JobBuilder,
+    type LinkOption,
+    type NamedItem,
+    type Opener,
+    type Project,
+    type Runner,
+    type Setting,
+    type Target,
+    type TargetDesc,
+    type TargetJob,
+    type Tool,
+    ProjectPhase,
 } from '../types.ts';
 import { ProjectImpl } from '../impl/projectimpl.ts';
 import { ConfigurerImpl } from '../impl/configurerimpl.ts';
@@ -37,35 +38,36 @@ import { path } from '../../deps.ts';
 
 let projectImpl: ProjectImpl;
 
-export async function configure(rootModule: FibsModule, rootDir: string, withTargets: boolean): Promise<Project> {
+export async function configure(rootModule: FibsModule, rootDir: string): Promise<Project> {
     projectImpl = new ProjectImpl(rootModule, rootDir);
+    projectImpl.setPhase(ProjectPhase.Configure);
     await doConfigure(rootModule, projectImpl);
-    if (withTargets) {
-        await configureTargets();
-    }
     return projectImpl;
 }
 
-export async function generate(): Promise<void> {
-    await configureTargets();
+export async function configureTargets(): Promise<void> {
+    projectImpl.assertPhaseExact(ProjectPhase.Configure);
+    projectImpl.setPhase(ProjectPhase.Build);
     const adapter = projectImpl.adapter('cmake');
-    const config = projectImpl.activeConfig();
-    await adapter.generate(projectImpl, config);
+    const configRes = await adapter.configure(projectImpl);
+    projectImpl._compiler = configRes.compiler;
+    doBuildSetup(projectImpl);
+    projectImpl.setPhase(ProjectPhase.Execute);
+}
+
+export async function generate(): Promise<void> {
+    if (projectImpl.phase() !== ProjectPhase.Execute) {
+        await configureTargets();
+    }
+    const adapter = projectImpl.adapter('cmake');
+    await adapter.generate(projectImpl);
 }
 
 export async function build(options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void> {
+    projectImpl.assertPhaseExact(ProjectPhase.Execute);
     const { buildTarget, forceRebuild } = options;
     const adapter = projectImpl.adapter('cmake');
-    const config = projectImpl.activeConfig();
-    await adapter.build(projectImpl, config, { buildTarget, forceRebuild });
-}
-
-async function configureTargets(): Promise<void> {
-    const adapter = projectImpl.adapter('cmake');
-    const config = projectImpl.activeConfig();
-    const configRes = await adapter.configure(projectImpl, config);
-    projectImpl._compiler = configRes.compiler;
-    doBuildSetup(projectImpl);
+    await adapter.build(projectImpl, { buildTarget, forceRebuild });
 }
 
 export function validateTarget(
@@ -240,7 +242,6 @@ async function doConfigure(rootModule: FibsModule, project: ProjectImpl): Promis
     project._adapters = resolveAdapters(configurers);
     project._configs = resolveConfigs(configurers, project);
     project._importOptionsFuncs = resolveImportOptionsFuncs(configurers);
-    settings.load(project);
 }
 
 function configureBuiltins(project: ProjectImpl): ConfigurerImpl {

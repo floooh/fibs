@@ -16,7 +16,6 @@ async function run(project: Project) {
     if (imports.hasImportErrors(project)) {
         log.panic('import errors detected');
     }
-    const config = project.activeConfig();
     let forceRebuild = false;
     let buildTarget;
     for (const arg of Deno.args.slice(1)) {
@@ -30,6 +29,7 @@ async function run(project: Project) {
             buildTarget = project.target(arg).name;
         }
     }
-    await conf.validate(project, config, { silent: false, abortOnError: true });
+    await proj.configureTargets();
+    await conf.validate(project, project.activeConfig(), { silent: false, abortOnError: true });
     await proj.build({ forceRebuild, buildTarget });
 }

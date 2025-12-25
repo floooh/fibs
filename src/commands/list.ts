@@ -1,4 +1,4 @@
-import { imports, log } from '../lib/index.ts';
+import { imports, log, proj } from '../lib/index.ts';
 import type { CommandDesc, Project, TargetType } from '../types.ts';
 import { colors } from '../../deps.ts';
 
@@ -83,6 +83,7 @@ async function run(project: Project): Promise<void> {
         log.section('targets');
     }
     if (args.all || (args.targetTypes.length > 0)) {
+        await proj.configureTargets();
         const types = allTargetTypes;
         for (const type of types) {
             for (const target of project.targets()) {

@@ -1,3 +1,10 @@
+export enum ProjectPhase {
+    Initial = 0,
+    Configure = 1,
+    Build = 2,
+    Execute = 3,
+}
+
 type IConfigPhaseInfo = {
     hostPlatform(): Platform;
     hostArch(): Arch;
@@ -146,6 +153,9 @@ export type TargetBuilder = {
 
 export type Project = IExecutePhaseInfo & {
     dir(): string;
+    phase(): ProjectPhase;
+    setPhase(phase: ProjectPhase): void;
+    assertPhaseExact(phase: ProjectPhase): void;
 }
 
 export type FibsModule = {
@@ -439,8 +449,8 @@ export type AdapterBuildOptions = {
 };
 
 export type AdapterDesc = NamedItem & {
-    configure(project: Project, config: Config): Promise<AdapterConfigureResult>;
-    generate(project: Project, config: Config): Promise<void>;
-    build(project: Project, config: Config, options: AdapterBuildOptions): Promise<void>;
+    configure(project: Project): Promise<AdapterConfigureResult>;
+    generate(project: Project): Promise<void>;
+    build(project: Project, options: AdapterBuildOptions): Promise<void>;
 };
 export type Adapter = ImportedItem & AdapterDesc;

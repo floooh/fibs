@@ -36,7 +36,8 @@ add_executable(hello hello.c)
 file(WRITE cmake_config.json "{\\"CMAKE_C_COMPILER_ID\\":\\"\${CMAKE_C_COMPILER_ID}\\",\\"CMAKE_HOST_SYSTEM_NAME\\":\\"\${CMAKE_HOST_SYSTEM_NAME}\\",\\"CMAKE_SYSTEM_PROCESSOR\\":\\"\${CMAKE_SYTEM_PROCESSOR}\\"}\\n")
 `;
 
-export async function configure(project: Project, config: Config): Promise<AdapterConfigureResult> {
+export async function configure(project: Project): Promise<AdapterConfigureResult> {
+    const config = project.activeConfig();
     const configDir = project.configDir(config.name);
     const configPath = `${configDir}/cmake_config.json`;
     if (!util.fileExists(configPath)) {
@@ -63,7 +64,8 @@ export async function configure(project: Project, config: Config): Promise<Adapt
     };
 }
 
-export async function generate(project: Project, config: Config): Promise<void> {
+export async function generate(project: Project): Promise<void> {
+    const config = project.activeConfig();
     const cmakeListsPath = `${project.dir()}/CMakeLists.txt`;
     const cmakePresetsPath = `${project.dir()}/CMakePresets.json`;
     try {
@@ -87,9 +89,9 @@ export async function generate(project: Project, config: Config): Promise<void> 
     await cmake.generate(project, config);
 }
 
-export async function build(project: Project, config: Config, options: AdapterBuildOptions): Promise<void> {
+export async function build(project: Project, options: AdapterBuildOptions): Promise<void> {
     if (!util.fileExists(`${project.buildDir()}/CMakeCache.txt`)) {
-        await generate(project, config);
+        await generate(project);
     }
     const { buildTarget, forceRebuild } = options;
     await cmake.build({ target: buildTarget, forceRebuild: forceRebuild });
