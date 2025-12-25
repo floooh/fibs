@@ -53,12 +53,21 @@ export async function configure(rootModule: FibsModule, rootDir: string, withTar
     return projectImpl;
 }
 
-export async function generate(config?: Config): Promise<void> {
+export async function configureTargets(config?: Config): Promise<void> {
+    projectImpl.assertPhaseAtLeast(ProjectPhase.Build);
     if (config) {
         projectImpl.setActiveConfig(config.name);
     }
+    const adapter = projectImpl.adapter('cmake');
+    const configRes = await adapter.configure(projectImpl);
+    projectImpl._compiler = configRes.compiler;
+    doBuildSetup(projectImpl);
+    projectImpl.setPhase(ProjectPhase.Execute);
+}
+
+export async function generate(config?: Config): Promise<void> {
     if (config || (projectImpl.phase() !== ProjectPhase.Execute)) {
-        await configureTargets();
+        await configureTargets(config);
     }
     const adapter = projectImpl.adapter('cmake');
     await adapter.generate(projectImpl);
@@ -69,15 +78,6 @@ export async function build(options: { buildTarget?: string; forceRebuild?: bool
     const { buildTarget, forceRebuild } = options;
     const adapter = projectImpl.adapter('cmake');
     await adapter.build(projectImpl, { buildTarget, forceRebuild });
-}
-
-async function configureTargets(): Promise<void> {
-    projectImpl.assertPhaseAtLeast(ProjectPhase.Build);
-    const adapter = projectImpl.adapter('cmake');
-    const configRes = await adapter.configure(projectImpl);
-    projectImpl._compiler = configRes.compiler;
-    doBuildSetup(projectImpl);
-    projectImpl.setPhase(ProjectPhase.Execute);
 }
 
 export function validateTarget(

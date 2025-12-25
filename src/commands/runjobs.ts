@@ -20,5 +20,6 @@ async function run(project: Project) {
         const configName = Deno.args[1];
         config = project.config(configName);
     }
+    await proj.configureTargets(config);
     await Promise.all(project.targets().map((target): Promise<void> => proj.runJobs(project, config, target)));
 }
