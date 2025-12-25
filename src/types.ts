@@ -7,6 +7,10 @@ type IConfigPhaseInfo = {
     configDir(configName?: string): string;
     buildDir(configName?: string): string;
     distDir(configName?: string): string;
+    isHostPlatform(platform: Platform): boolean;
+    isHostWindows(): boolean;
+    isHostLinux(): boolean;
+    isHostMacOS(): boolean;
 };
 
 type IBuildPhaseInfo = IConfigPhaseInfo & {
@@ -54,10 +58,6 @@ type IBuildPhaseInfo = IConfigPhaseInfo & {
     isEmscripten(): boolean;
     isWasi(): boolean;
     isWasm(): boolean;
-    isHostPlatform(platform: Platform): boolean;
-    isHostWindows(): boolean;
-    isHostLinux(): boolean;
-    isHostMacOS(): boolean;
     isCompiler(compiler: Compiler): boolean;
     isClang(): boolean; // includes AppleClang
     isAppleClang(): boolean;

@@ -124,12 +124,22 @@ export class ConfigurerImpl implements Configurer {
     configDir(configName: string): string {
         return util.configDir(this._rootDir, configName);
     }
-
     buildDir(configName: string): string {
         return util.buildDir(this._rootDir, configName);
     }
-
     distDir(configName: string): string {
         return util.distDir(this._rootDir, configName);
+    }
+    isHostPlatform(platform: Platform): boolean {
+        return this.hostPlatform() === platform;
+    }
+    isHostWindows(): boolean {
+        return this.hostPlatform() === 'windows';
+    }
+    isHostLinux(): boolean {
+        return this.hostPlatform() === 'linux';
+    }
+    isHostMacOS(): boolean {
+        return this.hostPlatform() === 'macos';
     }
 }
