@@ -29,7 +29,6 @@ async function run(project: Project) {
             buildTarget = project.target(arg).name;
         }
     }
-    await proj.configureTargets();
     await conf.validate(project, project.activeConfig(), { silent: false, abortOnError: true });
     await proj.build({ forceRebuild, buildTarget });
 }

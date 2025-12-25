@@ -55,6 +55,7 @@ export function warn(...args: unknown[]) {
 
 export function panic(...args: unknown[]): never {
     console.warn(`${colors.red('[error]')}`, ...args);
+    console.trace();
     Deno.exit(10);
 }
 

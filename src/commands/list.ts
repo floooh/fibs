@@ -1,4 +1,4 @@
-import { imports, log, proj } from '../lib/index.ts';
+import { imports, log } from '../lib/index.ts';
 import type { CommandDesc, Project, TargetType } from '../types.ts';
 import { colors } from '../../deps.ts';
 
@@ -20,7 +20,6 @@ function help() {
 const allTargetTypes: TargetType[] = ['windowed-exe', 'plain-exe', 'lib', 'dll', 'interface'];
 
 async function run(project: Project): Promise<void> {
-    await proj.configureTargets();
     const args = parseArgs();
     if (args.all) {
         log.section('settings');

@@ -1,4 +1,4 @@
-import { host, log, util } from './index.ts';
+import { host, log, util, settings } from './index.ts';
 import {
     type Adapter,
     type CmakeInclude,
@@ -38,25 +38,26 @@ import { path } from '../../deps.ts';
 
 let projectImpl: ProjectImpl;
 
-export async function configure(rootModule: FibsModule, rootDir: string): Promise<Project> {
+export async function configure(rootModule: FibsModule, rootDir: string, withTargets: boolean): Promise<Project> {
     projectImpl = new ProjectImpl(rootModule, rootDir);
     projectImpl.setPhase(ProjectPhase.Configure);
     await doConfigure(rootModule, projectImpl);
     projectImpl.setPhase(ProjectPhase.Build);
+    // activate the default config, this can be overridden later
+    settings.load(projectImpl);
+    projectImpl.setActiveConfig(projectImpl.setting('config').value);
+    // configure default targets
+    if (withTargets) {
+        await configureTargets()
+    }
     return projectImpl;
 }
 
-export async function configureTargets(): Promise<void> {
-    projectImpl.assertPhaseExact(ProjectPhase.Build);
-    const adapter = projectImpl.adapter('cmake');
-    const configRes = await adapter.configure(projectImpl);
-    projectImpl._compiler = configRes.compiler;
-    doBuildSetup(projectImpl);
-    projectImpl.setPhase(ProjectPhase.Execute);
-}
-
-export async function generate(): Promise<void> {
-    if (projectImpl.phase() !== ProjectPhase.Execute) {
+export async function generate(config?: Config): Promise<void> {
+    if (config) {
+        projectImpl.setActiveConfig(config.name);
+    }
+    if (config || (projectImpl.phase() !== ProjectPhase.Execute)) {
         await configureTargets();
     }
     const adapter = projectImpl.adapter('cmake');
@@ -68,6 +69,15 @@ export async function build(options: { buildTarget?: string; forceRebuild?: bool
     const { buildTarget, forceRebuild } = options;
     const adapter = projectImpl.adapter('cmake');
     await adapter.build(projectImpl, { buildTarget, forceRebuild });
+}
+
+async function configureTargets(): Promise<void> {
+    projectImpl.assertPhaseAtLeast(ProjectPhase.Build);
+    const adapter = projectImpl.adapter('cmake');
+    const configRes = await adapter.configure(projectImpl);
+    projectImpl._compiler = configRes.compiler;
+    doBuildSetup(projectImpl);
+    projectImpl.setPhase(ProjectPhase.Execute);
 }
 
 export function validateTarget(
@@ -629,7 +639,7 @@ function resolveCmakeIncludes(builders: BuilderImpl[]): CmakeInclude[] {
 
 function resolvePath(rootDir: string, maybeRelativePath: string): string {
     if (!path.isAbsolute(rootDir)) {
-        throw new Error(`rootDir must be an absolute path`);
+        log.panic(`rootDir must be an absolute path`);
     }
     if (path.isAbsolute(maybeRelativePath)) {
         return maybeRelativePath;

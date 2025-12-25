@@ -36,5 +36,5 @@ async function run(project: Project) {
     }
     await conf.validate(project, config, { silent: false, abortOnError: true });
     settings.set(project, 'config', config.name);
-    await proj.generate();
+    await proj.generate(config);
 }

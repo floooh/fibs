@@ -1,4 +1,4 @@
-import { log, util, proj, settings } from './lib/index.ts';
+import { log, util, proj } from './lib/index.ts';
 import { assertFibsModule, type Project } from './types.ts';
 import { resetCmd } from './commands/reset.ts';
 
@@ -13,8 +13,9 @@ export async function main(importMeta: ImportMeta) {
     // special 'reset' command to wipe .fibs directory (useful when imports are broken)
     const rootDir = Deno.cwd().replaceAll('\\', '/');
     const rootPath = `${rootDir}/fibs.ts`;
+    const cmdName = Deno.args[0];
     let skipCmd = false;
-    if (Deno.args[0] === 'reset') {
+    if (cmdName === 'reset') {
         skipCmd = true;
         await resetCmd.run(null as unknown as Project);
     }
@@ -27,10 +28,7 @@ export async function main(importMeta: ImportMeta) {
         assertFibsModule(rootModule);
 
         // run configure-pass (with special-case to avoid redundant target config on changing the config)
-        const project = await proj.configure(rootModule, rootDir);
-        settings.load(project);
-
-        const cmdName = Deno.args[0];
+        const project = await proj.configure(rootModule, rootDir, cmdName !== 'config');
         const cmd = project.command(cmdName);
 
         // invoke the requested command

@@ -22,11 +22,12 @@ import {
     type Tool,
     ProjectPhase,
 } from '../types.ts';
-import { host, log, settings, util } from '../lib/index.ts';
+import { host, log, util } from '../lib/index.ts';
 import { path } from '../../deps.ts';
 
 export class ProjectImpl implements Project {
     _phase: ProjectPhase;
+    _activeConfig: Config | undefined;
     _name: string;
     _rootModule: FibsModule;
     _rootDir: string;
@@ -57,17 +58,22 @@ export class ProjectImpl implements Project {
         this._rootDir = rootDir;
     }
 
+    setActiveConfig(configName: string): void {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
+        this._activeConfig = this.config(configName);
+    }
+
     phase(): ProjectPhase {
         return this._phase;
     }
     assertPhaseExact(phase: ProjectPhase): void {
         if (this._phase !== phase) {
-            throw new Error(`Expected project phase ${phase}, but current phase is ${this._phase}`);
+            log.panic(`Expected project phase ${phase}, but current phase is ${this._phase}`);
         }
     }
     assertPhaseAtLeast(phase: ProjectPhase): void {
         if (this._phase < phase) {
-            throw new Error(`Expected project phase to be at least ${phase}, but current phase is ${this._phase}`);
+            log.panic(`Expected project phase to be at least ${phase}, but current phase is ${this._phase}`);
         }
     }
     setPhase(phase: ProjectPhase): void {
@@ -124,7 +130,10 @@ export class ProjectImpl implements Project {
     //=== IBuildPhaseInfo
     activeConfig(): Config {
         this.assertPhaseAtLeast(ProjectPhase.Build);
-        return this.config(settings.get(this, 'config'));
+        if (this._activeConfig === undefined) {
+            log.panic('active config not set');
+        }
+        return this._activeConfig;
     }
     platform(): Platform {
         this.assertPhaseAtLeast(ProjectPhase.Build);
