@@ -20,6 +20,7 @@ function help() {
 const allTargetTypes: TargetType[] = ['windowed-exe', 'plain-exe', 'lib', 'dll', 'interface'];
 
 async function run(project: Project): Promise<void> {
+    await proj.configureTargets();
     const args = parseArgs();
     if (args.all) {
         log.section('settings');
@@ -83,7 +84,6 @@ async function run(project: Project): Promise<void> {
         log.section('targets');
     }
     if (args.all || (args.targetTypes.length > 0)) {
-        await proj.configureTargets();
         const types = allTargetTypes;
         for (const type of types) {
             for (const target of project.targets()) {

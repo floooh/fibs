@@ -1,17 +1,18 @@
 import { cmake, log, proj, util } from '../lib/index.ts';
 import { fs } from '../../deps.ts';
-import type {
-    AdapterBuildOptions,
-    AdapterConfigureResult,
-    AdapterDesc,
-    BuildMode,
-    Compiler,
-    Config,
-    Generator,
-    Language,
-    Project,
-    Scope,
-    Target,
+import {
+    type AdapterBuildOptions,
+    type AdapterConfigureResult,
+    type AdapterDesc,
+    type BuildMode,
+    type Compiler,
+    type Config,
+    type Generator,
+    type Language,
+    type Project,
+    type Scope,
+    type Target,
+    ProjectPhase,
 } from '../types.ts';
 
 export const cmakeAdapter: AdapterDesc = {
@@ -200,8 +201,10 @@ function genCacheVariables(project: Project, config: Config): Record<string, unk
     if (!isMultiConfigGenerator(config)) {
         res.CMAKE_BUILD_TYPE = asCmakeBuildMode(config.buildMode);
     }
-    for (const cmakeVariable of project.cmakeVariables()) {
-        res[cmakeVariable.name] = resolveCacheVariable(cmakeVariable.value);
+    if (project.phase() === ProjectPhase.Execute) {
+        for (const cmakeVariable of project.cmakeVariables()) {
+            res[cmakeVariable.name] = resolveCacheVariable(cmakeVariable.value);
+        }
     }
     return res;
 }

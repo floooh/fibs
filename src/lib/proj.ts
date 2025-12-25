@@ -42,12 +42,12 @@ export async function configure(rootModule: FibsModule, rootDir: string): Promis
     projectImpl = new ProjectImpl(rootModule, rootDir);
     projectImpl.setPhase(ProjectPhase.Configure);
     await doConfigure(rootModule, projectImpl);
+    projectImpl.setPhase(ProjectPhase.Build);
     return projectImpl;
 }
 
 export async function configureTargets(): Promise<void> {
-    projectImpl.assertPhaseExact(ProjectPhase.Configure);
-    projectImpl.setPhase(ProjectPhase.Build);
+    projectImpl.assertPhaseExact(ProjectPhase.Build);
     const adapter = projectImpl.adapter('cmake');
     const configRes = await adapter.configure(projectImpl);
     projectImpl._compiler = configRes.compiler;
