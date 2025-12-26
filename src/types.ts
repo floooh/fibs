@@ -2,7 +2,7 @@ export enum ProjectPhase {
     Initial = 0,
     Configure = 1,
     Build = 2,
-    Execute = 3,
+    Generate = 3,
 }
 
 type IConfigPhaseInfo = {
@@ -72,7 +72,7 @@ type IBuildPhaseInfo = IConfigPhaseInfo & {
     isGcc(): boolean;
 };
 
-type IExecutePhaseInfo = IBuildPhaseInfo & {
+type IGeneratePhaseInfo = IBuildPhaseInfo & {
     name(): string;
     targetSourceDir(targetName: string): string;
     targetBuildDir(targetName: string, configName?: string): string;
@@ -151,11 +151,9 @@ export type TargetBuilder = {
     addJob(job: TargetJob): void;
 };
 
-export type Project = IExecutePhaseInfo & {
+export type Project = IGeneratePhaseInfo & {
     dir(): string;
     phase(): ProjectPhase;
-    setPhase(phase: ProjectPhase): void;
-    assertPhaseExact(phase: ProjectPhase): void;
 }
 
 export type FibsModule = {

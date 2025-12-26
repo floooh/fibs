@@ -54,7 +54,7 @@ export async function configure(project: Project): Promise<AdapterConfigureResul
         const cmakePresetsSource = genCMakePresetsJson(project, config, configDir);
         Deno.writeTextFileSync(cmakePresetsPath, cmakePresetsSource, { create: true });
 
-        const res = await cmake.run({ cwd: configDir, args: ['--preset', config.name], stderr: 'piped' });
+        const res = await cmake.run({ cwd: configDir, args: ['--preset', config.name], stderr: 'piped', stdout: 'piped' });
         if (res.exitCode !== 0) {
             log.panic(`cmake returned with exit code ${res.exitCode}, stderr: \n\n${res.stderr}`);
         }
@@ -201,7 +201,7 @@ function genCacheVariables(project: Project, config: Config): Record<string, unk
     if (!isMultiConfigGenerator(config)) {
         res.CMAKE_BUILD_TYPE = asCmakeBuildMode(config.buildMode);
     }
-    if (project.phase() === ProjectPhase.Execute) {
+    if (project.phase() === ProjectPhase.Generate) {
         for (const cmakeVariable of project.cmakeVariables()) {
             res[cmakeVariable.name] = resolveCacheVariable(cmakeVariable.value);
         }

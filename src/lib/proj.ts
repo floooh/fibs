@@ -1,4 +1,4 @@
-import { host, log, util, settings } from './index.ts';
+import { host, log, settings, util } from './index.ts';
 import {
     type Adapter,
     type CmakeInclude,
@@ -16,13 +16,13 @@ import {
     type NamedItem,
     type Opener,
     type Project,
+    ProjectPhase,
     type Runner,
     type Setting,
     type Target,
     type TargetDesc,
     type TargetJob,
     type Tool,
-    ProjectPhase,
 } from '../types.ts';
 import { ProjectImpl } from '../impl/projectimpl.ts';
 import { ConfigurerImpl } from '../impl/configurerimpl.ts';
@@ -41,14 +41,14 @@ let projectImpl: ProjectImpl;
 export async function configure(rootModule: FibsModule, rootDir: string, withTargets: boolean): Promise<Project> {
     projectImpl = new ProjectImpl(rootModule, rootDir);
     projectImpl.setPhase(ProjectPhase.Configure);
-    await doConfigure(rootModule, projectImpl);
+    await doConfigurePhase(rootModule, projectImpl);
     projectImpl.setPhase(ProjectPhase.Build);
     // activate the default config, this can be overridden later
     settings.load(projectImpl);
     projectImpl.setActiveConfig(projectImpl.setting('config').value);
     // configure default targets
     if (withTargets) {
-        await configureTargets()
+        await configureTargets();
     }
     return projectImpl;
 }
@@ -61,12 +61,12 @@ export async function configureTargets(config?: Config): Promise<void> {
     const adapter = projectImpl.adapter('cmake');
     const configRes = await adapter.configure(projectImpl);
     projectImpl._compiler = configRes.compiler;
-    doBuildSetup(projectImpl);
-    projectImpl.setPhase(ProjectPhase.Execute);
+    doBuildPhase(projectImpl);
+    projectImpl.setPhase(ProjectPhase.Generate);
 }
 
 export async function generate(config?: Config): Promise<void> {
-    if (config || (projectImpl.phase() !== ProjectPhase.Execute)) {
+    if ((config && config.name !== projectImpl.activeConfig().name) || (projectImpl.phase() < ProjectPhase.Generate)) {
         await configureTargets(config);
     }
     const adapter = projectImpl.adapter('cmake');
@@ -74,7 +74,7 @@ export async function generate(config?: Config): Promise<void> {
 }
 
 export async function build(options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void> {
-    projectImpl.assertPhaseExact(ProjectPhase.Execute);
+    projectImpl.assertPhaseExact(ProjectPhase.Generate);
     const { buildTarget, forceRebuild } = options;
     const adapter = projectImpl.adapter('cmake');
     await adapter.build(projectImpl, { buildTarget, forceRebuild });
@@ -223,7 +223,7 @@ export async function runJobs(project: Project, config: Config, target: Target) 
     }
 }
 
-async function doConfigure(rootModule: FibsModule, project: ProjectImpl): Promise<void> {
+async function doConfigurePhase(rootModule: FibsModule, project: ProjectImpl): Promise<void> {
     const configurers: ConfigurerImpl[] = [];
 
     // start configuration at the root object to gather imports
@@ -299,7 +299,7 @@ async function configureRecurseImports(
     }
 }
 
-function doBuildSetup(project: ProjectImpl): void {
+function doBuildPhase(project: ProjectImpl): void {
     // resolve import options
     project._importOptionsFuncs.forEach((func) => {
         project._importOptions = {

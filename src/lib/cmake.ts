@@ -24,7 +24,7 @@ export async function generate(project: Project, config: Config) {
         await config.opener.generate(project, config);
     }
     const args = ['--preset', config.name, '-B', project.buildDir(config.name)];
-    const res = await run({ args, stderr: 'piped' });
+    const res = await run({ args, stderr: 'piped', stdout: 'piped' });
     if (res.exitCode !== 0) {
         log.panic(
             `cmake returned with exit code ${res.exitCode}, stderr:\n\n${res.stderr}`,
