@@ -10,11 +10,11 @@ function help() {
     ], 'link an import to an existing directory');
 }
 
-async function run(project: Project) {
-    if (Deno.args.length !== 3) {
+async function run(project: Project, args: string[]) {
+    if (args.length !== 3) {
         log.panic("expected args [import] and [directory] (run 'fibs help link')");
     }
-    const imp = Deno.args[1];
-    const dir = path.resolve(Deno.args[2]);
+    const imp = args[1];
+    const dir = path.resolve(args[2]);
     imports.link(project, imp, dir);
 }

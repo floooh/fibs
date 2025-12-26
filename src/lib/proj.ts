@@ -1,4 +1,4 @@
-import { host, log, settings, util } from './index.ts';
+import { conf, host, log, settings, util } from './index.ts';
 import {
     type Adapter,
     type CmakeInclude,
@@ -56,6 +56,7 @@ export async function configure(rootModule: FibsModule, rootDir: string, withTar
 export async function configureTargets(config?: Config): Promise<void> {
     projectImpl.assertPhaseAtLeast(ProjectPhase.Build);
     if (config) {
+        conf.validate(projectImpl, config, { silent: false, abortOnError: true });
         projectImpl.setActiveConfig(config.name);
     }
     const adapter = projectImpl.adapter('cmake');

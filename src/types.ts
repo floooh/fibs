@@ -155,7 +155,7 @@ export type TargetBuilder = {
 export type Project = IGeneratePhaseInfo & {
     dir(): string;
     phase(): ProjectPhase;
-}
+};
 
 export type FibsModule = {
     configure?(c: Configurer): void;
@@ -389,7 +389,7 @@ export type Job = NamedItem & {
 
 export type CommandDesc = NamedItem & {
     help(): void;
-    run(project: Project): Promise<void>;
+    run(project: Project, args: string[]): Promise<void>;
 };
 export type Command = ImportedItem & CommandDesc;
 

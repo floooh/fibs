@@ -10,9 +10,9 @@ import {
     type Generator,
     type Language,
     type Project,
+    ProjectPhase,
     type Scope,
     type Target,
-    ProjectPhase,
 } from '../types.ts';
 
 export const cmakeAdapter: AdapterDesc = {
@@ -449,7 +449,7 @@ function genTargetProperties(target: Target): string {
     const items = Object.entries(target.props);
     if (items.length > 0) {
         str += `set_target_properties(${target.name} PROPERTIES `;
-        str +=  items.map(([key, val]) => `${key} ${val}`).join(' ');
+        str += items.map(([key, val]) => `${key} ${val}`).join(' ');
         str += ')\n';
     }
     return str;

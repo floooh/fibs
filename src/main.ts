@@ -1,4 +1,4 @@
-import { log, util, proj } from './lib/index.ts';
+import { log, proj, util } from './lib/index.ts';
 import { assertFibsModule, type Project } from './types.ts';
 import { resetCmd } from './commands/reset.ts';
 
@@ -17,7 +17,7 @@ export async function main(importMeta: ImportMeta) {
     let skipCmd = false;
     if (cmdName === 'reset') {
         skipCmd = true;
-        await resetCmd.run(null as unknown as Project);
+        await resetCmd.run(null as unknown as Project, []);
     }
     try {
         // try to import a fibs.ts file from current directory
@@ -33,7 +33,7 @@ export async function main(importMeta: ImportMeta) {
 
         // invoke the requested command
         if (!skipCmd) {
-            await cmd.run(project);
+            await cmd.run(project, Deno.args);
         }
     } catch (err) {
         log.panic(err);

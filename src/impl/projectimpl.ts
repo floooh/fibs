@@ -16,11 +16,11 @@ import {
     type Opener,
     type Platform,
     type Project,
+    ProjectPhase,
     type Runner,
     type Setting,
     type Target,
     type Tool,
-    ProjectPhase,
 } from '../types.ts';
 import { host, log, util } from '../lib/index.ts';
 import { path } from '../../deps.ts';
@@ -336,62 +336,62 @@ export class ProjectImpl implements Project {
 
     //=== IExecutePhaseInfo
     name(): string {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         return this._name;
     }
     targetSourceDir(targetName: string): string {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         return this.target(targetName).dir;
     }
     targetBuildDir(targetName: string, configName?: string): string {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         if (configName === undefined) {
             configName = this.activeConfig().name;
         }
         return util.targetBuildDir(this._rootDir, configName, targetName);
     }
     targetDistDir(targetName: string, configName?: string): string {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         const config = (configName === undefined) ? this.activeConfig() : this.config(configName);
         const target = this.target(targetName);
         return util.targetDistDir(this._rootDir, config.name, targetName, config.platform, target.type);
     }
     targetAssetsDir(targetName: string, configName?: string): string {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         const config = (configName === undefined) ? this.activeConfig() : this.config(configName);
         const target = this.target(targetName);
         return util.targetAssetsDir(this._rootDir, config.name, targetName, config.platform, target.type);
     }
     cmakeVariables(): CmakeVariable[] {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         return this._cmakeVariables;
     }
     cmakeIncludes(): CmakeInclude[] {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         return this._cmakeIncludes;
     }
     targets(): Target[] {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         return this._targets;
     }
     includeDirectories(): IncludeDirectory[] {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         return this._includeDirectories;
     }
     compileDefinitions(): CompileDefinition[] {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         return this._compileDefinitions;
     }
     compileOptions(): CompileOption[] {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         return this._compileOptions;
     }
     linkOptions(): LinkOption[] {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         return this._linkOptions;
     }
     findTarget(name: string | undefined): Target | undefined {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         return util.find(name, this._targets);
     }
     target(name: string): Target {
@@ -402,7 +402,7 @@ export class ProjectImpl implements Project {
         return target;
     }
     findCompileDefinition(name: string): CompileDefinition | undefined {
-        this.assertPhaseAtLeast(ProjectPhase.Execute);
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
         // first look through targets, then in the global definitions
         for (const t of this._targets) {
             const def = util.find(name, t.compileDefinitions);

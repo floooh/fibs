@@ -12,10 +12,10 @@ function help() {
     ]);
 }
 
-async function run(project: Project) {
-    if (Deno.args.length !== 2) {
+async function run(project: Project, args: string[]) {
+    if (args.length !== 2) {
         log.panic('expected [key] arg');
     }
-    const key = Deno.args[1];
+    const key = args[1];
     settings.unset(project, key);
 }

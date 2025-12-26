@@ -12,13 +12,13 @@ function help() {
     ], 'build all targets or a specific target');
 }
 
-async function run(project: Project) {
+async function run(project: Project, args: string[]) {
     if (imports.hasImportErrors(project)) {
         log.panic('import errors detected');
     }
     let forceRebuild = false;
     let buildTarget;
-    for (const arg of Deno.args.slice(1)) {
+    for (const arg of args.slice(1)) {
         if (arg.startsWith('--')) {
             if (arg === '--rebuild') {
                 forceRebuild = true;

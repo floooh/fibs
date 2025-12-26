@@ -10,12 +10,12 @@ function help() {
     ], 'open IDE for current or named config');
 }
 
-async function run(project: Project) {
+async function run(project: Project, args: string[]) {
     let config;
-    if (Deno.args.length <= 1) {
+    if (args.length <= 1) {
         config = project.activeConfig();
     } else {
-        const configName = Deno.args[1];
+        const configName = args[1];
         config = project.config(configName);
     }
     if (config.opener === undefined) {

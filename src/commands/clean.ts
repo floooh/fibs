@@ -10,8 +10,8 @@ function help() {
     ], 'delete build output for current, specific or all configs');
 }
 
-async function run(project: Project) {
-    const configs = parseArgs(project);
+async function run(project: Project, args: string[]) {
+    const configs = parseArgs(project, args);
     let numDeleted = 0;
     for (const config of configs) {
         const buildPath = project.buildDir(config.name);
@@ -47,9 +47,9 @@ async function run(project: Project) {
     }
 }
 
-function parseArgs(project: Project): Config[] {
+function parseArgs(project: Project, cmdLineArgs: string[]): Config[] {
     let all = false;
-    const args = Deno.args.slice(1).filter((arg) => {
+    const args = cmdLineArgs.slice(1).filter((arg) => {
         if (arg.startsWith('--')) {
             if (arg === '--all') {
                 all = true;

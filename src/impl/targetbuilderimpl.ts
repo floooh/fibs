@@ -28,6 +28,7 @@ export class TargetBuilderImpl implements TargetBuilder {
             deps: [],
             libs: [],
             frameworks: [],
+            props: {},
             includeDirectories: [],
             compileDefinitions: [],
             compileOptions: [],

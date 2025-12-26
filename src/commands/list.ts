@@ -19,8 +19,8 @@ function help() {
 
 const allTargetTypes: TargetType[] = ['windowed-exe', 'plain-exe', 'lib', 'dll', 'interface'];
 
-async function run(project: Project): Promise<void> {
-    const args = parseArgs();
+async function run(project: Project, cmdLineArgs: string[]): Promise<void> {
+    const args = parseArgs(cmdLineArgs);
     if (args.all) {
         log.section('settings');
     }
@@ -101,7 +101,7 @@ async function run(project: Project): Promise<void> {
     }
 }
 
-function parseArgs(): {
+function parseArgs(cmdLineArgs: string[]): {
     all: boolean;
     settings: boolean;
     configs: boolean;
@@ -123,11 +123,11 @@ function parseArgs(): {
         verbose: false,
         targetTypes: [],
     };
-    if (Deno.args.length === 1) {
+    if (cmdLineArgs.length === 1) {
         args.all = true;
         args.targetTypes = allTargetTypes;
     } else {
-        const filter = Deno.args[1];
+        const filter = cmdLineArgs[1];
         switch (filter) {
             case 'settings':
                 args.settings = true;
@@ -148,11 +148,11 @@ function parseArgs(): {
                 args.jobs = true;
                 break;
             case 'targets':
-                if (Deno.args.length === 2) {
+                if (cmdLineArgs.length === 2) {
                     args.targetTypes = allTargetTypes;
-                } else if (Deno.args.length >= 3) {
-                    for (let i = 2; i < Deno.args.length; i++) {
-                        const targetArg = Deno.args[i];
+                } else if (cmdLineArgs.length >= 3) {
+                    for (let i = 2; i < cmdLineArgs.length; i++) {
+                        const targetArg = cmdLineArgs[i];
                         const allTargetTypes: TargetType[] = ['plain-exe', 'windowed-exe', 'lib', 'dll', 'interface'];
                         switch (targetArg) {
                             case '--all':

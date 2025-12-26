@@ -9,10 +9,10 @@ function help() {
     ], 'unlink an import from a local directory');
 }
 
-async function run(project: Project) {
-    if (Deno.args.length !== 2) {
+async function run(project: Project, args: string[]) {
+    if (args.length !== 2) {
         log.panic("expected arg [import] (run 'fibs help unlink')");
     }
-    const imp = Deno.args[1];
+    const imp = args[1];
     imports.unlink(project, imp);
 }

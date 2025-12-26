@@ -10,11 +10,11 @@ function help() {
     ], '(re-)configure project, or get current config');
 }
 
-async function run(project: Project) {
+async function run(project: Project, args: string[]) {
     if (imports.hasImportErrors(project)) {
         log.panic('import errors detected');
     }
-    const args = Deno.args.slice(1).filter((arg) => {
+    args = args.slice(1).filter((arg) => {
         if (arg.startsWith('--')) {
             if (arg === '--get') {
                 log.print(project.activeConfig().name);

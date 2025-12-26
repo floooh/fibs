@@ -16,15 +16,15 @@ function help() {
     ], 'run diagnostics and check for errors');
 }
 
-async function run(project: Project) {
+async function run(project: Project, args: string[]) {
     const all: string[] = ['fibs', 'tools', 'configs', 'targets', 'imports', 'project'];
     let which: string[] = [];
     let separator = false;
-    if (Deno.args.length === 1) {
+    if (args.length === 1) {
         which = all;
         separator = true;
     } else {
-        const arg = Deno.args[1];
+        const arg = args[1];
         if (!all.includes(arg)) {
             log.panic(`invalid arg '${arg}', run 'fibs help diag'`);
         }

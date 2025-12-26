@@ -11,15 +11,15 @@ function help() {
     ], 'print help for all commands or a specific command');
 }
 
-async function run(project: Project) {
-    if (Deno.args.length === 1) {
+async function run(project: Project, args: string[]) {
+    if (args.length === 1) {
         log.print(`${colors.blue("Floh's Infernal Build System!")}`);
         log.print('https://github.com/floooh/fibs\n');
         for (const cmd of project.commands()) {
             cmd.help();
         }
     } else {
-        const cmdName = Deno.args[1];
+        const cmdName = args[1];
         project.command(cmdName).help();
     }
 }
