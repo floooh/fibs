@@ -608,6 +608,7 @@ function resolveTargets(builders: BuilderImpl[]): Target[] {
                 deps: t.deps ?? [],
                 libs: t.libs ?? [],
                 frameworks: t.frameworks ?? [],
+                props: t.props ?? {},
                 includeDirectories: resolveTargetIncludeDirectories(builder, t, resolvedTargetDir),
                 compileDefinitions: resolveTargetCompileDefinitions(builder, t),
                 compileOptions: resolveTargetCompileOptions(builder, t),

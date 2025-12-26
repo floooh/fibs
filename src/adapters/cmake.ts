@@ -237,6 +237,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
         str += genTargetCompileDefinitions(target);
         str += genTargetCompileOptions(target);
         str += genTargetLinkOptions(target);
+        str += genTargetProperties(target);
         str += genTargetJobDependencies(target);
         str += genTargetMisc(project, target);
     }
@@ -438,6 +439,17 @@ function genTargetLinkOptions(target: Target): string {
     if (items.length > 0) {
         str += `target_link_options(${target.name}`;
         str += items.map((item) => `${asCmakeScope(item.scope)} ${expr(undefined, item.buildMode, item.opt)}`).join(' ');
+        str += ')\n';
+    }
+    return str;
+}
+
+function genTargetProperties(target: Target): string {
+    let str = '';
+    const items = Object.entries(target.props);
+    if (items.length > 0) {
+        str += `set_target_properties(${target.name} PROPERTIES `;
+        str +=  items.map(([key, val]) => `${key} ${val}`).join(' ');
         str += ')\n';
     }
     return str;

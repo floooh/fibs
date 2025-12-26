@@ -75,6 +75,9 @@ export class TargetBuilderImpl implements TargetBuilder {
     addFrameworks(frameworks: string[]): void {
         this._desc.frameworks!.push(...frameworks);
     }
+    addProperties(props: Record<string, string>): void {
+        Object.entries(props).map(([key, val]) => this._desc.props![key] = val);
+    }
     addIncludeDirectories(dirs: IncludeDirectoriesDesc | string[]): void {
         if (isIncludeDirectoriesDesc(dirs)) {
             this._desc.includeDirectories!.push(dirs);
