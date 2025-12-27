@@ -59,7 +59,7 @@ export async function configure(project: Project): Promise<AdapterConfigureResul
             log.panic(`cmake returned with exit code ${res.exitCode}, stderr: \n\n${res.stderr}`);
         }
     }
-    const importPath =`file://${configPath}`;
+    const importPath = `file://${configPath}`;
     const configJson = (await import(importPath, { with: { type: 'json' } })).default;
     return {
         compiler: fromCmakeCompiler(configJson.CMAKE_C_COMPILER_ID),
@@ -331,8 +331,8 @@ function genAllJobsTarget(project: Project, config: Config): string {
         }
     }
     if (hasJobs) {
-        str +=
-            `add_custom_target(ALL_JOBS COMMAND fibs runjobs ${config.name} WORKING_DIRECTORY ${project.dir()})\n`;
+        str += `find_program(FIBS fibs REQUIRED)\n`;
+        str += `add_custom_target(ALL_JOBS COMMAND \${FIBS} runjobs ${config.name} WORKING_DIRECTORY ${project.dir()})\n`;
     }
     return str;
 }
