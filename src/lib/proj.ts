@@ -34,7 +34,7 @@ import { builtinRunners } from '../runners/index.ts';
 import { builtinTools } from '../tools/index.ts';
 import { builtinCommands } from '../commands/index.ts';
 import { fetchImport, importModulesFromDir } from './imports.ts';
-import { path } from '../../deps.ts';
+import { isAbsolute } from '@std/path';
 
 let projectImpl: ProjectImpl;
 
@@ -640,10 +640,10 @@ function resolveCmakeIncludes(builders: BuilderImpl[]): CmakeInclude[] {
 }
 
 function resolvePath(rootDir: string, maybeRelativePath: string): string {
-    if (!path.isAbsolute(rootDir)) {
+    if (!isAbsolute(rootDir)) {
         log.panic(`rootDir must be an absolute path`);
     }
-    if (path.isAbsolute(maybeRelativePath)) {
+    if (isAbsolute(maybeRelativePath)) {
         return maybeRelativePath;
     }
     // NOTE: do *NOT* use path.join() since this will use backslashes on Windows

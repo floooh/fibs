@@ -1,6 +1,6 @@
 import { log } from '../lib/index.ts';
 import type { CommandDesc, Project } from '../types.ts';
-import { colors } from '../../deps.ts';
+import { blue } from '@std/fmt/colors';
 
 export const helpCmd: CommandDesc = { name: 'help', help, run };
 
@@ -13,7 +13,7 @@ function help() {
 
 async function run(project: Project, args: string[]) {
     if (args.length === 1) {
-        log.print(`${colors.blue("Floh's Infernal Build System!")}`);
+        log.print(`${blue("Floh's Infernal Build System!")}`);
         log.print('https://github.com/floooh/fibs\n');
         for (const cmd of project.commands()) {
             cmd.help();

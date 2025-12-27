@@ -1,5 +1,5 @@
 import { cmake, log, proj, util } from '../lib/index.ts';
-import { fs } from '../../deps.ts';
+import { ensureDirSync } from '@std/fs';
 import {
     type AdapterBuildOptions,
     type AdapterConfigureResult,
@@ -42,7 +42,7 @@ export async function configure(project: Project): Promise<AdapterConfigureResul
     const configDir = project.configDir(config.name);
     const configPath = `${configDir}/cmake_config.json`;
     if (!util.fileExists(configPath)) {
-        fs.ensureDirSync(configDir);
+        ensureDirSync(configDir);
         // run a dummy cmake generator to obtain runtime config params
         const helloPath = `${configDir}/hello.c`;
         Deno.writeTextFileSync(helloPath, helloSource, { create: true });

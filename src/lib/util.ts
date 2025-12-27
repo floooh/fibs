@@ -1,6 +1,7 @@
 import type { Config, JobArgs, NamedItem, Platform, Project, RunOptions, RunResult, TargetType } from '../types.ts';
 import { log } from './index.ts';
-import { fs, path } from '../../deps.ts';
+import { ensureDirSync } from '@std/fs';
+import { dirname } from '@std/path';
 
 export function find<T extends NamedItem>(name: string | undefined, items: T[]): T | undefined {
     if (name === undefined) {
@@ -94,7 +95,7 @@ export function targetAssetsDir(
 
 export function ensureFile(filePath: string) {
     if (!fileExists(filePath)) {
-        fs.ensureDirSync(path.dirname(filePath));
+        ensureDirSync(dirname(filePath));
         Deno.writeTextFileSync(filePath, '');
     }
 }
@@ -149,25 +150,25 @@ export function dirty(inputs: string[], outputs: string[]): boolean {
 
 export function ensureFibsDir(project: Project): string {
     const path = project.fibsDir();
-    fs.ensureDirSync(path);
+    ensureDirSync(path);
     return path;
 }
 
 export function ensureDistDir(project: Project, configName?: string): string {
     const path = project.distDir(configName);
-    fs.ensureDirSync(path);
+    ensureDirSync(path);
     return path;
 }
 
 export function ensureImportsDir(project: Project): string {
     const path = project.importsDir();
-    fs.ensureDirSync(path);
+    ensureDirSync(path);
     return path;
 }
 
 export function ensureSdkDir(project: Project): string {
     const path = project.sdkDir();
-    fs.ensureDirSync(path);
+    ensureDirSync(path);
     return path;
 }
 
@@ -252,7 +253,7 @@ export async function download(
         if ((response.status < 400) && response.body) {
             const allLength = +response.headers.get('Content-Length')!;
             let curLength = 0;
-            fs.ensureDirSync(dir);
+            ensureDirSync(dir);
             const file = await Deno.open(path, { write: true, create: true });
             const reader = response.body.getReader();
             while (true) {

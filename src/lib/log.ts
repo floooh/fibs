@@ -1,4 +1,4 @@
-import { colors } from '../../deps.ts';
+import { bold, brightBlue, brightRed, green, red, yellow } from '@std/fmt/colors';
 
 const textEncoder = new TextEncoder();
 
@@ -12,7 +12,7 @@ export function dir(item: unknown) {
 
 export function helpCmd(cmds: string[], help: string | string[]) {
     for (const cmd of cmds) {
-        print(`${colors.yellow(`fibs ${cmd}`)}`);
+        print(`${yellow(`fibs ${cmd}`)}`);
     }
     if (typeof help === 'string') {
         print('    ', help);
@@ -25,20 +25,20 @@ export function helpCmd(cmds: string[], help: string | string[]) {
 }
 
 export function helpJob(name: string, args: { name: string; type: string; desc: string }[], help: string) {
-    print(`${colors.green(`${name}:`)} ${help}`);
+    print(`${green(`${name}:`)} ${help}`);
     for (const arg of args) {
-        print(`  ${colors.brightBlue(`${arg.name}:`)} ${colors.yellow(arg.type)} - ${arg.desc}`);
+        print(`  ${brightBlue(`${arg.name}:`)} ${yellow(arg.type)} - ${arg.desc}`);
     }
     print('');
 }
 
 export function run(cmdLine: string[], cwd?: string) {
     const cwdString = cwd ? `(in ${cwd})` : '';
-    print(colors.brightBlue(`=> ${cmdLine.join(' ')} ${cwdString}`));
+    print(brightBlue(`=> ${cmdLine.join(' ')} ${cwdString}`));
 }
 
 export function section(name: string) {
-    print(colors.yellow(`=== ${name}:`));
+    print(yellow(`=== ${name}:`));
 }
 
 export function write(str: string) {
@@ -50,11 +50,11 @@ export function info(...args: unknown[]) {
 }
 
 export function warn(...args: unknown[]) {
-    console.warn(`${colors.yellow('[warning]')}`, ...args);
+    console.warn(`${yellow('[warning]')}`, ...args);
 }
 
 export function panic(...args: unknown[]): never {
-    console.warn(`${colors.red('[error]')}`, ...args);
+    console.warn(`${red('[error]')}`, ...args);
     console.trace();
     Deno.exit(10);
 }
@@ -63,6 +63,6 @@ export function ask(msg: string, yes: boolean): boolean {
     if (yes) {
         return true;
     } else {
-        return confirm(`${colors.bold(colors.brightRed('??'))} ${msg}?`);
+        return confirm(`${bold(brightRed('??'))} ${msg}?`);
     }
 }

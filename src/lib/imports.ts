@@ -147,7 +147,7 @@ export function unlink(project: Project, importName: string) {
     }
 }
 
-export function isLinked(project: Project, importName: string) {
+export function isLinked(project: Project, importName: string): boolean {
     const links = loadImportLinks(project);
     return (links[importName] !== undefined);
 }

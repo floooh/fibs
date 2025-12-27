@@ -1,6 +1,6 @@
 import { log, util } from '../lib/index.ts';
 import type { CommandDesc, Config, Project } from '../types.ts';
-import { colors } from '../../deps.ts';
+import { blue } from '@std/fmt/colors';
 
 export const cleanCmd: CommandDesc = { name: 'clean', help, run };
 
@@ -21,7 +21,7 @@ async function run(project: Project, args: string[]) {
         const distExists = util.dirExists(distPath);
         const configExists = util.dirExists(configPath);
         if (buildExists || distExists || configExists) {
-            log.info(colors.blue(`${config.name}:`));
+            log.info(blue(`${config.name}:`));
             if (configExists) {
                 log.info(`  delete ${configPath}`);
                 Deno.removeSync(configPath, { recursive: true });

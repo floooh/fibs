@@ -12,7 +12,7 @@ import {
     type TargetJob,
     type TargetType,
 } from '../types.ts';
-import { ProjectImpl } from './projectimpl.ts';
+import type { ProjectImpl } from './projectimpl.ts';
 import { util } from '../lib/index.ts';
 
 export class TargetBuilderImpl implements TargetBuilder {

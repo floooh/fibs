@@ -1,5 +1,5 @@
 import { log, util } from './index.ts';
-import { Project } from '../types.ts';
+import type { Project } from '../types.ts';
 
 export function set(project: Project, key: string, value: string) {
     project.setting(key).value = value;

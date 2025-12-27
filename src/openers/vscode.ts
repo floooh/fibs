@@ -1,13 +1,13 @@
 import { host, log } from '../lib/index.ts';
 import type { Config, OpenerDesc, Project } from '../types.ts';
 import { run } from '../tools/vscode.ts';
-import { fs } from '../../deps.ts';
+import { ensureDirSync } from '@std/fs';
 
 export const vscodeOpener: OpenerDesc = { name: 'vscode', generate, open };
 
 async function generate(project: Project, config: Config) {
     const vscodeDir = `${project.dir()}/.vscode`;
-    fs.ensureDirSync(vscodeDir);
+    ensureDirSync(vscodeDir);
     writeWorkspaceFile(project, config, vscodeDir);
     writeLaunchJson(project, config, vscodeDir);
 }

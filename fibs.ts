@@ -1,1 +1,1 @@
-console.log("Hello from Fibs");
+console.log('Hello from Fibs');
