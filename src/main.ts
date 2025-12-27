@@ -21,7 +21,8 @@ export async function main() {
         if (!util.fileExists(rootPath)) {
             log.panic('current directory is not a fibs project (no fibs.ts found)');
         }
-        const rootModule = await import(`file://${rootPath}`);
+        const importPath = `file://${rootPath}`;
+        const rootModule = await import(importPath);
         assertFibsModule(rootModule);
 
         // run configure-pass (with special-case to avoid redundant target config on changing the config)

@@ -59,7 +59,8 @@ export async function configure(project: Project): Promise<AdapterConfigureResul
             log.panic(`cmake returned with exit code ${res.exitCode}, stderr: \n\n${res.stderr}`);
         }
     }
-    const configJson = (await import(`file://${configPath}`, { with: { type: 'json' } })).default;
+    const importPath =`file://${configPath}`;
+    const configJson = (await import(importPath, { with: { type: 'json' } })).default;
     return {
         compiler: fromCmakeCompiler(configJson.CMAKE_C_COMPILER_ID),
     };
