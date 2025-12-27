@@ -51,7 +51,8 @@ export async function importModulesFromDir(
     const defaultFiles = util.fileExists(`${dir}/fibs.ts`) ? ['fibs.ts'] : [];
     const files = importDesc.files ? importDesc.files : defaultFiles;
     const settledResults = await Promise.allSettled<FibsModule>(files.map((file) => {
-        return import(`file://${dir}/${file}`);
+        const importPath = `file://${dir}/${file}`;
+        return import(importPath);
     }));
     settledResults.forEach((settledResult) => {
         if (settledResult.status === 'fulfilled') {
