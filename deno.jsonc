@@ -1,4 +1,8 @@
 {
+    "name": "@floooh/fibs",
+    "version": "0.1.0",
+    "license": "MIT",
+    "export": "./index.ts",
     "compilerOptions": {
         "strict": true,
         "noImplicitAny": true,
