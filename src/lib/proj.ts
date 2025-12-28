@@ -286,14 +286,14 @@ async function configureRecurseImports(
         importDesc.importModules = [];
         if (valid) {
             const { modules, importErrors } = await importModulesFromDir(dir, importDesc);
-            for (const module of modules) {
+            for (const mod of modules) {
                 // record the actual import modules in the parent importDesc
-                importDesc.importModules.push(module);
+                importDesc.importModules.push(mod);
                 const childConfigurer = new ConfigurerImpl(project.dir(), dir);
                 childConfigurer._importErrors = importErrors;
                 res.push(childConfigurer);
-                if (module.configure) {
-                    module.configure(childConfigurer);
+                if (mod.module.configure) {
+                    mod.module.configure(childConfigurer);
                 }
                 await configureRecurseImports(childConfigurer, project, res);
             }
@@ -321,10 +321,10 @@ function doBuildPhase(project: ProjectImpl): void {
 
     // call build method on all imports
     for (const imp of projectImpl.imports()) {
-        for (const module of imp.modules) {
-            if (module.build) {
+        for (const mod of imp.modules) {
+            if (mod.module.build) {
                 const builder = new BuilderImpl(project, imp.importDir);
-                module.build(builder);
+                mod.module.build(builder);
                 builders.push(builder);
             }
         }

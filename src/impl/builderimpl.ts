@@ -9,6 +9,7 @@ import {
     type CompileOptionsDesc,
     type Compiler,
     type Config,
+    type FibsModule,
     type Import,
     type IncludeDirectoriesDesc,
     isCompileDefinitionsDesc,
@@ -175,29 +176,32 @@ export class BuilderImpl implements Builder {
     openers(): Opener[] {
         return this._project.openers();
     }
-    findSetting(name: string | undefined): Setting | undefined {
+    findSetting(name: string): Setting | undefined {
         return this._project.findSetting(name);
     }
-    findConfig(name: string | undefined): Config | undefined {
+    findConfig(name: string): Config | undefined {
         return this._project.findConfig(name);
     }
-    findAdapter(name: string | undefined): Adapter | undefined {
+    findAdapter(name: string): Adapter | undefined {
         return this._project.findAdapter(name);
     }
-    findCommand(name: string | undefined): Command | undefined {
+    findCommand(name: string): Command | undefined {
         return this._project.findCommand(name);
     }
-    findImport(name: string | undefined): Import | undefined {
+    findImport(name: string): Import | undefined {
         return this._project.findImport(name);
     }
-    findTool(name: string | undefined): Tool | undefined {
+    findTool(name: string): Tool | undefined {
         return this._project.findTool(name);
     }
-    findRunner(name: string | undefined): Runner | undefined {
+    findRunner(name: string): Runner | undefined {
         return this._project.findRunner(name);
     }
-    findOpener(name: string | undefined): Opener | undefined {
+    findOpener(name: string): Opener | undefined {
         return this._project.findOpener(name);
+    }
+    findImportModule(importName: string, filename?: string): FibsModule | undefined {
+        return this._project.findImportModule(importName, filename);
     }
     setting(name: string): Setting {
         return this._project.setting(name);
@@ -222,6 +226,9 @@ export class BuilderImpl implements Builder {
     }
     opener(name: string): Opener {
         return this._project.opener(name);
+    }
+    importModule(importName: string, filename?: string): FibsModule {
+        return this._project.importModule(importName, filename);
     }
     isPlatform(platform: Platform): boolean {
         return this._project.isPlatform(platform);

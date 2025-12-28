@@ -4,8 +4,8 @@ import type {
     CommandDesc,
     ConfigDesc,
     Configurer,
-    FibsModule,
     ImportDesc,
+    ImportedModule,
     JobBuilderDesc,
     OpenerDesc,
     Platform,
@@ -18,7 +18,7 @@ import { host, log, util } from '../lib/index.ts';
 
 type ImportExtra = {
     importDir?: string;
-    importModules?: FibsModule[];
+    importModules?: ImportedModule[];
 };
 
 export class ConfigurerImpl implements Configurer {

@@ -38,14 +38,15 @@ type IBuildPhaseInfo = IConfigPhaseInfo & {
     runners(): Runner[];
     openers(): Opener[];
 
-    findSetting(name: string | undefined): Setting | undefined;
-    findConfig(name: string | undefined): Config | undefined;
-    findAdapter(name: string | undefined): Adapter | undefined;
-    findCommand(name: string | undefined): Command | undefined;
-    findImport(name: string | undefined): Import | undefined;
-    findTool(name: string | undefined): Tool | undefined;
-    findRunner(name: string | undefined): Runner | undefined;
-    findOpener(name: string | undefined): Opener | undefined;
+    findSetting(name: string): Setting | undefined;
+    findConfig(name: string): Config | undefined;
+    findAdapter(name: string): Adapter | undefined;
+    findCommand(name: string): Command | undefined;
+    findImport(name: string): Import | undefined;
+    findTool(name: string): Tool | undefined;
+    findRunner(name: string): Runner | undefined;
+    findOpener(name: string): Opener | undefined;
+    findImportModule(importName: string, filename?: string): FibsModule | undefined;
 
     setting(name: string): Setting;
     config(name: string): Config;
@@ -55,6 +56,7 @@ type IBuildPhaseInfo = IConfigPhaseInfo & {
     tool(name: string): Tool;
     runner(name: string): Runner;
     opener(name: string): Opener;
+    importModule(importName: string, filename?: string): FibsModule;
 
     isPlatform(platform: Platform): boolean;
     isWindows(): boolean;
@@ -325,12 +327,13 @@ export type ImportDesc = NamedItem & {
     files?: string[];
 };
 
+export type ImportedModule = NamedItem & { module: FibsModule };
+
 export type Import = NamedItem & ImportedItem & {
     url: string;
     ref: string | undefined;
     importErrors: unknown[];
-    // each import can have multiple modules
-    modules: FibsModule[];
+    modules: ImportedModule[];
 };
 
 export type JobArgs = Record<string, unknown>;

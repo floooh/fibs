@@ -1,5 +1,5 @@
 import { git, log, util } from './index.ts';
-import type { FibsModule, Import, ImportDesc, Project } from '../types.ts';
+import type { FibsModule, Import, ImportDesc, ImportedModule, Project } from '../types.ts';
 
 export async function fetchImport(
     project: Project,
@@ -43,7 +43,7 @@ export async function fetchImport(
 export async function importModulesFromDir(
     dir: string,
     importDesc: ImportDesc,
-): Promise<{ importErrors: unknown[]; modules: FibsModule[] }> {
+): Promise<{ importErrors: unknown[]; modules: ImportedModule[] }> {
     const res: Awaited<ReturnType<typeof importModulesFromDir>> = {
         importErrors: [],
         modules: [],
@@ -54,10 +54,10 @@ export async function importModulesFromDir(
         const importPath = `file://${dir}/${file}`;
         return import(importPath);
     }));
-    settledResults.forEach((settledResult) => {
+    settledResults.forEach((settledResult, i) => {
         if (settledResult.status === 'fulfilled') {
             const module = settledResult.value;
-            res.modules.push(module);
+            res.modules.push({ name: files[i], module });
         } else {
             log.warn('importing module failed with:', settledResult.reason);
             res.importErrors.push(settledResult.reason);

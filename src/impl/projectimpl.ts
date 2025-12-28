@@ -191,37 +191,48 @@ export class ProjectImpl implements Project {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._openers;
     }
-    findSetting(name: string | undefined): Setting | undefined {
+    findSetting(name: string): Setting | undefined {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._settings);
     }
-    findConfig(name: string | undefined): Config | undefined {
+    findConfig(name: string): Config | undefined {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._configs);
     }
-    findAdapter(name: string | undefined): Adapter | undefined {
+    findAdapter(name: string): Adapter | undefined {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._adapters);
     }
-    findCommand(name: string | undefined): Command | undefined {
+    findCommand(name: string): Command | undefined {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._commands);
     }
-    findImport(name: string | undefined): Import | undefined {
+    findImport(name: string): Import | undefined {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._imports);
     }
-    findTool(name: string | undefined): Tool | undefined {
+    findTool(name: string): Tool | undefined {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._tools);
     }
-    findRunner(name: string | undefined): Runner | undefined {
+    findRunner(name: string): Runner | undefined {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._runners);
     }
-    findOpener(name: string | undefined): Opener | undefined {
+    findOpener(name: string): Opener | undefined {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._openers);
+    }
+    findImportModule(importName: string, filename?: string): FibsModule | undefined {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
+        const imp = this.findImport(importName);
+        if (imp !== undefined) {
+            const mod = util.find(filename ?? 'fibs.ts', imp.modules);
+            if (mod !== undefined) {
+                return mod.module;
+            }
+        }
+        return undefined;
     }
     setting(name: string): Setting {
         const setting = this.findSetting(name);
@@ -278,6 +289,13 @@ export class ProjectImpl implements Project {
             log.panic(`unknown opener: ${name}`);
         }
         return opener;
+    }
+    importModule(importName: string, filename?: string): FibsModule {
+        const mod = this.findImportModule(importName, filename);
+        if (mod === undefined) {
+            log.panic(`unknown import module: ${importName}/${filename}`)
+        }
+        return mod;
     }
     isPlatform(platform: Platform): boolean {
         return this.platform() === platform;
