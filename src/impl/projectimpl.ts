@@ -293,7 +293,7 @@ export class ProjectImpl implements Project {
     importModule(importName: string, filename?: string): FibsModule {
         const mod = this.findImportModule(importName, filename);
         if (mod === undefined) {
-            log.panic(`unknown import module: ${importName}/${filename}`)
+            log.panic(`unknown import module: ${importName}/${filename}`);
         }
         return mod;
     }

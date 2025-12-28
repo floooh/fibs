@@ -46,7 +46,8 @@ type IBuildPhaseInfo = IConfigPhaseInfo & {
     findTool(name: string): Tool | undefined;
     findRunner(name: string): Runner | undefined;
     findOpener(name: string): Opener | undefined;
-    findImportModule(importName: string, filename?: string): FibsModule | undefined;
+    // deno-lint-ignore no-explicit-any
+    findImportModule(importName: string, filename?: string): any | undefined;
 
     setting(name: string): Setting;
     config(name: string): Config;
@@ -56,7 +57,8 @@ type IBuildPhaseInfo = IConfigPhaseInfo & {
     tool(name: string): Tool;
     runner(name: string): Runner;
     opener(name: string): Opener;
-    importModule(importName: string, filename?: string): FibsModule;
+    // deno-lint-ignore no-explicit-any
+    importModule(importName: string, filename?: string): any;
 
     isPlatform(platform: Platform): boolean;
     isWindows(): boolean;
@@ -159,10 +161,8 @@ export type Project = IGeneratePhaseInfo & {
     phase(): ProjectPhase;
 };
 
-export type FibsModule = {
-    configure?(c: Configurer): void;
-    build?(b: Builder): void;
-};
+// deno-lint-ignore no-explicit-any
+export type FibsModule = { [key: string]: (...args: any[]) => any };
 
 export function assertFibsModule(val: unknown): asserts val is FibsModule {
     const obj = val as Record<string, unknown>;
