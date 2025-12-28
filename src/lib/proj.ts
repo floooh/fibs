@@ -18,6 +18,7 @@ import {
     type Project,
     ProjectPhase,
     type Runner,
+    type Scope,
     type Setting,
     type Target,
     type TargetDesc,
@@ -493,11 +494,12 @@ function resolveTargetIncludeDirectories(
     if (t.includeDirectories === undefined) {
         return [];
     }
+    const defaultScope: Scope = t.type === 'interface' ? 'interface' : 'public';
     return t.includeDirectories.flatMap((items) =>
         items.dirs.map((dir) => ({
             dir: resolvePath(resolvedTargetDir, dir),
             importDir: builder._importDir,
-            scope: items.scope ?? 'public',
+            scope: items.scope ?? defaultScope,
             system: items.system ?? false,
             language: items.language,
             buildMode: items.buildMode,
@@ -530,11 +532,12 @@ function resolveTargetCompileDefinitions(builder: BuilderImpl, t: TargetDesc): C
     if (t.compileDefinitions === undefined) {
         return [];
     }
+    const defaultScope: Scope = t.type === 'interface' ? 'interface' : 'public';
     return deduplicate(t.compileDefinitions.flatMap((items) =>
         Object.entries(items.defs).map(([key, val]) => ({
             name: key,
             val,
-            scope: items.scope ?? 'public',
+            scope: items.scope ?? defaultScope,
             language: items.language,
             buildMode: items.buildMode,
             importDir: builder._importDir,
@@ -560,10 +563,11 @@ function resolveTargetCompileOptions(builder: BuilderImpl, t: TargetDesc): Compi
     if (t.compileOptions === undefined) {
         return [];
     }
+    const defaultScope: Scope = t.type === 'interface' ? 'interface' : 'public';
     return t.compileOptions.flatMap((items) =>
         items.opts.map((opt) => ({
             opt,
-            scope: items.scope ?? 'public',
+            scope: items.scope ?? defaultScope,
             language: items.language,
             buildMode: items.buildMode,
             importDir: builder._importDir,
@@ -587,10 +591,11 @@ function resolveTargetLinkOptions(builder: BuilderImpl, t: TargetDesc): LinkOpti
     if (t.linkOptions === undefined) {
         return [];
     }
+    const defaultScope: Scope = t.type === 'interface' ? 'interface' : 'public';
     return t.linkOptions.flatMap((items) =>
         items.opts.map((opt) => ({
             opt,
-            scope: items.scope ?? 'public',
+            scope: items.scope ?? defaultScope,
             importDir: builder._importDir,
         }))
     );
