@@ -61,7 +61,7 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
                 name: 'Debug in Chrome',
                 url: 'http://localhost:8080/${command:cmake.launchTargetFilename}',
                 server: {
-                    program: `${project.distDir(config.name)}/httpserver.js`,
+                    program: `${project.buildDir(config.name)}/httpserver.js`,
                 },
             }],
         };
@@ -102,11 +102,12 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
 
 function writeHttpServer(project: Project, config: Config) {
     const path = `${project.buildDir(config.name)}`;
+    ensureDirSync(path);
     let src = "const { execSync } = require('child_process');\n";
     src += "execSync('http-server -c-1 -g .', {\n";
     src += `  cwd: '${project.distDir(config.name)}',\n`;
-    src += " stdio: 'inherit',\n";
+    src += "  stdio: 'inherit',\n";
     src += "  stderr: 'inherit',\n";
     src += '});\n';
-    Deno.writeTextFileSync(path, src);
+    Deno.writeTextFileSync(`${path}/httpserver.js`, src);
 }

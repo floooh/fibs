@@ -2,6 +2,7 @@ import { ninjaTool } from './ninja.ts';
 import { cmakeTool } from './cmake.ts';
 import { gitTool } from './git.ts';
 import { makeTool } from './make.ts';
+import { httpServerTool } from './httpserver.ts';
 import { vscodeCmakeTools, vscodeCppTools, vscodeDwarfDebugging, vscodeTool } from './vscode.ts';
 
 export const builtinTools = [
@@ -13,4 +14,5 @@ export const builtinTools = [
     vscodeCppTools,
     vscodeCmakeTools,
     vscodeDwarfDebugging,
+    httpServerTool,
 ];
