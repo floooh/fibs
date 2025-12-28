@@ -1,4 +1,4 @@
-import { host, log } from '../lib/index.ts';
+import { log } from '../lib/index.ts';
 import type { Config, OpenerDesc, Project } from '../types.ts';
 import { run } from '../tools/vscode.ts';
 import { ensureDirSync } from '@std/fs';
@@ -10,6 +10,9 @@ async function generate(project: Project, config: Config) {
     ensureDirSync(vscodeDir);
     writeWorkspaceFile(project, config, vscodeDir);
     writeLaunchJson(project, config, vscodeDir);
+    if (project.isEmscripten()) {
+        writeHttpServer(project, config);
+    }
 }
 
 async function open(project: Project) {
@@ -48,53 +51,62 @@ function writeWorkspaceFile(project: Project, config: Config, vscodeDir: string)
 }
 
 function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
-    const getType = () => {
-        switch (host.platform()) {
-            case 'windows':
-                return 'cppvsdbg';
-            case 'linux':
-                return 'cppdbg';
-            case 'macos':
-                // on macOS use the CodeLLDB debug extension, since the MS C/C++ debugger
-                // integration is all kinds of broken
-                return 'lldb';
-        }
-    };
-    const getMIMode = () => host.platform() === 'linux' ? 'gdb' : undefined;
-
-    const launchConfig = {
-        name: 'Debug Current Target',
-        request: 'launch',
-        program: '${command:cmake.launchTargetPath}',
-        cwd: project.distDir(config.name),
-        args: [],
-        type: getType(),
-        MIMode: getMIMode(),
-    };
-    let stopAtEntryLaunchConfig;
-    if (launchConfig.type === 'lldb') {
-        stopAtEntryLaunchConfig = {
-            ...launchConfig,
-            name: 'Debug Current Target (Stop at Entry)',
-            stopOnEntry: true,
+    let launch;
+    if (project.isEmscripten()) {
+        launch = {
+            version: '0.2.0',
+            configurations: [{
+                type: 'chrome',
+                request: 'launch',
+                name: 'Debug in Chrome',
+                url: 'http://localhost:8080/${command:cmake.launchTargetFilename}',
+                server: {
+                    program: `${project.distDir(config.name)}/httpserver.js`,
+                },
+            }],
         };
     } else {
-        stopAtEntryLaunchConfig = {
-            ...launchConfig,
-            name: 'Debug Current Target (Stop at Entry)',
-            stopAtEntry: true,
+        const getType = () => {
+            switch (project.hostPlatform()) {
+                case 'windows':
+                    return 'cppvsdbg';
+                case 'linux':
+                    return 'cppdbg';
+                default:
+                    // on macOS use the CodeLLDB debug extension, since the MS C/C++ debugger
+                    // integration is all kinds of broken
+                    return 'lldb';
+            }
+        };
+        const getMIMode = () => project.hostPlatform() === 'linux' ? 'gdb' : undefined;
+        launch = {
+            version: '0.2.0',
+            configurations: [{
+                name: 'Debug Current Target',
+                request: 'launch',
+                program: '${command:cmake.launchTargetPath}',
+                cwd: project.buildDir(config.name),
+                args: [],
+                type: getType(),
+                MIMode: getMIMode(),
+            }],
         };
     }
-
-    const launch = {
-        version: '0.2.0',
-        configurations: [launchConfig, stopAtEntryLaunchConfig],
-    };
-
     const path = `${vscodeDir}/launch.json`;
     try {
         Deno.writeTextFileSync(path, JSON.stringify(launch, null, '  '));
     } catch (err) {
         log.panic(`Failed writing ${path} with: `, err);
     }
+}
+
+function writeHttpServer(project: Project, config: Config) {
+    const path = `${project.buildDir(config.name)}`;
+    let src = "const { execSync } = require('child_process');\n";
+    src += "execSync('http-server -c-1 -g .', {\n";
+    src += `  cwd: '${project.distDir(config.name)}',\n`;
+    src += " stdio: 'inherit',\n";
+    src += "  stderr: 'inherit',\n";
+    src += '});\n';
+    Deno.writeTextFileSync(path, src);
 }
