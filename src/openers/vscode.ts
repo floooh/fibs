@@ -100,6 +100,7 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
     }
 }
 
+// FIXME: would be nice to not require separate http-server tool here:
 function writeHttpServer(project: Project, config: Config) {
     const path = `${project.buildDir(config.name)}`;
     ensureDirSync(path);
