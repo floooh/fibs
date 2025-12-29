@@ -151,9 +151,9 @@ export class ProjectImpl implements Project {
         }
         return imp.importDir;
     }
-    importOption(name: string): unknown {
+    importOptions(name: string): unknown {
         this.assertPhaseAtLeast(ProjectPhase.Build);
-        return this._importOptions[name];
+        return this._importOptions[name] ?? {};
     }
     settings(): Setting[] {
         this.assertPhaseAtLeast(ProjectPhase.Build);

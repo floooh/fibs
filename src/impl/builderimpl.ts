@@ -146,8 +146,8 @@ export class BuilderImpl implements Builder {
     importDir(importName: string): string {
         return this._project.importDir(importName);
     }
-    importOption(name: string): unknown {
-        return this._project.importOption(name);
+    importOptions(name: string): unknown {
+        return this._project.importOptions(name);
     }
     settings(): Setting[] {
         return this._project.settings();
