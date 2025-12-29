@@ -33,6 +33,19 @@ export function helpJob(name: string, help: string, schema: Schema) {
     print('');
 }
 
+export function helpImport(name: string, help: string, importOptions: { name: string; schema: Schema }[]) {
+    print(`  ${green(name)}: ${help}`);
+    if (importOptions.length > 0) {
+        for (const opts of importOptions) {
+            print(`    ${brightBlue(`${opts.name}:`)}`);
+            for (const [key, val] of Object.entries(opts.schema)) {
+                print(`      ${brightBlue(`${key}${val.optional ? '?' : ''}:`)} ${yellow(val.type)} - ${val.desc}`);
+            }
+        }
+    }
+    print('');
+}
+
 export function run(cmdLine: string[], cwd?: string) {
     const cwdString = cwd ? `(in ${cwd})` : '';
     print(brightBlue(`=> ${cmdLine.join(' ')} ${cwdString}`));

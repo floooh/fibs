@@ -1,6 +1,6 @@
 import { imports, log } from '../lib/index.ts';
 import type { CommandDesc, Project, TargetType } from '../types.ts';
-import { blue, brightBlue } from '@std/fmt/colors';
+import { blue, brightBlue, green } from '@std/fmt/colors';
 
 export const listCmd: CommandDesc = { name: 'list', help, run };
 
@@ -45,9 +45,14 @@ async function run(project: Project, cmdLineArgs: string[]): Promise<void> {
     if (args.all || args.imports) {
         for (const i of project.imports().toReversed()) {
             if (imports.isLinked(project, i.name)) {
-                log.print(`${i.name}: ${brightBlue(`link => ${i.importDir}`)}`);
+                log.print(`${green(i.name)}: ${brightBlue(`link => ${i.importDir}`)}`);
             } else {
-                log.print(`${i.name}: ${i.importDir}`);
+                log.print(`${green(i.name)}: ${i.name}: ${i.importDir}`);
+            }
+            for (const mod of i.modules) {
+                if (mod.module.help) {
+                    mod.module.help(mod.name);
+                }
             }
         }
     }
