@@ -101,7 +101,7 @@ async function diagTargets(project: Project) {
 async function diagImports(project: Project) {
     for (const imp of project.imports()) {
         log.write(`${imp.name}: `);
-        const res = await imports.validate(imp, { silent: true, abortOnError: false });
+        const res = imports.validate(imp, { silent: true, abortOnError: false });
         if (res.valid) {
             log.write(green('ok\n'));
         } else {

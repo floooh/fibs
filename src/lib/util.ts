@@ -1,4 +1,4 @@
-import type { JobArgs, NamedItem, Platform, RunOptions, RunResult, TargetType } from '../types.ts';
+import type { NamedItem, Platform, RunOptions, RunResult, Schema, TargetType } from '../types.ts';
 import { log } from './index.ts';
 import { ensureDirSync } from '@std/fs';
 import { dirname } from '@std/path';
@@ -258,96 +258,93 @@ export async function download(
     return true;
 }
 
-export function isString(val: unknown): val is string {
-    return typeof val === 'string';
-}
-
-export function isNumber(val: unknown): val is number {
-    return typeof val === 'number';
-}
-
-export function isBoolean(val: unknown): val is boolean {
-    return typeof val === 'boolean';
-}
-
-export function isStringArray(val: unknown): val is string[] {
-    return Array.isArray(val) && val.every((item) => isString(item));
-}
-
-export function isNumberArray(val: unknown): val is number[] {
-    return Array.isArray(val) && val.every((item) => isNumber(item));
-}
-
-export function isBooleanArray(val: unknown): val is boolean[] {
-    return Array.isArray(val) && val.every((item) => isBoolean(item));
-}
-
 /**
- * Iterates over the properties of an 'args' object and checks their
- * type against a map of expected argument types.
- * @param args - an object with properties to check
- * @param expected - a map of property names and their expected type
- * @returns validation result (either valid, or a string array with hints what's wrong)
+ * Validate JS object against schema.
+ *
+ * @param obj a JS object of type unknown
+ * @param schema a Schema object
  */
-export function validateArgs(
-    args: JobArgs,
-    expected: Record<
-        string,
-        { type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]'; optional: boolean }
-    >,
-): { valid: boolean; hints: string[] } {
-    const res: ReturnType<typeof validateArgs> = { valid: true, hints: [] };
-    for (const [key, value] of Object.entries(expected)) {
-        if (!value.optional && (args[key as keyof object] === undefined)) {
-            res.valid = false;
-            res.hints.push(`expected required arg '${key}'`);
+export function validate(obj: unknown, schema: Schema): { valid: boolean; hints: string[] } {
+    const res: ReturnType<typeof validate> = { valid: false, hints: [] };
+    if (typeof obj !== 'object') {
+        res.hints.push('object must be a record');
+        return res;
+    }
+    if (obj === null) {
+        res.hints.push('object must not be null');
+        return res;
+    }
+    for (const [key, val] of Object.entries(schema)) {
+        if (!val.optional && obj[key as keyof object] === undefined) {
+            res.hints.push(`required arg '${key}' is missing`);
         }
     }
-    for (const [key, value] of Object.entries(args)) {
-        const exp = expected[key];
-        if (exp === undefined) {
-            res.valid = false;
-            res.hints.push(`unknown arg '${key}'`);
+    for (const [key, val] of Object.entries(obj)) {
+        const schemaItem = schema[key];
+        if (schemaItem === undefined) {
+            res.hints.push(`unknown property '${key}'`);
         } else {
-            switch (exp.type) {
-                case 'boolean':
-                    if (!isBoolean(value)) {
-                        res.valid = false;
-                        res.hints.push(`arg '${key} must be a boolean`);
-                    }
-                    break;
-                case 'boolean[]':
-                    if (!isBooleanArray(value)) {
-                        res.valid = false;
-                        res.hints.push(`arg '${key} must be a boolean array`);
+            switch (schemaItem.type) {
+                case 'string':
+                    if (typeof val !== 'string') {
+                        res.hints.push(`property '$${key}' must be a string`);
                     }
                     break;
                 case 'number':
-                    if (!isNumber(value)) {
-                        res.valid = false;
-                        res.hints.push(`arg '${key} must be a number`);
+                    if (typeof val !== 'number') {
+                        res.hints.push(`property '${key}' must be a number`);
                     }
                     break;
-                case 'number[]':
-                    if (!isNumberArray(value)) {
-                        res.valid = false;
-                        res.hints.push(`arg '${key} must be a number array`);
+                case 'boolean':
+                    if (typeof val !== 'boolean') {
+                        res.hints.push(`property '${key}' must be a boolean`);
                     }
                     break;
-                case 'string':
-                    if (!isString(value)) {
-                        res.valid = false;
-                        res.hints.push(`arg '${key} must be a string`);
+                case 'enum':
+                    if (typeof val !== 'string' || !schemaItem.items.includes(val)) {
+                        res.hints.push(`property '${key}' must be one of [${schemaItem.items.join(' ')}]`);
                     }
                     break;
                 case 'string[]':
-                    if (!isStringArray(value)) {
-                        res.valid = false;
-                        res.hints.push(`arg '${key} must be a string array`);
+                    if (!Array.isArray(val) || !val.every((item) => typeof item === 'string')) {
+                        res.hints.push(`property '${key}' must be a string array`);
+                    }
+                    break;
+                case 'number[]':
+                    if (!Array.isArray(val) || !val.every((item) => typeof item === 'number')) {
+                        res.hints.push(`property '${key}' must a number array`);
+                    }
+                    break;
+                case 'boolean[]':
+                    if (!Array.isArray(val) || !val.every((item) => typeof item === 'boolean')) {
+                        res.hints.push(`property '${key}' must be a boolean array`);
+                    }
+                    break;
+                case 'object':
+                    {
+                        const { hints } = validate(val, schemaItem.schema);
+                        res.hints.push(...hints);
                     }
                     break;
             }
         }
     }
+    res.valid = res.hints.length === 0;
     return res;
+}
+
+/**
+ * Safely cast an unknown object to a type with schema validation.
+ *
+ * @param obj - an object to cast
+ * @param schema - a schema to validate obj against
+ * @returns type guard result
+ */
+export function safeCast<T>(obj: unknown, schema: Schema, silent: boolean = false): obj is T {
+    const { valid, hints } = validate(obj, schema);
+    if (!valid && !silent) {
+        log.warn(`validation failed:`);
+        hints.forEach((hint) => log.info(`  ${hint}`));
+    }
+    return valid;
 }

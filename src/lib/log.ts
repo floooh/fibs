@@ -1,3 +1,4 @@
+import type { Schema } from '../types.ts';
 import { bold, brightBlue, brightRed, green, red, yellow } from '@std/fmt/colors';
 
 const textEncoder = new TextEncoder();
@@ -24,10 +25,10 @@ export function helpCmd(cmds: string[], help: string | string[]) {
     print('');
 }
 
-export function helpJob(name: string, args: { name: string; type: string; desc: string }[], help: string) {
+export function helpJob(name: string, help: string, schema: Schema) {
     print(`${green(`${name}:`)} ${help}`);
-    for (const arg of args) {
-        print(`  ${brightBlue(`${arg.name}:`)} ${yellow(arg.type)} - ${arg.desc}`);
+    for (const [key, val] of Object.entries(schema)) {
+        print(`  ${brightBlue(`${key}:`)} ${yellow(val.type)} - ${val.desc}`);
     }
     print('');
 }

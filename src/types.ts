@@ -459,3 +459,20 @@ export type AdapterDesc = NamedItem & {
     build(project: Project, options: AdapterBuildOptions): Promise<void>;
 };
 export type Adapter = ImportedItem & AdapterDesc;
+
+export type SchemaItem = {
+    type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]';
+    optional: boolean;
+    desc: string;
+} | {
+    type: 'object';
+    schema: Schema;
+    optional: boolean;
+    desc: string;
+} | {
+    type: 'enum';
+    items: string[];
+    optional: boolean;
+    desc: string;
+};
+export type Schema = Record<string, SchemaItem>;

@@ -48,7 +48,9 @@ export class ConfigurerImpl implements Configurer {
         if (typeof funcOrOpts === 'function') {
             this._importOptionsFuncs.push(funcOrOpts);
         } else {
-            this._importOptionsFuncs.push(() => { return funcOrOpts; })
+            this._importOptionsFuncs.push(() => {
+                return funcOrOpts;
+            });
         }
     }
     addImport(imp: ImportDesc): void {
