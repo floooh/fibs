@@ -106,15 +106,17 @@ function genCMakePresetsJson(project: Project, config: Config, buildDir: string)
             minor: 21,
             patch: 0,
         },
-        configurePresets: {
-            name: config.name,
-            displayName: config.name,
-            binaryDir: buildDir,
-            generator: asCmakeGenerator(config.generator),
-            toolchainFile: config.toolchainFile,
-            cacheVariables: genCacheVariables(project, config),
-            environment: config.environment,
-        },
+        configurePresets: [
+            {
+                name: config.name,
+                displayName: config.name,
+                binaryDir: buildDir,
+                generator: asCmakeGenerator(config.generator),
+                toolchainFile: config.toolchainFile,
+                cacheVariables: genCacheVariables(project, config),
+                environment: config.environment,
+            },
+        ],
         buildPresets: genBuildPresets(config),
     };
     return JSON.stringify(preset, null, 2);
