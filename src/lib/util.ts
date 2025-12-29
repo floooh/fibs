@@ -287,7 +287,7 @@ export function validate(obj: unknown, schema: Schema): { valid: boolean; hints:
             switch (schemaItem.type) {
                 case 'string':
                     if (typeof val !== 'string') {
-                        res.hints.push(`property '$${key}' must be a string`);
+                        res.hints.push(`property '${key}' must be a string`);
                     }
                     break;
                 case 'number':
