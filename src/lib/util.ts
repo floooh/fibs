@@ -340,10 +340,10 @@ export function validate(obj: unknown, schema: Schema): { valid: boolean; hints:
  * @param schema - a schema to validate obj against
  * @returns obj safely casted to type T
  */
-export function safeCast<T>(obj: unknown, schema: Schema, silent: boolean = false): T {
+export function safeCast<T>(obj: unknown, schema: Schema, context?: string): T {
     const { valid, hints } = validate(obj, schema);
-    if (!valid && !silent) {
-        log.panic(`safe casting failed:\n${hints.forEach((hint) => `  ${hint}\n`)}`);
+    if (!valid) {
+        log.panic(`safe casting failed${context === undefined ? '' : ` (${context})`}:\n\n${hints.map((hint) => `  ${hint}`).join('\n')}`);
     }
     return obj as T;
 }
