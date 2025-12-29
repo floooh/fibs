@@ -1,13 +1,12 @@
-import { log } from '../lib/index.ts';
+import { log, util } from '../lib/index.ts';
 import type { Config, OpenerDesc, Project } from '../types.ts';
 import { run } from '../tools/vscode.ts';
-import { ensureDirSync } from '@std/fs';
 
 export const vscodeOpener: OpenerDesc = { name: 'vscode', generate, open };
 
 async function generate(project: Project, config: Config) {
     const vscodeDir = `${project.dir()}/.vscode`;
-    ensureDirSync(vscodeDir);
+    util.ensureDir(vscodeDir);
     writeWorkspaceFile(project, config, vscodeDir);
     writeLaunchJson(project, config, vscodeDir);
     if (project.isEmscripten()) {
@@ -103,7 +102,7 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
 // FIXME: would be nice to not require separate http-server tool here:
 function writeHttpServer(project: Project, config: Config) {
     const path = `${project.buildDir(config.name)}`;
-    ensureDirSync(path);
+    util.ensureDir(path);
     let src = "const { execSync } = require('child_process');\n";
     src += "execSync('http-server -c-1 -g .', {\n";
     src += `  cwd: '${project.distDir(config.name)}',\n`;

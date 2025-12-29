@@ -1,4 +1,4 @@
-import type { Config, JobArgs, NamedItem, Platform, Project, RunOptions, RunResult, TargetType } from '../types.ts';
+import type { JobArgs, NamedItem, Platform, RunOptions, RunResult, TargetType } from '../types.ts';
 import { log } from './index.ts';
 import { ensureDirSync } from '@std/fs';
 import { dirname } from '@std/path';
@@ -13,6 +13,18 @@ export function find<T extends NamedItem>(name: string | undefined, items: T[]):
 export function findIndex<T extends NamedItem>(name: string, items: T[]): number | undefined {
     const index = items.findIndex((elm) => elm.name === name);
     return (index === -1) ? undefined : index;
+}
+
+export function ensureFile(filePath: string) {
+    if (!fileExists(filePath)) {
+        ensureDirSync(dirname(filePath));
+        Deno.writeTextFileSync(filePath, '');
+    }
+}
+
+export function ensureDir(path: string): string {
+    ensureDirSync(path);
+    return path;
 }
 
 export function fileExists(path: string): boolean {
@@ -93,13 +105,6 @@ export function targetAssetsDir(
     }
 }
 
-export function ensureFile(filePath: string) {
-    if (!fileExists(filePath)) {
-        ensureDirSync(dirname(filePath));
-        Deno.writeTextFileSync(filePath, '');
-    }
-}
-
 /**
  * Checks if output files are dirty, returns true if:
  * - any of the input or output files don't exist
@@ -146,40 +151,6 @@ export function dirty(inputs: string[], outputs: string[]): boolean {
         }
     }
     return false;
-}
-
-export function ensureFibsDir(project: Project): string {
-    const path = project.fibsDir();
-    ensureDirSync(path);
-    return path;
-}
-
-export function ensureDistDir(project: Project, configName?: string): string {
-    const path = project.distDir(configName);
-    ensureDirSync(path);
-    return path;
-}
-
-export function ensureImportsDir(project: Project): string {
-    const path = project.importsDir();
-    ensureDirSync(path);
-    return path;
-}
-
-export function ensureSdkDir(project: Project): string {
-    const path = project.sdkDir();
-    ensureDirSync(path);
-    return path;
-}
-
-export function validConfigForPlatform(config: Config, platform: string): boolean {
-    // cross-compilation configs are valid on all platforms
-    // FIXME: how to deal with cmake's integrated cross-platform support
-    // which doesn't need a toolchain file?
-    if (config.toolchainFile) {
-        return true;
-    }
-    return config.platform === platform;
 }
 
 /**

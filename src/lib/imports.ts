@@ -20,7 +20,7 @@ export async function fetchImport(
         return res;
     } else {
         // regular import
-        const importsDir = util.ensureImportsDir(project);
+        const importsDir = util.ensureDir(project.importsDir());
         const repoDir = git.getDir(importsDir, url, ref);
         const res = {
             valid: false,
@@ -98,7 +98,7 @@ export function validate(
 
 function loadImportLinks(project: Project): Record<string, string | undefined> {
     let result: ReturnType<typeof loadImportLinks> = {};
-    const linksJsonPath = `${util.ensureFibsDir(project)}/links.json`;
+    const linksJsonPath = `${util.ensureDir(project.fibsDir())}/links.json`;
     if (util.fileExists(linksJsonPath)) {
         try {
             result = JSON.parse(Deno.readTextFileSync(linksJsonPath));
@@ -110,7 +110,7 @@ function loadImportLinks(project: Project): Record<string, string | undefined> {
 }
 
 function saveImportLinks(project: Project, links: Record<string, string | undefined>) {
-    const linksJsonPath = `${util.ensureFibsDir(project)}/links.json`;
+    const linksJsonPath = `${util.ensureDir(project.fibsDir())}/links.json`;
     try {
         Deno.writeTextFileSync(linksJsonPath, JSON.stringify(links, null, 2));
     } catch (err) {

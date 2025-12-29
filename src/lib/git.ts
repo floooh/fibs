@@ -1,6 +1,5 @@
 import { log, util } from './index.ts';
 import type { RunOptions, RunResult } from '../types.ts';
-import { ensureDirSync } from '@std/fs';
 import { parse } from '@std/path';
 
 export async function run(options: RunOptions): Promise<RunResult> {
@@ -41,7 +40,7 @@ export async function clone(options: { url: string; dir: string; ref?: string; s
     if (util.dirExists(repoDir)) {
         log.panic(`git clone directory ${repoDir} already exists!`);
     }
-    ensureDirSync(repoDir);
+    util.ensureDir(repoDir);
     if ((await run({ args: ['init', '-q'], cwd: repoDir, showCmd })).exitCode !== 0) {
         return false;
     }

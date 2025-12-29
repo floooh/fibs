@@ -52,7 +52,7 @@ export function load(project: Project) {
 }
 
 export function save(project: Project) {
-    const path = util.ensureFibsDir(project) + '/settings.json';
+    const path = `${util.ensureDir(project.fibsDir())}/settings.json`;
     try {
         const kvp: Record<string, string> = {};
         for (const s of project.settings()) {

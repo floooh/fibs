@@ -1,5 +1,4 @@
 import { cmake, log, proj, util } from '../lib/index.ts';
-import { ensureDirSync } from '@std/fs';
 import {
     type AdapterBuildOptions,
     type AdapterConfigureResult,
@@ -42,7 +41,7 @@ export async function configure(project: Project): Promise<AdapterConfigureResul
     const configDir = project.configDir(config.name);
     const configPath = `${configDir}/cmake_config.json`;
     if (!util.fileExists(configPath)) {
-        ensureDirSync(configDir);
+        util.ensureDir(configDir);
         // run a dummy cmake generator to obtain runtime config params
         const helloPath = `${configDir}/hello.c`;
         Deno.writeTextFileSync(helloPath, helloSource, { create: true });
@@ -107,7 +106,15 @@ function genCMakePresetsJson(project: Project, config: Config, buildDir: string)
             minor: 21,
             patch: 0,
         },
-        configurePresets: genConfigurePresets(project, config, buildDir),
+        configurePresets: {
+            name: config.name,
+            displayName: config.name,
+            binaryDir: buildDir,
+            generator: asCmakeGenerator(config.generator),
+            toolchainFile: config.toolchainFile,
+            cacheVariables: genCacheVariables(project, config),
+            environment: config.environment,
+        },
         buildPresets: genBuildPresets(config),
     };
     return JSON.stringify(preset, null, 2);
@@ -177,24 +184,6 @@ function resolveCacheVariable(val: string | boolean): string | { type: 'BOOL'; v
             value: val ? 'ON' : 'OFF',
         };
     }
-}
-
-function genConfigurePresets(project: Project, config: Config, buildDir: string): unknown[] {
-    const res = [];
-    if (util.validConfigForPlatform(config, project.hostPlatform())) {
-        res.push({
-            name: config.name,
-            displayName: config.name,
-            binaryDir: buildDir,
-            generator: asCmakeGenerator(config.generator),
-            toolchainFile: config.toolchainFile,
-            cacheVariables: genCacheVariables(project, config),
-            environment: config.environment,
-        });
-    } else {
-        log.panic(`config '${config.name} is not valid for platform '${project.hostPlatform()}'`);
-    }
-    return res;
 }
 
 function genCacheVariables(project: Project, config: Config): Record<string, unknown> {
