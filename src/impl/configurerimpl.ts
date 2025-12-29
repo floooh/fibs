@@ -44,8 +44,12 @@ export class ConfigurerImpl implements Configurer {
     selfDir(): string {
         return this._importDir;
     }
-    addImportOptions(func: (p: Project) => Record<string, unknown>): void {
-        this._importOptionsFuncs.push(func);
+    addImportOptions(funcOrOpts: Record<string, unknown> | ((p: Project) => Record<string, unknown>)): void {
+        if (typeof funcOrOpts === 'function') {
+            this._importOptionsFuncs.push(funcOrOpts);
+        } else {
+            this._importOptionsFuncs.push(() => { return funcOrOpts; })
+        }
     }
     addImport(imp: ImportDesc): void {
         if (util.find(imp.name, this._imports)) {

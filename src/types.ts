@@ -100,7 +100,8 @@ export type Configurer = IConfigPhaseInfo & {
     projectDir(): string;
     selfDir(): string;
 
-    addImportOptions(func: (p: Project) => Record<string, unknown>): void;
+    addImportOptions(opts: Record<string, unknown>): void;
+    addImportOptions(optsFunc: (p: Project) => Record<string, unknown>): void;
     addImport(imp: ImportDesc): void;
     addCommand(cmd: CommandDesc): void;
     addJob(job: JobBuilderDesc): void;
