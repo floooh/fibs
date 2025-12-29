@@ -26,7 +26,7 @@ type IBuildPhaseInfo = IConfigPhaseInfo & {
     compiler(): Compiler;
 
     importDir(importName: string): string;
-    importOptions(name: string): unknown;
+    importOptions<T>(name: string, schema: Schema): T;
 
     settings(): Setting[];
     configs(): Config[];

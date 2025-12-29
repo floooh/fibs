@@ -18,6 +18,7 @@ import {
     type Project,
     ProjectPhase,
     type Runner,
+    type Schema,
     type Setting,
     type Target,
     type Tool,
@@ -151,9 +152,15 @@ export class ProjectImpl implements Project {
         }
         return imp.importDir;
     }
-    importOptions(name: string): unknown {
+    importOptions<T>(name: string, schema: Schema): T {
         this.assertPhaseAtLeast(ProjectPhase.Build);
-        return this._importOptions[name] ?? {};
+        const opts = this._importOptions[name] ?? {};
+        const { valid, hints } = util.validate(opts, schema);
+        if (valid) {
+            return opts as T;
+        } else {
+            log.panic(`import options validation failed for '${name}':\n\n${hints.map((hint) => `  ${hint}`).join('\n')}\n`);
+        }
     }
     settings(): Setting[] {
         this.assertPhaseAtLeast(ProjectPhase.Build);

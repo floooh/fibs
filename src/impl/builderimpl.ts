@@ -21,6 +21,7 @@ import {
     type Opener,
     type Platform,
     type Runner,
+    type Schema,
     type Setting,
     type TargetBuilder,
     type TargetDesc,
@@ -146,8 +147,8 @@ export class BuilderImpl implements Builder {
     importDir(importName: string): string {
         return this._project.importDir(importName);
     }
-    importOptions(name: string): unknown {
-        return this._project.importOptions(name);
+    importOptions<T>(name: string, schema: Schema): T {
+        return this._project.importOptions(name, schema);
     }
     settings(): Setting[] {
         return this._project.settings();
