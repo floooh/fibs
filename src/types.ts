@@ -337,11 +337,9 @@ export type Import = NamedItem & ImportedItem & {
     modules: ImportedModule[];
 };
 
-export type JobArgs = Record<string, unknown>;
-
 export type TargetJob = {
     job: string;
-    args: JobArgs;
+    args: Record<string, unknown>;
 };
 
 export type TargetDesc = NamedItem & {
@@ -376,8 +374,8 @@ export type Target = NamedItem & ImportedItem & {
 
 export type JobBuilderDesc = NamedItem & {
     help(): void;
-    validate(args: JobArgs): { valid: boolean; hints: string[] };
-    build(project: Project, config: Config, target: Target, args: JobArgs): Job;
+    validate(args: unknown): { valid: boolean; hints: string[] };
+    build(project: Project, config: Config, target: Target, args: unknown): Job;
 };
 
 export type JobBuilder = ImportedItem & JobBuilderDesc;
@@ -386,7 +384,7 @@ export type Job = NamedItem & {
     inputs: string[];
     outputs: string[];
     addOutputsToTargetSources: boolean;
-    args: JobArgs;
+    args: unknown;
     // deno-lint-ignore no-explicit-any
     func: (inputs: string[], output: string[], args: any) => Promise<void>;
 };
