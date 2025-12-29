@@ -338,13 +338,12 @@ export function validate(obj: unknown, schema: Schema): { valid: boolean; hints:
  *
  * @param obj - an object to cast
  * @param schema - a schema to validate obj against
- * @returns type guard result
+ * @returns obj safely casted to type T
  */
-export function safeCast<T>(obj: unknown, schema: Schema, silent: boolean = false): obj is T {
+export function safeCast<T>(obj: unknown, schema: Schema, silent: boolean = false): T {
     const { valid, hints } = validate(obj, schema);
     if (!valid && !silent) {
-        log.warn(`validation failed:`);
-        hints.forEach((hint) => log.info(`  ${hint}`));
+        log.panic(`safe casting failed:\n${hints.forEach((hint) => `  ${hint}\n`)}`);
     }
-    return valid;
+    return obj as T;
 }
