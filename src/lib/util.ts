@@ -338,6 +338,7 @@ export function validate(obj: unknown, schema: Schema): { valid: boolean; hints:
  *
  * @param obj - an object to cast
  * @param schema - a schema to validate obj against
+ * @param context - additional context log message when safe casting fails
  * @returns obj safely casted to type T
  */
 export function safeCast<T>(obj: unknown, schema: Schema, context?: string): T {
