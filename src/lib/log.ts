@@ -28,7 +28,7 @@ export function helpCmd(cmds: string[], help: string | string[]) {
 export function helpJob(name: string, help: string, schema: Schema) {
     print(`${green(`${name}:`)} ${help}`);
     for (const [key, val] of Object.entries(schema)) {
-        print(`  ${brightBlue(`${key}:`)} ${yellow(val.type)} - ${val.desc}`);
+        print(`  ${brightBlue(`${key}${val.optional ? '?' : ''}:`)} ${yellow(val.type)} - ${val.desc}`);
     }
     print('');
 }
