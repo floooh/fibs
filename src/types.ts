@@ -272,6 +272,7 @@ export type CompileOption = ImportedItem & {
 export type LinkOptionsDesc = {
     opts: string[];
     scope?: Scope;
+    language?: Language;
     buildMode?: BuildMode;
 };
 export function isLinkOptionsDesc(val: unknown): val is LinkOptionsDesc {
@@ -283,6 +284,7 @@ export function isLinkOptionsDesc(val: unknown): val is LinkOptionsDesc {
 export type LinkOption = ImportedItem & {
     opt: string;
     scope: Scope;
+    language?: Language;
     buildMode?: BuildMode;
 };
 

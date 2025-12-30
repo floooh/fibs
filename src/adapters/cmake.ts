@@ -250,7 +250,7 @@ function genProlog(project: Project): string {
     return str;
 }
 
-function expr(l: Language | undefined, m: BuildMode | undefined, str: string): string {
+function compileExpr(l: Language | undefined, m: BuildMode | undefined, str: string): string {
     switch (l) {
         case 'c':
             str = `$<$<COMPILE_LANGUAGE:C>:${str}>`;
@@ -270,10 +270,29 @@ function expr(l: Language | undefined, m: BuildMode | undefined, str: string): s
     return str;
 }
 
+function linkExpr(l: Language | undefined, m: BuildMode | undefined, str: string): string {
+    switch (l) {
+        case 'c':
+            str = `$<$<LINK_LANGUAGE:C>:${str}>`;
+            break;
+        case 'cxx':
+            str = `$<$<LINK_LANGUAGE:CXX>:${str}>`;
+            break;
+    }
+    switch (m) {
+        case 'debug':
+            str = `$<$<CONFIG:DEBUG>:${str}>`;
+            break;
+        case 'release':
+            str = `$<$<CONFIG:RELEASE>:${str}>`;
+            break;
+    }
+    return str;
+}
 function genIncludeDirectories(project: Project): string {
     let str = '';
     project.includeDirectories().forEach((item) =>
-        str += `include_directories(${item.system ? 'SYSTEM ' : ''}"${expr(item.language, item.buildMode, item.dir)}")\n`
+        str += `include_directories(${item.system ? 'SYSTEM ' : ''}"${compileExpr(item.language, item.buildMode, item.dir)}")\n`
     );
     return str;
 }
@@ -283,7 +302,7 @@ function genCompileDefinitions(project: Project): string {
     const items = project.compileDefinitions();
     if (items.length > 0) {
         str += 'add_compile_definitions(';
-        str += items.map((item) => `${expr(item.language, item.buildMode, `${item.name}=${item.val}`)}`).join(' ');
+        str += items.map((item) => `${compileExpr(item.language, item.buildMode, `${item.name}=${item.val}`)}`).join(' ');
         str += ')\n';
     }
     return str;
@@ -294,7 +313,7 @@ function genCompileOptions(project: Project): string {
     const items = project.compileOptions();
     if (items.length > 0) {
         str += 'add_compile_options(';
-        str += items.map((item) => `${expr(item.language, item.buildMode, item.opt)}`).join(' ');
+        str += items.map((item) => `${compileExpr(item.language, item.buildMode, item.opt)}`).join(' ');
         str += ')\n';
     }
     return str;
@@ -305,7 +324,7 @@ function genLinkOptions(project: Project): string {
     const items = project.linkOptions();
     if (items.length > 0) {
         str += 'add_link_options(';
-        str += items.map((item) => `${expr(undefined, item.buildMode, item.opt)}`).join(' ');
+        str += items.map((item) => `${linkExpr(item.language, item.buildMode, item.opt)}`).join(' ');
         str += ')\n';
     }
     return str;
@@ -396,7 +415,7 @@ function genTargetIncludeDirectories(target: Target): string {
     target.includeDirectories.forEach((item) => {
         const sys = item.system ? ' SYSTEM' : '';
         const scope = asCmakeScope(item.scope);
-        str += `target_include_directories(${target.name}${sys}${scope} "${expr(item.language, item.buildMode, item.dir)}")\n`;
+        str += `target_include_directories(${target.name}${sys}${scope} "${compileExpr(item.language, item.buildMode, item.dir)}")\n`;
     });
     return str;
 }
@@ -406,9 +425,10 @@ function genTargetCompileDefinitions(target: Target): string {
     const items = target.compileDefinitions;
     if (items.length > 0) {
         str += `target_compile_definitions(${target.name}`;
-        str += items.map((item) => `${asCmakeScope(item.scope)} ${expr(item.language, item.buildMode, `${item.name}=${item.val}`)}`).join(
-            ' ',
-        );
+        str += items.map((item) => `${asCmakeScope(item.scope)} ${compileExpr(item.language, item.buildMode, `${item.name}=${item.val}`)}`)
+            .join(
+                ' ',
+            );
         str += ')\n';
     }
     return str;
@@ -419,7 +439,7 @@ function genTargetCompileOptions(target: Target): string {
     const items = target.compileOptions;
     if (items.length > 0) {
         str += `target_compile_options(${target.name}`;
-        str += items.map((item) => `${asCmakeScope(item.scope)} ${expr(item.language, item.buildMode, item.opt)}`).join(' ');
+        str += items.map((item) => `${asCmakeScope(item.scope)} ${compileExpr(item.language, item.buildMode, item.opt)}`).join(' ');
         str += ')\n';
     }
     return str;
@@ -430,7 +450,7 @@ function genTargetLinkOptions(target: Target): string {
     const items = target.linkOptions;
     if (items.length > 0) {
         str += `target_link_options(${target.name}`;
-        str += items.map((item) => `${asCmakeScope(item.scope)} ${expr(undefined, item.buildMode, item.opt)}`).join(' ');
+        str += items.map((item) => `${asCmakeScope(item.scope)} ${linkExpr(item.language, item.buildMode, item.opt)}`).join(' ');
         str += ')\n';
     }
     return str;

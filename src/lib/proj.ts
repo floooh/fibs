@@ -581,6 +581,8 @@ function resolveBuilderLinkOptions(builders: BuilderImpl[]): LinkOption[] {
             items.opts.map((opt) => ({
                 opt,
                 scope: items.scope ?? 'public',
+                language: items.language,
+                buildMode: items.buildMode,
                 importDir: builder._importDir,
             }))
         )
@@ -596,6 +598,8 @@ function resolveTargetLinkOptions(builder: BuilderImpl, t: TargetDesc): LinkOpti
         items.opts.map((opt) => ({
             opt,
             scope: items.scope ?? defaultScope,
+            language: items.language,
+            buildMode: items.buildMode,
             importDir: builder._importDir,
         }))
     );
