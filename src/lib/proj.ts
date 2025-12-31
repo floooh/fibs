@@ -220,7 +220,7 @@ export async function runJobs(project: Project, config: Config, target: Target) 
         try {
             await job.func(job.inputs, job.outputs, job.args);
         } catch (err) {
-            log.panic(`job '${job.name}' in target '${target.name}' failed with ${err}`);
+            log.panic(`job '${job.name}' in target '${target.name}' failed with: `, err);
         }
     }
 }
