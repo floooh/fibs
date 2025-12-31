@@ -415,9 +415,11 @@ export type RunOptions = {
     /** optional current working directory to run the command in */
     cwd?: string;
     /** whether to print or capture stdout */
-    stdout?: 'inherit' | 'piped';
+    stdout?: 'inherit' | 'piped' | 'null';
     /** whether to print or capture stderr */
-    stderr?: 'inherit' | 'piped';
+    stderr?: 'inherit' | 'piped' | 'null';
+    /** how stdin of the spawned process will be handled (default: inherit) */
+    stdin?: 'inherit' | 'piped' | 'null';
     /** whether to log the cmdline before executing */
     showCmd?: boolean;
     /** whether to abort on error */

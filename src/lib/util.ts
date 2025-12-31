@@ -168,6 +168,7 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
         cwd,
         stdout = 'inherit',
         stderr = 'inherit',
+        stdin = 'inherit',
         winUseCmd,
     } = options;
     let cmdx;
@@ -183,7 +184,7 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
         log.run([cmdx, ...argsx], cwd);
     }
     try {
-        const command = new Deno.Command(cmdx, { args: argsx, stdout, stderr, cwd });
+        const command = new Deno.Command(cmdx, { args: argsx, stdout, stderr, stdin, cwd });
         const cmdRes = await command.output();
         const res: RunResult = {
             exitCode: cmdRes.code,
