@@ -29,7 +29,7 @@ export async function main() {
         const project = await proj.configure(rootModule, rootDir, cmdName !== 'config');
         const cmd = project.command(cmdName);
 
-        // invoke the requested command
+        // invoke the requested command (NOTE: the cmd may set Deno.exitCode)
         if (!skipCmd) {
             await cmd.run(project, Deno.args);
         }

@@ -7,5 +7,5 @@ async function run(project: Project, config: Config, target: Target, options: Ru
     // can assume here that run() will only be called for executable targets
     const path = `${project.targetDistDir(target.name, config.name)}/${target.name}`;
     const res = await util.runCmd(path, options);
-    Deno.exit(res.exitCode);
+    Deno.exitCode = res.exitCode;
 }
