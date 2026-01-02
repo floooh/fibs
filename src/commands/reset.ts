@@ -31,5 +31,4 @@ async function run() {
     } else {
         log.info(`'deno clean' not run`);
     }
-    log.info(green('Done.'));
 }
