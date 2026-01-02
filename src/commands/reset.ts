@@ -1,6 +1,5 @@
 import { log, util } from '../lib/index.ts';
 import type { CommandDesc } from '../types.ts';
-import { green } from '@std/fmt/colors';
 
 export const resetCmd: CommandDesc = { name: 'reset', help, run };
 
