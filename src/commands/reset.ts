@@ -24,10 +24,4 @@ async function run() {
     } else {
         log.info('.fibs directory not deleted');
     }
-    if (log.ask(`run 'deno clean'?`, false)) {
-        await util.runCmd('deno', { args: ['clean'] });
-        log.info('ok');
-    } else {
-        log.info(`'deno clean' not run`);
-    }
 }
