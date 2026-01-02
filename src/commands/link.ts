@@ -15,6 +15,6 @@ async function run(project: Project, args: string[]) {
         log.panic("expected args [import] and [directory] (run 'fibs help link')");
     }
     const imp = args[1];
-    const dir = resolve(args[2]);
+    const dir = resolve(args[2]).replaceAll('\\', '/');
     imports.link(project, imp, dir);
 }
