@@ -14,6 +14,8 @@ const debug = { buildMode: 'debug' };
 export const builtinConfigs = [
     { ...win, ...vstudio, ...release, name: 'win-vstudio-release' },
     { ...win, ...vstudio, ...debug, name: 'win-vstudio-debug' },
+    { ...win, ...vstudio, ...release, opener: 'vscode', name: 'win-vscode-release' },
+    { ...win, ...vstudio, ...debug, opener: 'vscode', name: 'win-vscode-debug' },
     { ...mac, ...make, ...release, name: 'macos-make-release' },
     { ...mac, ...make, ...debug, name: 'macos-make-debug' },
     { ...mac, ...ninja, ...release, name: 'macos-ninja-release' },
