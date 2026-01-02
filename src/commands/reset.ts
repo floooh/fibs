@@ -1,5 +1,6 @@
 import { log, util } from '../lib/index.ts';
 import type { CommandDesc } from '../types.ts';
+import { green } from '@std/fmt/colors';
 
 export const resetCmd: CommandDesc = { name: 'reset', help, run };
 
@@ -22,6 +23,13 @@ async function run() {
         Deno.removeSync(fibsDir, { recursive: true });
         log.info('ok');
     } else {
-        log.info('not deleted');
+        log.info('.fibs directory not deleted');
     }
+    if (log.ask(`run 'deno clean'?`, false)) {
+        await util.runCmd('deno', { args: ['clean'] });
+        log.info('ok');
+    } else {
+        log.info(`'deno clean' not run`);
+    }
+    log.info(green('Done.'));
 }
