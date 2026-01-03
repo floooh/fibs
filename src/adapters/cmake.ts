@@ -50,7 +50,7 @@ export async function configure(project: Project): Promise<AdapterConfigureResul
         Deno.writeTextFileSync(cmakePath, cmakeConfigSource, { create: true });
 
         const cmakePresetsPath = `${configDir}/CMakePresets.json`;
-        const cmakePresetsSource = genCMakePresetsJson(project, config, configDir);
+        const cmakePresetsSource = genCMakePresetsJson(config, configDir);
         Deno.writeTextFileSync(cmakePresetsPath, cmakePresetsSource, { create: true });
 
         const res = await cmake.run({ cwd: configDir, args: ['--preset', config.name], stderr: 'piped', stdout: 'piped' });
@@ -81,7 +81,7 @@ export async function generate(project: Project): Promise<void> {
     try {
         Deno.writeTextFileSync(
             cmakePresetsPath,
-            genCMakePresetsJson(project, config, project.buildDir()),
+            genCMakePresetsJson(config, project.buildDir()),
             { create: true },
         );
     } catch (err) {
@@ -98,7 +98,7 @@ export async function build(project: Project, options: AdapterBuildOptions): Pro
     await cmake.build({ target: buildTarget, forceRebuild: forceRebuild });
 }
 
-function genCMakePresetsJson(project: Project, config: Config, buildDir: string): string {
+function genCMakePresetsJson(config: Config, buildDir: string): string {
     const preset = {
         version: 3,
         cmakeMinimumRequired: {
@@ -115,7 +115,6 @@ function genCMakePresetsJson(project: Project, config: Config, buildDir: string)
                 architecture: config.generatorArchitecture,
                 toolset: config.generatorToolset,
                 toolchainFile: config.toolchainFile,
-                cacheVariables: genCacheVariables(project, config),
                 environment: config.environment,
             },
         ],
@@ -179,31 +178,6 @@ function isMultiConfigGenerator(config: Config): boolean {
     }
 }
 
-function resolveCacheVariable(val: string | boolean): string | { type: 'BOOL'; value: 'ON' | 'OFF' } {
-    if (typeof val === 'string') {
-        return val;
-    } else {
-        return {
-            type: 'BOOL',
-            value: val ? 'ON' : 'OFF',
-        };
-    }
-}
-
-function genCacheVariables(project: Project, config: Config): Record<string, unknown> {
-    const res: Record<string, unknown> = {};
-    if (!isMultiConfigGenerator(config)) {
-        res.CMAKE_BUILD_TYPE = asCmakeBuildMode(config.buildMode);
-    }
-    if (project.phase() >= ProjectPhase.Generate) {
-        const vars = util.deduplicate([...config.cmakeVariables, ...project.cmakeVariables()]);
-        for (const cmakeVariable of vars) {
-            res[cmakeVariable.name] = resolveCacheVariable(cmakeVariable.value);
-        }
-    }
-    return res;
-}
-
 function genBuildPresets(config: Config): unknown[] {
     if (isMultiConfigGenerator(config)) {
         return [
@@ -220,6 +194,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     let str = '';
     str += genProlog(project);
     str += genMisc(project);
+    str += genCMakeVariables(project, config);
     str += genIncludeDirectories(project);
     str += genCompileDefinitions(project);
     str += genCompileOptions(project);
@@ -249,6 +224,28 @@ function genProlog(project: Project): string {
     str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     for (const includeDir of project.cmakeIncludes()) {
         str += `include("${includeDir.path}")\n`;
+    }
+    return str;
+}
+
+function resolveCMakeVariableValue(val: string | boolean): string {
+    if (typeof val === 'string') {
+        return val;
+    } else {
+        return val ? 'ON' : 'OFF';
+    }
+}
+
+function genCMakeVariables(project: Project, config: Config): string {
+    let str = '';
+    if (!isMultiConfigGenerator(config)) {
+        str += `set(CMAKE_BUILD_TYPE ${resolveCMakeVariableValue(config.buildMode)})`;
+    }
+    if (project.phase() >= ProjectPhase.Generate) {
+        const vars = util.deduplicate([...config.cmakeVariables, ...project.cmakeVariables()]);
+        for (const cmakeVariable of vars) {
+            str += `set(${cmakeVariable.name} ${resolveCMakeVariableValue(cmakeVariable.value)})`;
+        }
     }
     return str;
 }
