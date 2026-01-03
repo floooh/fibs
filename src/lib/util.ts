@@ -15,6 +15,21 @@ export function findIndex<T extends NamedItem>(name: string, items: T[]): number
     return (index === -1) ? undefined : index;
 }
 
+export function addOrReplace<T extends NamedItem>(items: T[], item: T) {
+    const index = findIndex(item.name, items);
+    if (index === undefined) {
+        items.push(item);
+    } else {
+        items[index] = item;
+    }
+}
+export function deduplicate<T extends NamedItem>(items: T[]): T[] {
+    const res: T[] = [];
+    for (const item of items) {
+        addOrReplace(res, item);
+    }
+    return res;
+}
 export function ensureFile(filePath: string) {
     if (!fileExists(filePath)) {
         ensureDirSync(dirname(filePath));

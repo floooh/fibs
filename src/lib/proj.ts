@@ -14,7 +14,6 @@ import {
     type Job,
     type JobBuilder,
     type LinkOption,
-    type NamedItem,
     type Opener,
     type Project,
     ProjectPhase,
@@ -354,7 +353,7 @@ function doBuildPhase(project: ProjectImpl): void {
 }
 
 function resolveSettings(configurers: ConfigurerImpl[]): Setting[] {
-    return deduplicate(configurers.flatMap((configurer) =>
+    return util.deduplicate(configurers.flatMap((configurer) =>
         configurer._settings.map((s) => ({
             name: s.name,
             importDir: configurer._importDir,
@@ -366,7 +365,7 @@ function resolveSettings(configurers: ConfigurerImpl[]): Setting[] {
 }
 
 function resolveImports(configurers: ConfigurerImpl[]): Import[] {
-    return deduplicate(configurers.flatMap((configurer) =>
+    return util.deduplicate(configurers.flatMap((configurer) =>
         configurer._imports.map<Import>((i) => ({
             name: i.name,
             importDir: i.importDir ?? 'no-import-dir',
@@ -380,7 +379,7 @@ function resolveImports(configurers: ConfigurerImpl[]): Import[] {
 }
 
 function resolveCommands(configurers: ConfigurerImpl[]): Command[] {
-    return deduplicate(configurers.flatMap((configurer) =>
+    return util.deduplicate(configurers.flatMap((configurer) =>
         configurer._commands.map((c) => ({
             name: c.name,
             importDir: configurer._importDir,
@@ -391,7 +390,7 @@ function resolveCommands(configurers: ConfigurerImpl[]): Command[] {
 }
 
 function resolveJobs(configurers: ConfigurerImpl[]): JobBuilder[] {
-    return deduplicate(configurers.flatMap((configurer) =>
+    return util.deduplicate(configurers.flatMap((configurer) =>
         configurer._jobs.map((j) => ({
             name: j.name,
             importDir: configurer._importDir,
@@ -403,7 +402,7 @@ function resolveJobs(configurers: ConfigurerImpl[]): JobBuilder[] {
 }
 
 function resolveTools(configurers: ConfigurerImpl[]): Tool[] {
-    return deduplicate(configurers.flatMap((configurer) =>
+    return util.deduplicate(configurers.flatMap((configurer) =>
         configurer._tools.map((t) => ({
             name: t.name,
             importDir: configurer._importDir,
@@ -416,7 +415,7 @@ function resolveTools(configurers: ConfigurerImpl[]): Tool[] {
 }
 
 function resolveRunners(configurers: ConfigurerImpl[]): Runner[] {
-    return deduplicate(configurers.flatMap((configurer) =>
+    return util.deduplicate(configurers.flatMap((configurer) =>
         configurer._runners.map((r) => ({
             name: r.name,
             importDir: configurer._importDir,
@@ -426,7 +425,7 @@ function resolveRunners(configurers: ConfigurerImpl[]): Runner[] {
 }
 
 function resolveOpeners(configurers: ConfigurerImpl[]): Opener[] {
-    return deduplicate(configurers.flatMap((configurer) =>
+    return util.deduplicate(configurers.flatMap((configurer) =>
         configurer._openers.map((o) => ({
             name: o.name,
             importDir: configurer._importDir,
@@ -437,7 +436,7 @@ function resolveOpeners(configurers: ConfigurerImpl[]): Opener[] {
 }
 
 function resolveAdapters(configurers: ConfigurerImpl[]): Adapter[] {
-    return deduplicate(configurers.flatMap((configurer) =>
+    return util.deduplicate(configurers.flatMap((configurer) =>
         configurer._adapters.map((a) => ({
             name: a.name,
             importDir: configurer._importDir,
@@ -449,7 +448,7 @@ function resolveAdapters(configurers: ConfigurerImpl[]): Adapter[] {
 }
 
 function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Config[] {
-    return deduplicate(configurers.flatMap((configurer) =>
+    return util.deduplicate(configurers.flatMap((configurer) =>
         configurer._configs.map((c) => ({
             name: c.name,
             importDir: configurer._importDir,
@@ -513,7 +512,7 @@ function resolveTargetSources(t: TargetDesc, resolvedTargetDir: string): string[
 }
 
 function resolveBuilderCompileDefinitions(builders: BuilderImpl[]): CompileDefinition[] {
-    return deduplicate(
+    return util.deduplicate(
         builders.flatMap((builder) =>
             builder._compileDefinitions.flatMap((items) =>
                 Object.entries(items.defs).map(([key, val]) => ({
@@ -534,7 +533,7 @@ function resolveTargetCompileDefinitions(builder: BuilderImpl, t: TargetDesc): C
         return [];
     }
     const defaultScope: Scope = t.type === 'interface' ? 'interface' : 'public';
-    return deduplicate(t.compileDefinitions.flatMap((items) =>
+    return util.deduplicate(t.compileDefinitions.flatMap((items) =>
         Object.entries(items.defs).map(([key, val]) => ({
             name: key,
             val,
@@ -607,7 +606,7 @@ function resolveTargetLinkOptions(builder: BuilderImpl, t: TargetDesc): LinkOpti
 }
 
 function resolveTargets(builders: BuilderImpl[]): Target[] {
-    return deduplicate(builders.flatMap((builder) =>
+    return util.deduplicate(builders.flatMap((builder) =>
         builder._targets.map((t) => {
             const resolvedTargetDir = (t.dir === undefined) ? builder._importDir : resolvePath(builder._importDir, t.dir);
             return {
@@ -631,7 +630,7 @@ function resolveTargets(builders: BuilderImpl[]): Target[] {
 }
 
 function resolveCmakeVariables(builders: BuilderImpl[]): CmakeVariable[] {
-    return deduplicate(builders.flatMap((builder) =>
+    return util.deduplicate(builders.flatMap((builder) =>
         builder._cmakeVariables.map((v) => ({
             name: v.name,
             importDir: builder._importDir,
@@ -644,7 +643,7 @@ function resolveConfigCmakeVariables(c: ConfigDesc, importDir: string): CmakeVar
     if (c.cmakeVariables === undefined) {
         return [];
     }
-    return deduplicate(
+    return util.deduplicate(
         Object.entries(c.cmakeVariables).map(([key, val]) => ({
             name: key,
             importDir,
@@ -671,21 +670,4 @@ function resolvePath(rootDir: string, maybeRelativePath: string): string {
     }
     // NOTE: do *NOT* use path.join() since this will use backslashes on Windows
     return `${rootDir}/${maybeRelativePath}`;
-}
-
-export function addOrReplace<T extends NamedItem>(items: T[], item: T) {
-    const index = util.findIndex(item.name, items);
-    if (index === undefined) {
-        items.push(item);
-    } else {
-        items[index] = item;
-    }
-}
-
-function deduplicate<T extends NamedItem>(items: T[]): T[] {
-    const res: T[] = [];
-    for (const item of items) {
-        addOrReplace(res, item);
-    }
-    return res;
 }
