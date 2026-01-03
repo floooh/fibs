@@ -239,12 +239,12 @@ function resolveCMakeVariableValue(val: string | boolean): string {
 function genCMakeVariables(project: Project, config: Config): string {
     let str = '';
     if (!isMultiConfigGenerator(config)) {
-        str += `set(CMAKE_BUILD_TYPE ${resolveCMakeVariableValue(config.buildMode)})`;
+        str += `set(CMAKE_BUILD_TYPE ${resolveCMakeVariableValue(config.buildMode)})\n`;
     }
     if (project.phase() >= ProjectPhase.Generate) {
         const vars = util.deduplicate([...config.cmakeVariables, ...project.cmakeVariables()]);
         for (const cmakeVariable of vars) {
-            str += `set(${cmakeVariable.name} ${resolveCMakeVariableValue(cmakeVariable.value)})`;
+            str += `set(${cmakeVariable.name} ${resolveCMakeVariableValue(cmakeVariable.value)})\n`;
         }
     }
     return str;
