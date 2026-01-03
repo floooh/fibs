@@ -1,17 +1,16 @@
 import { cmake, log, proj, util } from '../lib/index.ts';
-import {
-    type AdapterBuildOptions,
-    type AdapterConfigureResult,
-    type AdapterDesc,
-    type BuildMode,
-    type Compiler,
-    type Config,
-    type Generator,
-    type Language,
-    type Project,
-    ProjectPhase,
-    type Scope,
-    type Target,
+import type {
+    AdapterBuildOptions,
+    AdapterConfigureResult,
+    AdapterDesc,
+    BuildMode,
+    Compiler,
+    Config,
+    Generator,
+    Language,
+    Project,
+    Scope,
+    Target,
 } from '../types.ts';
 
 export const cmakeAdapter: AdapterDesc = {
@@ -193,8 +192,8 @@ function genBuildPresets(config: Config): unknown[] {
 function genCMakeListsTxt(project: Project, config: Config): string {
     let str = '';
     str += genProlog(project);
-    str += genMisc(project);
     str += genCMakeVariables(project, config);
+    str += genMisc(project);
     str += genIncludeDirectories(project);
     str += genCompileDefinitions(project);
     str += genCompileOptions(project);
@@ -219,9 +218,6 @@ function genProlog(project: Project): string {
     str += 'cmake_minimum_required(VERSION 3.21)\n';
     str += `project(${project.name()} C CXX)\n`;
     str += 'set(GLOBAL PROPERTY USE_FOLDERS ON)\n';
-    str += 'set(CMAKE_CONFIGURATION_TYPES Debug Release)\n';
-    str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
-    str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     for (const includeDir of project.cmakeIncludes()) {
         str += `include("${includeDir.path}")\n`;
     }
@@ -238,15 +234,16 @@ function resolveCMakeVariableValue(val: string | boolean): string {
 
 function genCMakeVariables(project: Project, config: Config): string {
     let str = '';
+    str += 'set(CMAKE_CONFIGURATION_TYPES Debug Release)\n';
     if (!isMultiConfigGenerator(config)) {
         str += `set(CMAKE_BUILD_TYPE ${resolveCMakeVariableValue(config.buildMode)})\n`;
     }
-    if (project.phase() >= ProjectPhase.Generate) {
-        const vars = util.deduplicate([...config.cmakeVariables, ...project.cmakeVariables()]);
-        for (const cmakeVariable of vars) {
-            str += `set(${cmakeVariable.name} ${resolveCMakeVariableValue(cmakeVariable.value)})\n`;
-        }
+    const vars = util.deduplicate([...config.cmakeVariables, ...project.cmakeVariables()]);
+    for (const cmakeVariable of vars) {
+        str += `set(${cmakeVariable.name} ${resolveCMakeVariableValue(cmakeVariable.value)})\n`;
     }
+    str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
+    str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     return str;
 }
 
