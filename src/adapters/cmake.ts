@@ -458,7 +458,7 @@ function genTargetProperties(target: Target): string {
     let str = '';
     const items = Object.entries(target.props);
     if (target.ideFolder !== undefined) {
-        str += `set_target_properties(${target.name} PROPERTIES FOLDER ${target.ideFolder})`;
+        str += `set_target_properties(${target.name} PROPERTIES FOLDER ${target.ideFolder})\n`;
     }
     if (items.length > 0) {
         str += `set_target_properties(${target.name} PROPERTIES `;
