@@ -302,11 +302,11 @@ export type ConfigDesc = NamedItem & {
     runner?: string;
     opener?: string;
     generator?: Generator;
-    arch?: Arch;
+    generatorArchitecture?: string;
+    generatorToolset?: string;
     toolchainFile?: string;
     environment?: Record<string, string>;
-    options?: Record<string, unknown>;
-    compilers?: Compiler[];
+    cmakeVariables?: Record<string, string | boolean>;
     validate?(project: Project): { valid: boolean; hints: string[] };
 };
 
@@ -316,11 +316,11 @@ export type Config = NamedItem & ImportedItem & {
     runner: Runner;
     opener?: Opener;
     generator?: Generator;
-    arch?: Arch;
+    generatorArchitecture?: string;
+    generatorToolset?: string;
     toolchainFile?: string;
     environment: Record<string, string>;
-    options: Record<string, unknown>;
-    compilers: Compiler[];
+    cmakeVariables: CmakeVariable[];
     validate(project: Project): { valid: boolean; hints: string[] };
 };
 

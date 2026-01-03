@@ -19,12 +19,6 @@ export async function validate(
         res.hints.push(...validateFuncRes.hints);
     }
 
-    // check for 'unknown-compiler'
-    if (config.compilers.includes('unknown-compiler')) {
-        res.valid = false;
-        res.hints.push("config doesn't define valid compilers");
-    }
-
     // validate generators
     // TODO: more generator checks
     if (config.generator === 'ninja') {

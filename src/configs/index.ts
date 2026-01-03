@@ -1,9 +1,9 @@
 import type { ConfigDesc } from '../types.ts';
 
-const win = { platform: 'windows', arch: 'x86_64' };
+const win = { platform: 'windows' };
 const mac = { platform: 'macos' };
 const linux = { platform: 'linux' };
-const vstudio = { compilers: ['msvc'], opener: 'vstudio' };
+const vstudio = { opener: 'vstudio' };
 const xcode = { generator: 'xcode', opener: 'xcode' };
 const vscode = { generator: 'ninja', opener: 'vscode' };
 const make = { generator: 'make' };

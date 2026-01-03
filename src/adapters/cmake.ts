@@ -1,17 +1,16 @@
 import { cmake, log, proj, util } from '../lib/index.ts';
-import {
-    type AdapterBuildOptions,
-    type AdapterConfigureResult,
-    type AdapterDesc,
-    type BuildMode,
-    type Compiler,
-    type Config,
-    type Generator,
-    type Language,
-    type Project,
-    ProjectPhase,
-    type Scope,
-    type Target,
+import type {
+    AdapterBuildOptions,
+    AdapterConfigureResult,
+    AdapterDesc,
+    BuildMode,
+    Compiler,
+    Config,
+    Generator,
+    Language,
+    Project,
+    Scope,
+    Target,
 } from '../types.ts';
 
 export const cmakeAdapter: AdapterDesc = {
@@ -112,6 +111,8 @@ function genCMakePresetsJson(project: Project, config: Config, buildDir: string)
                 displayName: config.name,
                 binaryDir: buildDir,
                 generator: asCmakeGenerator(config.generator),
+                architecture: config.generatorArchitecture,
+                toolset: config.generatorToolset,
                 toolchainFile: config.toolchainFile,
                 cacheVariables: genCacheVariables(project, config),
                 environment: config.environment,
@@ -193,10 +194,9 @@ function genCacheVariables(project: Project, config: Config): Record<string, unk
     if (!isMultiConfigGenerator(config)) {
         res.CMAKE_BUILD_TYPE = asCmakeBuildMode(config.buildMode);
     }
-    if (project.phase() === ProjectPhase.Generate) {
-        for (const cmakeVariable of project.cmakeVariables()) {
-            res[cmakeVariable.name] = resolveCacheVariable(cmakeVariable.value);
-        }
+    const vars = [...config.cmakeVariables, ...project.cmakeVariables()];
+    for (const cmakeVariable of vars) {
+        res[cmakeVariable.name] = resolveCacheVariable(cmakeVariable.value);
     }
     return res;
 }

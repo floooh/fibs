@@ -7,6 +7,7 @@ import {
     type CompileDefinition,
     type CompileOption,
     type Config,
+    type ConfigDesc,
     type FibsModule,
     type Import,
     type IncludeDirectory,
@@ -457,11 +458,11 @@ function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Co
             runner: util.find(c.runner, project._runners) ?? util.find('native', project._runners)!,
             opener: util.find(c.opener, project._openers),
             generator: c.generator,
-            arch: c.arch,
+            generatorArchitecture: c.generatorArchitecture,
+            generatorToolset: c.generatorToolset,
             toolchainFile: c.toolchainFile ? resolvePath(configurer._importDir, c.toolchainFile) : undefined,
             environment: c.environment ?? {},
-            options: c.options ?? {},
-            compilers: c.compilers ?? [],
+            cmakeVariables: resolveConfigCmakeVariables(c, configurer._importDir),
             validate: c.validate ?? (() => ({ valid: true, hints: [] })),
         }))
     ));
@@ -637,6 +638,19 @@ function resolveCmakeVariables(builders: BuilderImpl[]): CmakeVariable[] {
             value: v.value,
         }))
     ));
+}
+
+function resolveConfigCmakeVariables(c: ConfigDesc, importDir: string): CmakeVariable[] {
+    if (c.cmakeVariables === undefined) {
+        return [];
+    }
+    return deduplicate(
+        Object.entries(c.cmakeVariables).map(([key, val]) => ({
+            name: key,
+            importDir,
+            value: val,
+        })),
+    );
 }
 
 function resolveCmakeIncludes(builders: BuilderImpl[]): CmakeInclude[] {
