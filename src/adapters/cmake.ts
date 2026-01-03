@@ -217,7 +217,7 @@ function genProlog(project: Project): string {
     let str = '';
     str += 'cmake_minimum_required(VERSION 3.21)\n';
     str += `project(${project.name()} C CXX)\n`;
-    str += 'set(GLOBAL PROPERTY USE_FOLDERS ON)\n';
+    str += 'set_property(GLOBAL PROPERTY USE_FOLDERS ON)\n';
     for (const includeDir of project.cmakeIncludes()) {
         str += `include("${includeDir.path}")\n`;
     }
