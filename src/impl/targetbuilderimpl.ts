@@ -61,6 +61,9 @@ export class TargetBuilderImpl implements TargetBuilder {
     setDir(dir: string): void {
         this._desc.dir = dir;
     }
+    setIdeFolder(folder: string): void {
+        this._desc.ideFolder = folder;
+    }
     addSource(src: string): void {
         this._desc.sources!.push(src);
     }

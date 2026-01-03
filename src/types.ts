@@ -140,6 +140,7 @@ export type TargetBuilder = {
     assetsDir(configName?: string): string;
 
     setDir(dir: string): void;
+    setIdeFolder(folder: string): void;
     addSource(source: string): void;
     addSources(sources: string[]): void;
     addDependencies(dep: string[]): void;
@@ -347,6 +348,7 @@ export type TargetJob = {
 export type TargetDesc = NamedItem & {
     type: TargetType;
     dir?: string;
+    ideFolder?: string;
     sources: string[];
     deps?: string[];
     libs?: string[];
@@ -362,6 +364,7 @@ export type TargetDesc = NamedItem & {
 export type Target = NamedItem & ImportedItem & {
     type: TargetType;
     dir: string;
+    ideFolder?: string;
     sources: string[];
     deps: string[];
     libs: string[];

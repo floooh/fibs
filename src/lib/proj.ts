@@ -614,6 +614,7 @@ function resolveTargets(builders: BuilderImpl[]): Target[] {
                 importDir: builder._importDir,
                 type: t.type,
                 dir: resolvedTargetDir,
+                ideFolder: t.ideFolder,
                 sources: resolveTargetSources(t, resolvedTargetDir),
                 deps: t.deps ?? [],
                 libs: t.libs ?? [],

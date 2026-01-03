@@ -346,7 +346,8 @@ function genAllJobsTarget(project: Project, config: Config): string {
 }
 
 function genTarget(project: Project, config: Config, target: Target): string {
-    const jobOutputs = proj.resolveTargetJobs(project, config, target).flatMap((job) => {
+    const targetJobs = proj.resolveTargetJobs(project, config, target);
+    const jobOutputs = targetJobs.flatMap((job) => {
         if (job.addOutputsToTargetSources) {
             return job.outputs;
         } else {
@@ -354,7 +355,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
         }
     });
 
-    // need to create an empy dummy for any job output file that doesn't exist yet
+    // need to create an empty dummy for any job output file that doesn't exist yet
     for (const path of jobOutputs) {
         util.ensureFile(path);
     }
@@ -456,6 +457,9 @@ function genTargetLinkOptions(target: Target): string {
 function genTargetProperties(target: Target): string {
     let str = '';
     const items = Object.entries(target.props);
+    if (target.ideFolder !== undefined) {
+        str += `set_target_properties(${target.name} PROPERTIES FOLDER ${target.ideFolder})`;
+    }
     if (items.length > 0) {
         str += `set_target_properties(${target.name} PROPERTIES `;
         str += items.map(([key, val]) => `${key} ${val}`).join(' ');
