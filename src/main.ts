@@ -7,11 +7,17 @@ export async function main() {
         log.print("run 'fibs help' for more info");
         Deno.exit(10);
     }
+    let args = Deno.args;
+    let verbose = false;
+    if (args.includes('--verbose')) {
+        verbose = true;
+        args = args.filter((arg) => arg !== 'verbose');
+    }
     try {
         // special 'reset' command to wipe .fibs directory (useful when imports are broken)
         const rootDir = Deno.cwd().replaceAll('\\', '/');
         const rootPath = `${rootDir}/fibs.ts`;
-        const cmdName = Deno.args[0];
+        const cmdName = args[0];
         let skipCmd = false;
         if (cmdName === 'reset') {
             skipCmd = true;
@@ -31,9 +37,9 @@ export async function main() {
 
         // invoke the requested command (NOTE: the cmd may set Deno.exitCode)
         if (!skipCmd) {
-            await cmd.run(project, Deno.args);
+            await cmd.run(project, args);
         }
     } catch (err) {
-        log.error(err);
+        log.error(err, verbose);
     }
 }

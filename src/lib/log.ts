@@ -67,11 +67,23 @@ export function warn(...args: unknown[]) {
     console.warn(`${yellow('[warning]')}`, ...args);
 }
 
-export function error(err: unknown): never {
+export function error(err: unknown, verbose: boolean): never {
     // FIXME: only print message by default, and more detailed
     // output only on verbose
     if (err instanceof Error) {
-        console.warn(`${red('[error]')}`, err);
+        console.warn(`${red('[error]')}: ${err.message}\n`);
+        if (verbose) {
+            if (err.cause !== undefined) {
+                console.warn(`${brightBlue('cause: ')}`, err.cause, '\n\n');
+            }
+            if (err.stack) {
+                console.warn(`${brightBlue('stack trace: ')}`, err.stack, '\n\n');
+            }
+        } else {
+            console.warn('to get more detailed error information, run with --verbose');
+        }
+    } else {
+        console.warn(`${red('[unknown error]')}: `, err);
     }
     Deno.exit(10);
 }
