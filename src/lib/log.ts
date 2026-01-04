@@ -1,5 +1,5 @@
 import type { Schema } from '../types.ts';
-import { bold, brightBlue, brightRed, green, red, yellow } from '@std/fmt/colors';
+import { bold, brightBlue, brightRed, green, red, yellow, cyan } from '@std/fmt/colors';
 
 const textEncoder = new TextEncoder();
 
@@ -34,7 +34,7 @@ export function helpJob(name: string, help: string, schema: Schema) {
 }
 
 export function helpImport(name: string, help: string, importOptions: { name: string; schema: Schema }[]) {
-    print(`  ${green(name)}: ${help}`);
+    print(`  ${cyan(name)}: ${help}`);
     if (importOptions.length > 0) {
         for (const opts of importOptions) {
             print(`    ${brightBlue(`${opts.name}:`)}`);
