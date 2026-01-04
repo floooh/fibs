@@ -86,7 +86,7 @@ export function validate(
         res.hints.push(`directory does not exist: ${dir}`);
     }
     if (!res.valid && !silent) {
-        const msg = [`import '${imp.name} not valid:\n`, ...res.hints].join('\n  ') + '\n';
+        const msg = [`import '${imp.name}' not valid:\n`, ...res.hints].join('\n  ') + '\n';
         if (abortOnError) {
             throw new Error(msg);
         } else {

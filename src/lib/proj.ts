@@ -57,7 +57,7 @@ export async function configure(rootModule: FibsModule, rootDir: string, withTar
 export async function configureTargets(config?: Config): Promise<void> {
     projectImpl.assertPhaseAtLeast(ProjectPhase.Build);
     if (config) {
-        conf.validate(projectImpl, config, { silent: false, abortOnError: true });
+        await conf.validate(projectImpl, config, { silent: false, abortOnError: true });
         projectImpl.setActiveConfig(config.name);
     } else {
         config = projectImpl.activeConfig();
@@ -168,7 +168,7 @@ export function validateTarget(
     }
 
     if (!res.valid && !silent) {
-        const msg = [`target '${target.name} not valid:\n`, ...res.hints].join('\n  ') + '\n';
+        const msg = [`target '${target.name}' not valid:\n`, ...res.hints].join('\n  ') + '\n';
         if (abortOnError) {
             throw new Error(msg);
         } else {
