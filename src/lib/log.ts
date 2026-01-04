@@ -81,7 +81,7 @@ export function error(err: unknown, verbose: boolean): never {
             console.warn(`${brightBlue('[cause]')} `, err.cause, '\n\n');
         }
         if (!verbose) {
-            console.warn(`${brightBlue('[note]')} run with '--verbose' for more detailed error information\n`);
+            console.warn(`${brightBlue('[note]')} run with '--dbg' for more detailed error information\n`);
         }
     } else {
         console.warn(`${red('[unknown error]')}: `, err, '\n');

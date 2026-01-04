@@ -13,7 +13,7 @@ function help() {
         'list runners',
         'list openers',
         'list jobs',
-        'list targets [--all] [--exe] [--lib] [--dll] [--interface] [--verbose]',
+        'list targets [--all] [--exe] [--lib] [--dll] [--interface]',
     ], 'list available configs, current settings, targets, ...');
 }
 
@@ -92,11 +92,7 @@ async function run(project: Project, cmdLineArgs: string[]): Promise<void> {
         for (const type of types) {
             for (const target of project.targets()) {
                 if ((target.type === type) && (args.targetTypes.includes(type))) {
-                    if (args.verbose) {
-                        log.print(`${blue(target.name)}: ${target.type} => ${target.importDir}`);
-                    } else {
-                        log.print(target.name);
-                    }
+                    log.print(`${blue(target.name)}: ${target.type} => ${target.importDir}`);
                 }
             }
         }
@@ -114,7 +110,6 @@ function parseArgs(cmdLineArgs: string[]): {
     runners: boolean;
     openers: boolean;
     jobs: boolean;
-    verbose: boolean;
     targetTypes: TargetType[];
 } {
     const args: ReturnType<typeof parseArgs> = {
@@ -125,7 +120,6 @@ function parseArgs(cmdLineArgs: string[]): {
         runners: false,
         openers: false,
         jobs: false,
-        verbose: false,
         targetTypes: [],
     };
     if (cmdLineArgs.length === 1) {
@@ -174,9 +168,6 @@ function parseArgs(cmdLineArgs: string[]): {
                                 break;
                             case '--interface':
                                 args.targetTypes.push('interface');
-                                break;
-                            case '--verbose':
-                                args.verbose = true;
                                 break;
                             default:
                                 throw new Error(`unknown target type arg '${targetArg}' (run 'fibs help list')`);
