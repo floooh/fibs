@@ -47,7 +47,7 @@ async function run(project: Project, cmdLineArgs: string[]): Promise<void> {
             if (imports.isLinked(project, i.name)) {
                 log.print(`${green(i.name)}: ${brightBlue(`link => ${i.importDir}`)}`);
             } else {
-                log.print(`${green(i.name)}: ${i.name}: ${i.importDir}`);
+                log.print(`${green(i.name)}: ${i.url}`);
             }
             for (const mod of i.modules) {
                 if (mod.module.help) {
