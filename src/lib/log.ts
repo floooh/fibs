@@ -71,16 +71,16 @@ export function error(err: unknown, verbose: boolean): never {
     // FIXME: only print message by default, and more detailed
     // output only on verbose
     if (err instanceof Error) {
-        console.warn(`${red('[error]')}: ${err.message}\n`);
+        console.warn(`${red('[error]')} ${err.message}\n`);
         if (verbose) {
             if (err.cause !== undefined) {
-                console.warn(`${brightBlue('cause: ')}`, err.cause, '\n\n');
+                console.warn(`${brightBlue('[cause]')} `, err.cause, '\n\n');
             }
             if (err.stack) {
-                console.warn(`${brightBlue('stack trace: ')}`, err.stack, '\n\n');
+                console.warn(`${brightBlue('[stack trace]')}\n`, err.stack.slice(1), '\n\n');
             }
         } else {
-            console.warn('to get more detailed error information, run with --verbose');
+            console.warn(`${brightBlue('[note]')} run with '--verbose' for more detailed error information`);
         }
     } else {
         console.warn(`${red('[unknown error]')}: `, err);
