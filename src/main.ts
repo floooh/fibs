@@ -11,7 +11,7 @@ export async function main() {
     let verbose = false;
     if (args.includes('--verbose')) {
         verbose = true;
-        args = args.filter((arg) => arg !== 'verbose');
+        args = args.filter((arg) => arg !== '--verbose');
     }
     try {
         // special 'reset' command to wipe .fibs directory (useful when imports are broken)
