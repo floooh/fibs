@@ -1,4 +1,4 @@
-import { log, util } from '../lib/index.ts';
+import { util } from '../lib/index.ts';
 import {
     type Adapter,
     type Arch,
@@ -55,7 +55,7 @@ export class BuilderImpl implements Builder {
     }
     addCmakeVariable(name: string, value: string | boolean): void {
         if (util.find(name, this._cmakeVariables)) {
-            log.panic(`duplicate cmake variable: ${name}`);
+            throw new Error(`duplicate cmake variable: ${name}`);
         }
         this._cmakeVariables.push({ name, value });
     }
@@ -72,7 +72,7 @@ export class BuilderImpl implements Builder {
             target = b._desc;
         }
         if (util.find(target.name, this._targets)) {
-            log.panic(`duplicate target: ${target.name}`);
+            throw new Error(`duplicate target: ${target.name}`);
         }
         this._targets.push(target);
     }

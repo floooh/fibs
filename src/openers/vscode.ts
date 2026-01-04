@@ -1,4 +1,4 @@
-import { log, util } from '../lib/index.ts';
+import { util } from '../lib/index.ts';
 import type { Config, OpenerDesc, Project } from '../types.ts';
 import { run } from '../tools/vscode.ts';
 
@@ -45,7 +45,7 @@ function writeWorkspaceFile(project: Project, config: Config, vscodeDir: string)
     try {
         Deno.writeTextFileSync(path, JSON.stringify(ws, null, '  '));
     } catch (err) {
-        log.panic(`Failed writing ${path} with: `, err);
+        throw new Error(`Failed writing ${path}`, { cause: err });
     }
 }
 
@@ -95,7 +95,7 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
     try {
         Deno.writeTextFileSync(path, JSON.stringify(launch, null, '  '));
     } catch (err) {
-        log.panic(`Failed writing ${path} with: `, err);
+        throw new Error(`Failed writing ${path}`, { cause: err });
     }
 }
 

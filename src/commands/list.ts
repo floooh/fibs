@@ -179,7 +179,7 @@ function parseArgs(cmdLineArgs: string[]): {
                                 args.verbose = true;
                                 break;
                             default:
-                                log.panic(`unknown target type arg '${targetArg}' (run 'fibs help list')`);
+                                throw new Error(`unknown target type arg '${targetArg}' (run 'fibs help list')`);
                         }
                     }
                     if (args.targetTypes.length === 0) {
@@ -188,7 +188,7 @@ function parseArgs(cmdLineArgs: string[]): {
                 }
                 break;
             default:
-                log.panic(`unknown filter '${filter}' (run 'fibs help list')`);
+                throw new Error(`unknown filter '${filter}' (run 'fibs help list')`);
         }
     }
     return args;

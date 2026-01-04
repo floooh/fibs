@@ -12,7 +12,7 @@ async function run() {
     const fibsFile = `${cwd}/fibs.ts`;
     const fibsDir = `${cwd}/.fibs`;
     if (!util.fileExists(fibsFile)) {
-        log.panic('current directory is not a fibs project (no fibs.ts found)');
+        throw new Error('current directory is not a fibs project (no fibs.ts found)');
     }
     if (!util.dirExists(fibsDir)) {
         log.warn('no .fibs subdirectory in current directory');

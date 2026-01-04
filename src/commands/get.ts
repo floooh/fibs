@@ -14,7 +14,7 @@ function help() {
 
 async function run(project: Project, args: string[]) {
     if (args.length !== 2) {
-        log.panic('expected [key] arg');
+        throw new Error('expected [key] arg');
     }
     const key = args[1];
     const val = settings.get(project, key);

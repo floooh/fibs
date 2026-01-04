@@ -7,19 +7,19 @@ export async function main() {
         log.print("run 'fibs help' for more info");
         Deno.exit(10);
     }
-    // special 'reset' command to wipe .fibs directory (useful when imports are broken)
-    const rootDir = Deno.cwd().replaceAll('\\', '/');
-    const rootPath = `${rootDir}/fibs.ts`;
-    const cmdName = Deno.args[0];
-    let skipCmd = false;
-    if (cmdName === 'reset') {
-        skipCmd = true;
-        await resetCmd.run(null as unknown as Project, []);
-    }
     try {
+        // special 'reset' command to wipe .fibs directory (useful when imports are broken)
+        const rootDir = Deno.cwd().replaceAll('\\', '/');
+        const rootPath = `${rootDir}/fibs.ts`;
+        const cmdName = Deno.args[0];
+        let skipCmd = false;
+        if (cmdName === 'reset') {
+            skipCmd = true;
+            await resetCmd.run(null as unknown as Project, []);
+        }
         // try to import a fibs.ts file from current directory
         if (!util.fileExists(rootPath)) {
-            log.panic('current directory is not a fibs project (no fibs.ts found)');
+            throw new Error('current directory is not a fibs project (no fibs.ts found)');
         }
         const importPath = `file://${rootPath}`;
         const rootModule = await import(importPath);
@@ -34,6 +34,6 @@ export async function main() {
             await cmd.run(project, Deno.args);
         }
     } catch (err) {
-        log.panic(err);
+        log.error(err);
     }
 }

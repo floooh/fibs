@@ -11,7 +11,7 @@ function help() {
 
 async function run(project: Project, args: string[]) {
     if (args.length !== 2) {
-        log.panic("expected arg [import] (run 'fibs help unlink')");
+        throw new Error("expected arg [import] (run 'fibs help unlink')");
     }
     const imp = args[1];
     imports.unlink(project, imp);

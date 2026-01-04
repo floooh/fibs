@@ -12,12 +12,12 @@ function help() {
 
 async function run(project: Project, args: string[]) {
     if (args.length <= 1) {
-        log.panic("no target provided (run 'fibs help run')");
+        throw new Error("no target provided (run 'fibs help run')");
     }
     const name = args[1];
     const target = project.target(name);
     if (target.type !== 'plain-exe' && target.type !== 'windowed-exe') {
-        log.panic(`target '${name}' is not an executable (run 'fibs list targets)`);
+        throw new Error(`target '${name}' is not an executable (run 'fibs list targets)`);
     }
     const config = project.activeConfig();
     await config.runner.run(project, config, target, {

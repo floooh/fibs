@@ -59,27 +59,33 @@ export async function configureTargets(config?: Config): Promise<void> {
     if (config) {
         conf.validate(projectImpl, config, { silent: false, abortOnError: true });
         projectImpl.setActiveConfig(config.name);
+    } else {
+        config = projectImpl.activeConfig();
     }
     const adapter = projectImpl.adapter('cmake');
-    const configRes = await adapter.configure(projectImpl);
+    const configRes = await adapter.configure(projectImpl, config);
     projectImpl._compiler = configRes.compiler;
     doBuildPhase(projectImpl);
     projectImpl.setPhase(ProjectPhase.Generate);
 }
 
 export async function generate(config?: Config): Promise<void> {
-    if ((config && config.name !== projectImpl.activeConfig().name) || (projectImpl.phase() < ProjectPhase.Generate)) {
-        await configureTargets(config);
+    if (config) {
+        if ((config.name !== projectImpl.activeConfig().name) || (projectImpl.phase() < ProjectPhase.Generate)) {
+            await configureTargets(config);
+        }
+    } else {
+        config = projectImpl.activeConfig();
     }
     const adapter = projectImpl.adapter('cmake');
-    await adapter.generate(projectImpl);
+    await adapter.generate(projectImpl, config);
 }
 
 export async function build(options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void> {
     projectImpl.assertPhaseExact(ProjectPhase.Generate);
     const { buildTarget, forceRebuild } = options;
     const adapter = projectImpl.adapter('cmake');
-    await adapter.build(projectImpl, { buildTarget, forceRebuild });
+    await adapter.build(projectImpl, projectImpl.activeConfig(), { buildTarget, forceRebuild });
 }
 
 export function validateTarget(
@@ -164,7 +170,7 @@ export function validateTarget(
     if (!res.valid && !silent) {
         const msg = [`target '${target.name} not valid:\n`, ...res.hints].join('\n  ') + '\n';
         if (abortOnError) {
-            log.panic(msg);
+            throw new Error(msg);
         } else {
             log.warn(msg);
         }
@@ -220,7 +226,7 @@ export async function runJobs(project: Project, config: Config, target: Target) 
         try {
             await job.func(job.inputs, job.outputs, job.args);
         } catch (err) {
-            log.panic(`job '${job.name}' in target '${target.name}' failed with: `, err);
+            throw new Error(`job '${job.name}' in target '${target.name}' failed`, { cause: err });
         }
     }
 }
@@ -339,7 +345,7 @@ function doBuildPhase(project: ProjectImpl): void {
         }
         builders.push(builder);
     } else {
-        log.panic(`root project fibs.ts must export a 'build' function`);
+        throw new Error(`root project fibs.ts must export a 'build' function`);
     }
 
     // resolve all builder results into the project
@@ -664,7 +670,7 @@ function resolveCmakeIncludes(builders: BuilderImpl[]): CmakeInclude[] {
 
 function resolvePath(rootDir: string, maybeRelativePath: string): string {
     if (!isAbsolute(rootDir)) {
-        log.panic(`rootDir must be an absolute path`);
+        throw new Error(`rootDir must be an absolute path`);
     }
     if (isAbsolute(maybeRelativePath)) {
         return maybeRelativePath;

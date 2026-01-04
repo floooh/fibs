@@ -44,7 +44,7 @@ export async function validate(
     if (!res.valid && !silent) {
         const msg = [`config '${config.name} not valid:\n`, ...res.hints].join('\n  ') + '\n';
         if (abortOnError) {
-            log.panic(msg);
+            throw new Error(msg);
         } else {
             log.warn(msg);
         }

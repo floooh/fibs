@@ -23,7 +23,7 @@ import {
     type Target,
     type Tool,
 } from '../types.ts';
-import { host, log, util } from '../lib/index.ts';
+import { host, util } from '../lib/index.ts';
 import { basename } from '@std/path';
 
 export class ProjectImpl implements Project {
@@ -69,12 +69,12 @@ export class ProjectImpl implements Project {
     }
     assertPhaseExact(phase: ProjectPhase): void {
         if (this._phase !== phase) {
-            log.panic(`Expected project phase ${phase}, but current phase is ${this._phase}`);
+            throw new Error(`Expected project phase ${phase}, but current phase is ${this._phase}`);
         }
     }
     assertPhaseAtLeast(phase: ProjectPhase): void {
         if (this._phase < phase) {
-            log.panic(`Expected project phase to be at least ${phase}, but current phase is ${this._phase}`);
+            throw new Error(`Expected project phase to be at least ${phase}, but current phase is ${this._phase}`);
         }
     }
     setPhase(phase: ProjectPhase): void {
@@ -132,7 +132,7 @@ export class ProjectImpl implements Project {
     activeConfig(): Config {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         if (this._activeConfig === undefined) {
-            log.panic('active config not set');
+            throw new Error('active config not set');
         }
         return this._activeConfig;
     }
@@ -148,7 +148,7 @@ export class ProjectImpl implements Project {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         const imp = util.find(importName, this._imports);
         if (imp === undefined) {
-            log.panic(`Project.importDir(): unknown import name ${importName}`);
+            throw new Error(`Project.importDir(): unknown import name ${importName}`);
         }
         return imp.importDir;
     }
@@ -159,7 +159,7 @@ export class ProjectImpl implements Project {
         if (valid) {
             return opts as T;
         } else {
-            log.panic(`import options validation failed for '${name}':\n\n${hints.map((hint) => `  ${hint}`).join('\n')}\n`);
+            throw new Error(`import options validation failed for '${name}':\n\n${hints.map((hint) => `  ${hint}`).join('\n')}\n`);
         }
     }
     settings(): Setting[] {
@@ -244,63 +244,63 @@ export class ProjectImpl implements Project {
     setting(name: string): Setting {
         const setting = this.findSetting(name);
         if (setting === undefined) {
-            log.panic(`unknown setting: ${name}`);
+            throw new Error(`unknown setting: ${name}`);
         }
         return setting;
     }
     config(name: string): Config {
         const config = this.findConfig(name);
         if (config === undefined) {
-            log.panic(`unknown config: ${name}`);
+            throw new Error(`unknown config: ${name}`);
         }
         return config;
     }
     adapter(name: string): Adapter {
         const adapter = this.findAdapter(name);
         if (adapter === undefined) {
-            log.panic(`unknown adapter: ${name}`);
+            throw new Error(`unknown adapter: ${name}`);
         }
         return adapter;
     }
     command(name: string): Command {
         const command = this.findCommand(name);
         if (command === undefined) {
-            log.panic(`unknown command: ${name}`);
+            throw new Error(`unknown command: ${name}`);
         }
         return command;
     }
     import(name: string): Import {
         const imp = this.findImport(name);
         if (imp === undefined) {
-            log.panic(`unknown import: ${name}`);
+            throw new Error(`unknown import: ${name}`);
         }
         return imp;
     }
     tool(name: string): Tool {
         const tool = this.findTool(name);
         if (tool === undefined) {
-            log.panic(`unknown tool: ${name}`);
+            throw new Error(`unknown tool: ${name}`);
         }
         return tool;
     }
     runner(name: string): Runner {
         const runner = this.findRunner(name);
         if (runner === undefined) {
-            log.panic(`unknown runner: ${name}`);
+            throw new Error(`unknown runner: ${name}`);
         }
         return runner;
     }
     opener(name: string): Opener {
         const opener = this.findOpener(name);
         if (opener === undefined) {
-            log.panic(`unknown opener: ${name}`);
+            throw new Error(`unknown opener: ${name}`);
         }
         return opener;
     }
     importModule(importName: string, filename?: string): FibsModule {
         const mod = this.findImportModule(importName, filename);
         if (mod === undefined) {
-            log.panic(`unknown import module: ${importName}/${filename}`);
+            throw new Error(`unknown import module: ${importName}/${filename}`);
         }
         return mod;
     }
@@ -422,7 +422,7 @@ export class ProjectImpl implements Project {
     target(name: string): Target {
         const target = this.findTarget(name);
         if (target === undefined) {
-            log.panic(`unknown target ${name}`);
+            throw new Error(`unknown target ${name}`);
         }
         return target;
     }

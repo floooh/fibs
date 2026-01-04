@@ -14,7 +14,7 @@ function help() {
 
 async function run(project: Project, args: string[]) {
     if (imports.hasImportErrors(project)) {
-        log.panic('import errors detected');
+        throw new Error('import errors detected');
     }
     let forceRebuild = false;
     let buildTarget;
@@ -23,7 +23,7 @@ async function run(project: Project, args: string[]) {
             if (arg === '--rebuild') {
                 forceRebuild = true;
             } else {
-                log.panic(`unknown option '${arg}, type 'fibs help build'`);
+                throw new Error(`unknown option '${arg}, type 'fibs help build'`);
             }
         } else {
             buildTarget = project.target(arg).name;

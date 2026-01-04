@@ -12,7 +12,7 @@ function help() {
 
 async function run(project: Project, args: string[]) {
     if (imports.hasImportErrors(project)) {
-        log.panic('import errors detected');
+        throw new Error('import errors detected');
     }
     args = args.slice(1).filter((arg) => {
         if (arg.startsWith('--')) {
@@ -20,13 +20,13 @@ async function run(project: Project, args: string[]) {
                 log.print(project.activeConfig().name);
                 Deno.exit(0);
             } else {
-                log.panic(`unknown option '${arg} (run 'fibs help config')`);
+                throw new Error(`unknown option '${arg} (run 'fibs help config')`);
             }
         }
         return true;
     });
     if (args.length > 1) {
-        log.panic("too many args (run 'fibs help config')");
+        throw new Error("too many args (run 'fibs help config')");
     }
     let config: Config;
     if (args.length > 0) {

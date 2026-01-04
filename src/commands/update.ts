@@ -36,8 +36,7 @@ async function run(project: Project, cmdLineArgs: string[]) {
             }
         } else {
             if (!await git.update({ dir: project.importsDir(), url: imp.url, ref: imp.ref, showCmd: true })) {
-                log.print();
-                log.panic(`updating '${repoDir}' failed\n\n(consider running 'fibs update --clean')\n`);
+                throw new Error(`updating '${repoDir}' failed\n\n(consider running 'fibs update --clean')\n`);
             }
         }
     }
@@ -50,7 +49,7 @@ function parseArgs(project: Project, args: string[]): { clean: boolean; items: s
             if (arg === '--clean') {
                 res.clean = true;
             } else {
-                log.panic(`unknown option '${arg}' (run 'fibs help update')`);
+                throw new Error(`unknown option '${arg}' (run 'fibs help update')`);
             }
             return false;
         }

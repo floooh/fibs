@@ -400,6 +400,38 @@ export type CommandDesc = NamedItem & {
 };
 export type Command = ImportedItem & CommandDesc;
 
+/**
+ * Config options for util.runCmd()
+ */
+export type RunOptions = {
+    /** command line arguments */
+    args: string[];
+    /** optional working directory */
+    cwd?: string;
+    /** stdout behaviour */
+    stdout?: 'inherit' | 'piped' | 'null';
+    /** stderr behaviour */
+    stderr?: 'inherit' | 'piped' | 'null';
+    /** stdin behaviour */
+    stdin?: 'inherit' | 'piped' | 'null';
+    /** log command line */
+    showCmd?: boolean;
+    /** whether to run the command via 'cmd /c' on Windows */
+    winUseCmd?: boolean;
+};
+
+/**
+ * Result of util.runCmd()
+ */
+export type RunResult = {
+    /** the exit code of the command (zero on success) */
+    exitCode: number;
+    /** captured stdout (with stdout: 'piped') */
+    stdout: string;
+    /** captured stderr (with stderr: 'piped') */
+    stderr: string;
+};
+
 export type RunnerDesc = NamedItem & {
     run(project: Project, config: Config, target: Target, options: RunOptions): Promise<void>;
 };
@@ -410,36 +442,6 @@ export type OpenerDesc = NamedItem & {
     open(project: Project, config: Config): Promise<void>;
 };
 export type Opener = ImportedItem & OpenerDesc;
-
-/** options for running a command line tool */
-export type RunOptions = {
-    /** command line arguments */
-    args: string[];
-    /** optional current working directory to run the command in */
-    cwd?: string;
-    /** whether to print or capture stdout */
-    stdout?: 'inherit' | 'piped' | 'null';
-    /** whether to print or capture stderr */
-    stderr?: 'inherit' | 'piped' | 'null';
-    /** how stdin of the spawned process will be handled (default: inherit) */
-    stdin?: 'inherit' | 'piped' | 'null';
-    /** whether to log the cmdline before executing */
-    showCmd?: boolean;
-    /** whether to abort on error */
-    abortOnError?: boolean;
-    /** whether to run via 'cmd /c' on Windows */
-    winUseCmd?: boolean;
-};
-
-/** result of running a command line tool */
-export type RunResult = {
-    /** the exit code of the command (zero on success) */
-    exitCode: number;
-    /** captured stdout */
-    stdout: string;
-    /** captured stderr */
-    stderr: string;
-};
 
 export type ToolDesc = NamedItem & {
     platforms: Platform[];
@@ -459,9 +461,9 @@ export type AdapterBuildOptions = {
 };
 
 export type AdapterDesc = NamedItem & {
-    configure(project: Project): Promise<AdapterConfigureResult>;
-    generate(project: Project): Promise<void>;
-    build(project: Project, options: AdapterBuildOptions): Promise<void>;
+    configure(project: Project, config: Config): Promise<AdapterConfigureResult>;
+    generate(project: Project, config: Config): Promise<void>;
+    build(project: Project, config: Config, options: AdapterBuildOptions): Promise<void>;
 };
 export type Adapter = ImportedItem & AdapterDesc;
 

@@ -11,7 +11,7 @@ export const httpServerTool: ToolDesc = {
 
 export async function exists(): Promise<boolean> {
     try {
-        await util.runCmd('http-server', { args: ['-h'], stdout: 'piped', showCmd: false, abortOnError: false });
+        await util.runCmd('http-server', { args: ['-h'], stdout: 'piped', showCmd: false });
         return true;
     } catch (_err) {
         return false;

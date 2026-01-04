@@ -1,4 +1,4 @@
-import { log, util } from './index.ts';
+import { util } from './index.ts';
 import type { RunOptions, RunResult } from '../types.ts';
 import { parse } from '@std/path';
 
@@ -6,14 +6,14 @@ export async function run(options: RunOptions): Promise<RunResult> {
     try {
         return await util.runCmd('git', options);
     } catch (err) {
-        log.panic('Failed running git with', err);
+        throw new Error('Failed running git', { cause: err });
     }
 }
 
 export async function exists(): Promise<boolean> {
     try {
         // NOTE: cannot use local run() function since this would terminate on error!
-        await util.runCmd('git', { args: ['--version'], stdout: 'piped', showCmd: false, abortOnError: false });
+        await util.runCmd('git', { args: ['--version'], stdout: 'piped', showCmd: false });
         return true;
     } catch (_err) {
         return false;
@@ -38,7 +38,7 @@ export async function clone(options: { url: string; dir: string; ref?: string; s
     } = options;
     const repoDir = getDir(dir, url, ref);
     if (util.dirExists(repoDir)) {
-        log.panic(`git clone directory ${repoDir} already exists!`);
+        throw new Error(`git clone directory ${repoDir} already exists!`);
     }
     util.ensureDir(repoDir);
     if ((await run({ args: ['init', '-q'], cwd: repoDir, showCmd })).exitCode !== 0) {

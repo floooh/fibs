@@ -11,7 +11,7 @@ export const makeTool: ToolDesc = {
 
 export async function exists(): Promise<boolean> {
     try {
-        await util.runCmd('make', { args: ['--version'], stdout: 'piped', showCmd: false, abortOnError: false });
+        await util.runCmd('make', { args: ['--version'], stdout: 'piped', showCmd: false });
         return true;
     } catch (_err) {
         return false;

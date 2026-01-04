@@ -88,7 +88,7 @@ export function validate(
     if (!res.valid && !silent) {
         const msg = [`import '${imp.name} not valid:\n`, ...res.hints].join('\n  ') + '\n';
         if (abortOnError) {
-            log.panic(msg);
+            throw new Error(msg);
         } else {
             log.warn(msg);
         }
@@ -103,7 +103,7 @@ function loadImportLinks(project: Project): Record<string, string | undefined> {
         try {
             result = JSON.parse(Deno.readTextFileSync(linksJsonPath));
         } catch (err) {
-            log.panic(`Failed to load '${linksJsonPath}': ${err}`);
+            throw new Error(`Failed to load '${linksJsonPath}`, { cause: err });
         }
     }
     return result;
@@ -114,17 +114,17 @@ function saveImportLinks(project: Project, links: Record<string, string | undefi
     try {
         Deno.writeTextFileSync(linksJsonPath, JSON.stringify(links, null, 2));
     } catch (err) {
-        log.panic(`Failed to write '${linksJsonPath}': ${err}`);
+        throw new Error(`Failed to write '${linksJsonPath}`, { cause: err });
     }
 }
 
 function linkUnlink(project: Project, importName: string, path: string | undefined): string | undefined {
     if (!project.findImport(importName)) {
-        log.panic(`import '${importName}' not found (run 'fibs list imports')`);
+        throw new Error(`import '${importName}' not found (run 'fibs list imports')`);
     }
     if (path !== undefined) {
         if (!util.dirExists(path)) {
-            log.panic(`directory '${path}' does not exist`);
+            throw new Error(`directory '${path}' does not exist`);
         }
     }
     const links = loadImportLinks(project);

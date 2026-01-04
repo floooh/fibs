@@ -26,7 +26,7 @@ async function run(project: Project, args: string[]) {
     } else {
         const arg = args[1];
         if (!all.includes(arg)) {
-            log.panic(`invalid arg '${arg}', run 'fibs help diag'`);
+            throw new Error(`invalid arg '${arg}', run 'fibs help diag'`);
         }
         which = [arg];
     }

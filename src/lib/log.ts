@@ -67,9 +67,12 @@ export function warn(...args: unknown[]) {
     console.warn(`${yellow('[warning]')}`, ...args);
 }
 
-export function panic(...args: unknown[]): never {
-    console.warn(`${red('[error]')}`, ...args);
-    console.trace();
+export function error(err: unknown): never {
+    // FIXME: only print message by default, and more detailed
+    // output only on verbose
+    if (err instanceof Error) {
+        console.warn(`${red('[error]')}`, err);
+    }
     Deno.exit(10);
 }
 

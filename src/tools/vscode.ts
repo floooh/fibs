@@ -1,4 +1,4 @@
-import { log, util } from '../lib/index.ts';
+import { util } from '../lib/index.ts';
 import type { RunOptions, RunResult, ToolDesc } from '../types.ts';
 
 export const vscodeTool: ToolDesc = {
@@ -36,15 +36,10 @@ export const vscodeDwarfDebugging: ToolDesc = {
 };
 
 export async function run(options: RunOptions): Promise<RunResult> {
-    const { abortOnError = true } = options;
     try {
         return await util.runCmd('code', options);
     } catch (err) {
-        if (abortOnError) {
-            log.panic(`Failed to run 'code' with: `, err);
-        } else {
-            throw err;
-        }
+        throw new Error(`Failed to run 'code'`, { cause: err });
     }
 }
 
@@ -55,7 +50,6 @@ export async function exists(): Promise<boolean> {
             stdout: 'piped',
             stderr: 'piped',
             showCmd: false,
-            abortOnError: false,
             winUseCmd: true,
         });
         return res.exitCode === 0;
@@ -71,7 +65,6 @@ export async function hasExtension(ext: string): Promise<boolean> {
             stdout: 'piped',
             stderr: 'piped',
             showCmd: false,
-            abortOnError: false,
             winUseCmd: true,
         });
         return (res.exitCode === 0) && (res.stdout.includes(ext));

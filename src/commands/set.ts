@@ -14,7 +14,7 @@ function help() {
 
 async function run(project: Project, args: string[]) {
     if (args.length !== 3) {
-        log.panic('expected [key] and [value] args');
+        throw new Error('expected [key] and [value] args');
     }
     const key = args[1];
     const val = args[2];

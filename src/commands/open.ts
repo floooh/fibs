@@ -19,7 +19,7 @@ async function run(project: Project, args: string[]) {
         config = project.config(configName);
     }
     if (config.opener === undefined) {
-        log.panic(`don't know how to open config '${config.name}' (config has undefined runner)`);
+        throw new Error(`don't know how to open config '${config.name}' (config has undefined runner)`);
     }
     if (!util.dirExists(project.buildDir(config.name))) {
         await proj.generate();

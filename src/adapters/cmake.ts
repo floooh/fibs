@@ -1,4 +1,4 @@
-import { cmake, log, proj, util } from '../lib/index.ts';
+import { cmake, proj, util } from '../lib/index.ts';
 import type {
     AdapterBuildOptions,
     AdapterConfigureResult,
@@ -35,8 +35,16 @@ add_executable(hello hello.c)
 file(WRITE cmake_config.json "{\\"CMAKE_C_COMPILER_ID\\":\\"\${CMAKE_C_COMPILER_ID}\\",\\"CMAKE_HOST_SYSTEM_NAME\\":\\"\${CMAKE_HOST_SYSTEM_NAME}\\",\\"CMAKE_SYSTEM_PROCESSOR\\":\\"\${CMAKE_SYTEM_PROCESSOR}\\"}\\n")
 `;
 
-export async function configure(project: Project): Promise<AdapterConfigureResult> {
-    const config = project.activeConfig();
+/**
+ * Run the cmake configure 'pre-pass'. This is used to determine runtime
+ * properties like the compiler id.
+ *
+ * @param project the Project object
+ * @param config a build config
+ * @returns an AdapterConfigureResult
+ * @throws throw if cmake returns with an exit code !== 0
+ */
+export async function configure(project: Project, config: Config): Promise<AdapterConfigureResult> {
     const configDir = project.configDir(config.name);
     const configPath = `${configDir}/cmake_config.json`;
     if (!util.fileExists(configPath)) {
@@ -54,7 +62,7 @@ export async function configure(project: Project): Promise<AdapterConfigureResul
 
         const res = await cmake.run({ cwd: configDir, args: ['--preset', config.name], stderr: 'piped', stdout: 'piped' });
         if (res.exitCode !== 0) {
-            log.panic(`cmake returned with exit code ${res.exitCode}, stderr: \n\n${res.stderr}`);
+            throw new Error(`cmake returned with exit code ${res.exitCode}, stderr: \n\n${res.stderr}`);
         }
     }
     const importPath = `file://${configPath}`;
@@ -64,8 +72,14 @@ export async function configure(project: Project): Promise<AdapterConfigureResul
     };
 }
 
-export async function generate(project: Project): Promise<void> {
-    const config = project.activeConfig();
+/**
+ * Generates the CMakeLists.txt and CMakePresets.json files.
+ *
+ * @param project the Project object
+ * @param config a build config
+ * @throws throws when writing the files fails
+ */
+export async function generate(project: Project, config: Config): Promise<void> {
     const cmakeListsPath = `${project.dir()}/CMakeLists.txt`;
     const cmakePresetsPath = `${project.dir()}/CMakePresets.json`;
     try {
@@ -75,7 +89,7 @@ export async function generate(project: Project): Promise<void> {
             { create: true },
         );
     } catch (err) {
-        log.panic(`Failed writing ${cmakeListsPath}: `, err);
+        throw new Error(`Failed writing ${cmakeListsPath}`, { cause: err });
     }
     try {
         Deno.writeTextFileSync(
@@ -84,14 +98,22 @@ export async function generate(project: Project): Promise<void> {
             { create: true },
         );
     } catch (err) {
-        log.panic('Failed writing CMakePresets.json: ', err);
+        throw new Error('Failed writing CMakePresets.json: ', { cause: err });
     }
     await cmake.generate(project, config);
 }
 
-export async function build(project: Project, options: AdapterBuildOptions): Promise<void> {
+/**
+ * Runs cmake in build mode, generates the cmake files if needed.
+ *
+ * @param project the Project object
+ * @param config a buil config
+ * @param options build optional target and rebuild flag
+ * @throws throws when generation or on build error
+ */
+export async function build(project: Project, config: Config, options: AdapterBuildOptions): Promise<void> {
     if (!util.fileExists(`${project.buildDir()}/CMakeCache.txt`)) {
-        await generate(project);
+        await generate(project, config);
     }
     const { buildTarget, forceRebuild } = options;
     await cmake.build({ target: buildTarget, forceRebuild: forceRebuild });

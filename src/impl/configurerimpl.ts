@@ -14,7 +14,7 @@ import type {
     SettingDesc,
     ToolDesc,
 } from '../types.ts';
-import { host, log, util } from '../lib/index.ts';
+import { host, util } from '../lib/index.ts';
 
 type ImportExtra = {
     importDir?: string;
@@ -55,55 +55,55 @@ export class ConfigurerImpl implements Configurer {
     }
     addImport(imp: ImportDesc): void {
         if (util.find(imp.name, this._imports)) {
-            log.panic(`duplicate import: ${imp.name}`);
+            throw new Error(`duplicate import: ${imp.name}`);
         }
         this._imports.push(imp);
     }
     addCommand(cmd: CommandDesc): void {
         if (util.find(cmd.name, this._commands)) {
-            log.panic(`duplicate command: ${cmd.name}`);
+            throw new Error(`duplicate command: ${cmd.name}`);
         }
         this._commands.push(cmd);
     }
     addJob(job: JobBuilderDesc): void {
         if (util.find(job.name, this._jobs)) {
-            log.panic(`duplicate job: ${job.name}`);
+            throw new Error(`duplicate job: ${job.name}`);
         }
         this._jobs.push(job);
     }
     addTool(tool: ToolDesc): void {
         if (util.find(tool.name, this._tools)) {
-            log.panic(`duplicate tool: ${tool.name}`);
+            throw new Error(`duplicate tool: ${tool.name}`);
         }
         this._tools.push(tool);
     }
     addRunner(runner: RunnerDesc): void {
         if (util.find(runner.name, this._runners)) {
-            log.panic(`duplicate runner: ${runner.name}`);
+            throw new Error(`duplicate runner: ${runner.name}`);
         }
         this._runners.push(runner);
     }
     addOpener(opener: OpenerDesc): void {
         if (util.find(opener.name, this._openers)) {
-            log.panic(`duplicate opener: ${opener.name}`);
+            throw new Error(`duplicate opener: ${opener.name}`);
         }
         this._openers.push(opener);
     }
     addConfig(config: ConfigDesc): void {
         if (util.find(config.name, this._configs)) {
-            log.panic(`duplicate config: ${config.name}`);
+            throw new Error(`duplicate config: ${config.name}`);
         }
         this._configs.push(config);
     }
     addAdapter(adapter: AdapterDesc): void {
         if (util.find(adapter.name, this._adapters)) {
-            log.panic(`duplicate adapter: ${adapter.name}`);
+            throw new Error(`duplicate adapter: ${adapter.name}`);
         }
         this._adapters.push(adapter);
     }
     addSetting(setting: SettingDesc): void {
         if (util.find(setting.name, this._adapters)) {
-            log.panic(`duplicate setting: ${setting.name}`);
+            throw new Error(`duplicate setting: ${setting.name}`);
         }
         this._settings.push(setting);
     }

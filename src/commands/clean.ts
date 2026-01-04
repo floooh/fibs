@@ -54,7 +54,7 @@ function parseArgs(project: Project, cmdLineArgs: string[]): Config[] {
             if (arg === '--all') {
                 all = true;
             } else {
-                log.panic(`unknown option '${arg}' (run 'fibs help clean')`);
+                throw new Error(`unknown option '${arg}' (run 'fibs help clean')`);
             }
             return false;
         }

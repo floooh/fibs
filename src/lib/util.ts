@@ -3,6 +3,13 @@ import { log } from './index.ts';
 import { ensureDirSync } from '@std/fs';
 import { dirname } from '@std/path';
 
+/**
+ * Find a named item in an array of named items by name.
+ *
+ * @param name name to search for
+ * @param items array of named items
+ * @returns found item or undefined
+ */
 export function find<T extends NamedItem>(name: string | undefined, items: T[]): T | undefined {
     if (name === undefined) {
         return undefined;
@@ -10,11 +17,23 @@ export function find<T extends NamedItem>(name: string | undefined, items: T[]):
     return items.find((elm) => elm.name === name);
 }
 
+/**
+ * Find index of named item in an array of named items
+ *
+ * @param name name to search for
+ * @param items array of named items
+ * @returns index of found item or undefined
+ */
 export function findIndex<T extends NamedItem>(name: string, items: T[]): number | undefined {
     const index = items.findIndex((elm) => elm.name === name);
     return (index === -1) ? undefined : index;
 }
 
+/**
+ * Add or replace a named item to/in an array of named items
+ * @param items array of named item
+ * @param item item to add or replace
+ */
 export function addOrReplace<T extends NamedItem>(items: T[], item: T) {
     const index = findIndex(item.name, items);
     if (index === undefined) {
@@ -23,6 +42,14 @@ export function addOrReplace<T extends NamedItem>(items: T[], item: T) {
         items[index] = item;
     }
 }
+
+/**
+ * Return a new array of named items without duplicates. When
+ * there are multiple items of the same name, the last item 'wins'.
+ *
+ * @param items an array of named items.
+ * @returns a new array without duplicates
+ */
 export function deduplicate<T extends NamedItem>(items: T[]): T[] {
     const res: T[] = [];
     for (const item of items) {
@@ -30,6 +57,13 @@ export function deduplicate<T extends NamedItem>(items: T[]): T[] {
     }
     return res;
 }
+
+/**
+ * Checks if file and its directory hierarchy exists, and if not
+ * creates a new empty text file.
+ *
+ * @param filePath path to file
+ */
 export function ensureFile(filePath: string) {
     if (!fileExists(filePath)) {
         ensureDirSync(dirname(filePath));
@@ -37,11 +71,23 @@ export function ensureFile(filePath: string) {
     }
 }
 
+/**
+ * Create directory if it doesn't exist (including subdirectories).
+ *
+ * @param path a directory path
+ * @returns the same directory path
+ */
 export function ensureDir(path: string): string {
     ensureDirSync(path);
     return path;
 }
 
+/**
+ * Return true if file exists (and is actually a file, not a directory).
+ *
+ * @param path a filesystem path
+ * @returns true if path exists and is a file
+ */
 export function fileExists(path: string): boolean {
     try {
         const res = Deno.statSync(path);
@@ -51,6 +97,12 @@ export function fileExists(path: string): boolean {
     }
 }
 
+/**
+ * Return true if directory exists (and is actually a directory).
+ *
+ * @param path a filesystem path
+ * @returns true if path exists and is a directory
+ */
 export function dirExists(path: string): boolean {
     try {
         const res = Deno.statSync(path);
@@ -60,34 +112,106 @@ export function dirExists(path: string): boolean {
     }
 }
 
+/**
+ * Returns path of '.fibs/' subdirectory given a project root directory.
+ *
+ * @param rootDir the project root directory
+ * @returns path to the .fibs directory
+ */
 export function fibsDir(rootDir: string): string {
     return `${rootDir}/.fibs`;
 }
 
+/**
+ * Returns path of '.fibs/sdks' subdirectory given the project root directory.
+ *
+ * @param rootDir the project root directory
+ * @returns path to the '.fibs/sdks' subdirectory
+ */
 export function sdkDir(rootDir: string): string {
     return `${fibsDir(rootDir)}/sdks`;
 }
 
+/**
+ * Returns path of the '.fibs/imports' subdirectory given the project root directory.
+ *
+ * @param rootDir the project root directory
+ * @returns path to the '.fibs/imports' subdirectory
+ */
 export function importsDir(rootDir: string): string {
     return `${fibsDir(rootDir)}/imports`;
 }
 
+/**
+ * Returns path of the '.fibs/config/[configName]' subdirectory given the
+ * project root directory and configuration name. This is where
+ * intermediate cmake config files live.
+ *
+ * @param rootDir the project root directory
+ * @param configName name of a build config
+ * @returns path to the '.fibs/config/[configName]' subdirectory
+ */
 export function configDir(rootDir: string, configName: string): string {
     return `${fibsDir(rootDir)}/config/${configName}`;
 }
 
+/**
+ * Returns path of the '.fibs/build/[configName]' subdirectory given the
+ * project root directory and configuration name. This is where
+ * intermediate cmake build files live.
+ *
+ * @param rootDir the project root directory
+ * @param configName name of a build config
+ * @returns path to the '.fibs/build/[configName]' subdirectory
+ */
 export function buildDir(rootDir: string, configName: string): string {
     return `${fibsDir(rootDir)}/build/${configName}`;
 }
 
+/**
+ * Returns path of the '.fibs/dist/[configName]' subdirectory given the
+ * project root directory and configuration name. This is where the
+ * compiled executables and asset files are located.
+ *
+ * @param rootDir the project root directory
+ * @param configName name of a build config
+ * @returns path to the '.fibs/dist/[configName]' subdirectory
+ */
 export function distDir(rootDir: string, configName: string): string {
     return `${fibsDir(rootDir)}/dist/${configName}`;
 }
 
+/**
+ * Returns path of a target's build subdirectory given the project
+ * root directory, a config name and a target name. This is where
+ * the intermediate cmake build files for the target are located.
+ *
+ * @param rootDir the project root directory
+ * @param configName name of a build config
+ * @param targetName name of a target
+ * @returns path to the '.fibs/build/[configName]/[targetName]' subdirectory
+ */
 export function targetBuildDir(rootDir: string, configName: string, targetName: string): string {
     return `${buildDir(rootDir, configName)}/${targetName}`;
 }
 
+/**
+ * Returns path of a target's dist subdirectory given the project
+ * root directory name, a config name and a target name. This is where
+ * the target's executable file is located:
+ *
+ * - for windowed executables:
+ *  - on macOS: .fibs/dist/[configName]/[targetName].app/Contents/MacOS
+ *  - on iOS: .fibs/dist/[configName]/[targetName].app
+ * - otherwise: .fibs/dist/[configName]
+ *
+ * @param rootDir the project root directory
+ * @param configName a build config name
+ * @param targetName a target name
+ * @param platform the target platform
+ * @param targetType the target type
+ * @returns path to directory where the target executable is located
+ */
 export function targetDistDir(
     rootDir: string,
     configName: string,
@@ -104,6 +228,23 @@ export function targetDistDir(
     }
 }
 
+/**
+ * Returns path of a target's asset subdirectory given the project
+ * root directory name, a build config name, a target name, the
+ * target platform and target type.
+ *
+ * - for windowed executables:
+ *  - on macOS: .fibs/dist/[configName]/[targetName].app/Contents/Resources
+ *  - on iOS: .fibs/dist/[configName]/[targetName].app
+ * - otherwise: .fibs/dist/[configName]
+ *
+ * @param rootDir the project root directory
+ * @param configName a build config name
+ * @param targetName a target name
+ * @param platform the target platform
+ * @param targetType the target type
+ * @returns path to directory where the target's assets are located
+ */
 export function targetAssetsDir(
     rootDir: string,
     configName: string,
@@ -121,7 +262,9 @@ export function targetAssetsDir(
 }
 
 /**
- * Checks if output files are dirty, returns true if:
+ * Helper function for target jobs which checks if output files are dirty,
+ * returns true if (e.g. the job needs to run):
+ *
  * - any of the input or output files don't exist
  * - any of the output files exist but have size 0 (this is necessary because
  *   fibs may need to create empty output files before cmake runs, if those
@@ -129,8 +272,8 @@ export function targetAssetsDir(
  * - any of the input files has a more recent modification date than
  *   any of the output files
  *
- * @param inputs - an array of input file paths
- * @param outputs - an array of output file paths
+ * @param inputs an array of input file paths
+ * @param outputs an array of output file paths
  * @returns true if outputs need to be regenerated
  * @throws throws error when input file is missing
  */
@@ -171,14 +314,14 @@ export function dirty(inputs: string[], outputs: string[]): boolean {
 /**
  * Run a program with optional logging of the command line and support for
  * capturing stdout/stderr.
- * @param cmd - the program to run
- * @param options - a RunOptions object with options for running the command
+ *
+ * @param cmd the program to run
+ * @param options a RunOptions object with options for running the command
  * @returns a RunResult object with exit code, and optional captured stdout/stderr
  */
 export async function runCmd(cmd: string, options: RunOptions): Promise<RunResult> {
     const {
         showCmd = true,
-        abortOnError = true,
         args,
         cwd,
         stdout = 'inherit',
@@ -208,26 +351,31 @@ export async function runCmd(cmd: string, options: RunOptions): Promise<RunResul
         };
         return res;
     } catch (err) {
-        if (abortOnError) {
-            log.panic(`Failed running '${cmd}' with: `, err);
-        } else {
-            throw err;
-        }
+        throw new Error(`Failed running '${cmd}'`, { cause: err });
     }
 }
 
 /**
- * Download a file via http or https.
- * @param options - download options
- * @param options.url - the URL to download from
- * @param options.dir - the directory to place the downloaded file (created on demand)
- * @param options.filename - the filename for the downloaded file
- * @param options.abortOnError - whether to abort on an error (default is true)
- * @returns true if download succeeded
+ * Options for util.download()
  */
-export async function download(
-    options: { url: string; dir: string; filename: string; abortOnError?: boolean },
-): Promise<boolean> {
+export type DownloadOptions = {
+    /** a http or https url */
+    url: string;
+    /** the download directory (does not need to exist) */
+    dir: string;
+    /** the download filename */
+    filename: string;
+    /** whether to panic when the download fails */
+    abortOnError?: boolean;
+};
+
+/**
+ * Asynchronously download a file via http or https.
+ *
+ * @param options download options
+ * @returns a Promise<boolean> which resolves to true when the download succeeds
+ */
+export async function download(options: DownloadOptions): Promise<boolean> {
     const {
         url,
         dir,
@@ -241,7 +389,7 @@ export async function download(
             const allLength = +response.headers.get('Content-Length')!;
             let curLength = 0;
             ensureDirSync(dir);
-            const file = await Deno.open(path, { write: true, create: true });
+            await using file = await Deno.open(path, { write: true, create: true });
             const reader = response.body.getReader();
             while (true) {
                 const { done, value } = await reader.read();
@@ -254,20 +402,20 @@ export async function download(
                 await file.write(value);
             }
         } else {
-            const msg = `Downloading '${url} failed with: ${response.status} (${response.statusText})`;
+            const msg = `Downloading ${url} failed with: ${response.status} (${response.statusText})`;
             if (abortOnError) {
-                log.panic(msg);
+                throw new Error(msg);
             } else {
                 log.warn(msg);
                 return false;
             }
         }
     } catch (err) {
-        const msg = `Downloading '${url} to ${path} failed with: `;
+        const msg = `Downloading ${url} to ${path} failed`;
         if (abortOnError) {
-            log.panic(msg, err);
+            throw new Error(msg, { cause: err });
         } else {
-            log.warn(msg, err);
+            log.warn(`${msg}, cause: `, err);
             return false;
         }
     }
@@ -328,7 +476,7 @@ export function validate(obj: unknown, schema: Schema): { valid: boolean; hints:
                     break;
                 case 'number[]':
                     if (!Array.isArray(val) || !val.every((item) => typeof item === 'number')) {
-                        res.hints.push(`property '${key}' must a number array`);
+                        res.hints.push(`property '${key}' must be a number array`);
                     }
                     break;
                 case 'boolean[]':
@@ -360,7 +508,7 @@ export function validate(obj: unknown, schema: Schema): { valid: boolean; hints:
 export function safeCast<T>(obj: unknown, schema: Schema): T {
     const { valid, hints } = validate(obj, schema);
     if (!valid) {
-        log.panic(`safe casting failed:\n\n${hints.map((hint) => `  ${hint}`).join('\n')}`);
+        throw new Error(`safe casting failed:\n\n${hints.map((hint) => `  ${hint}`).join('\n')}`);
     }
     return obj as T;
 }

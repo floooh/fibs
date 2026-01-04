@@ -12,7 +12,7 @@ function help() {
 
 async function run(project: Project, args: string[]) {
     if (args.length !== 3) {
-        log.panic("expected args [import] and [directory] (run 'fibs help link')");
+        throw new Error("expected args [import] and [directory] (run 'fibs help link')");
     }
     const imp = args[1];
     const dir = resolve(args[2]).replaceAll('\\', '/');
