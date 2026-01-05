@@ -1,6 +1,6 @@
 import { imports, log } from '../lib/index.ts';
 import type { CommandDesc, Project, TargetType } from '../types.ts';
-import { blue, brightBlue, green } from '@std/fmt/colors';
+import { colors } from '../deps.ts';
 
 export const listCmd: CommandDesc = { name: 'list', help, run };
 
@@ -45,9 +45,9 @@ async function run(project: Project, cmdLineArgs: string[]): Promise<void> {
     if (args.all || args.imports) {
         for (const i of project.imports().toReversed()) {
             if (imports.isLinked(project, i.name)) {
-                log.print(`${green(i.name)}: ${brightBlue(`link => ${i.importDir}`)}`);
+                log.print(`${colors.green(i.name)}: ${colors.brightBlue(`link => ${i.importDir}`)}`);
             } else {
-                log.print(`${green(i.name)}: ${i.url}`);
+                log.print(`${colors.green(i.name)}: ${i.url}`);
             }
             for (const mod of i.modules) {
                 if (mod.module.help) {
@@ -92,7 +92,7 @@ async function run(project: Project, cmdLineArgs: string[]): Promise<void> {
         for (const type of types) {
             for (const target of project.targets()) {
                 if ((target.type === type) && (args.targetTypes.includes(type))) {
-                    log.print(`${blue(target.name)}: ${target.type} => ${target.importDir}`);
+                    log.print(`${colors.blue(target.name)}: ${target.type} => ${target.importDir}`);
                 }
             }
         }

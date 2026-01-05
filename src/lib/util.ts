@@ -1,7 +1,6 @@
 import type { NamedItem, Platform, RunOptions, RunResult, Schema, TargetType } from '../types.ts';
 import { log } from './index.ts';
-import { ensureDirSync } from '@std/fs';
-import { dirname } from '@std/path';
+import { fs, path } from '../deps.ts';
 
 /**
  * Find a named item in an array of named items by name.
@@ -66,7 +65,7 @@ export function deduplicate<T extends NamedItem>(items: T[]): T[] {
  */
 export function ensureFile(filePath: string) {
     if (!fileExists(filePath)) {
-        ensureDirSync(dirname(filePath));
+        fs.ensureDirSync(path.dirname(filePath));
         Deno.writeTextFileSync(filePath, '');
     }
 }
@@ -78,7 +77,7 @@ export function ensureFile(filePath: string) {
  * @returns the same directory path
  */
 export function ensureDir(path: string): string {
-    ensureDirSync(path);
+    fs.ensureDirSync(path);
     return path;
 }
 
@@ -388,7 +387,7 @@ export async function download(options: DownloadOptions): Promise<boolean> {
         if ((response.status < 400) && response.body) {
             const allLength = +response.headers.get('Content-Length')!;
             let curLength = 0;
-            ensureDirSync(dir);
+            fs.ensureDirSync(dir);
             await using file = await Deno.open(path, { write: true, create: true });
             const reader = response.body.getReader();
             while (true) {

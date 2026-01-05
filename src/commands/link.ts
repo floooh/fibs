@@ -1,6 +1,6 @@
 import { imports, log } from '../lib/index.ts';
 import type { CommandDesc, Project } from '../types.ts';
-import { resolve } from '@std/path';
+import { path } from '../deps.ts';
 
 export const linkCmd: CommandDesc = { name: 'link', help, run };
 
@@ -15,6 +15,6 @@ async function run(project: Project, args: string[]) {
         throw new Error("expected args [import] and [directory] (run 'fibs help link')");
     }
     const imp = args[1];
-    const dir = resolve(args[2]).replaceAll('\\', '/');
+    const dir = path.resolve(args[2]).replaceAll('\\', '/');
     imports.link(project, imp, dir);
 }

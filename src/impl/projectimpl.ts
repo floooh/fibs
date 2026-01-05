@@ -24,7 +24,7 @@ import {
     type Tool,
 } from '../types.ts';
 import { host, util } from '../lib/index.ts';
-import { basename } from '@std/path';
+import { path } from '../deps.ts';
 
 export class ProjectImpl implements Project {
     _phase: ProjectPhase;
@@ -54,7 +54,7 @@ export class ProjectImpl implements Project {
 
     constructor(rootModule: FibsModule, rootDir: string) {
         this._phase = ProjectPhase.Initial;
-        this._name = basename(rootDir);
+        this._name = path.basename(rootDir);
         this._rootModule = rootModule;
         this._rootDir = rootDir;
     }

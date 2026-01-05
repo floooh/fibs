@@ -35,7 +35,7 @@ export async function build(options: { target?: string; forceRebuild?: boolean }
         target,
         forceRebuild = false,
     } = options;
-    let args = ['--build', '--preset', 'default'];
+    let args = ['--build', '--preset', 'default', '--parallel'];
     if (target !== undefined) {
         args = [...args, '--target', target];
     }

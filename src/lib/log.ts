@@ -1,5 +1,5 @@
 import type { Schema } from '../types.ts';
-import { bold, brightBlue, brightRed, green, red, yellow, cyan } from '@std/fmt/colors';
+import { colors } from '../deps.ts';
 
 const textEncoder = new TextEncoder();
 
@@ -13,7 +13,7 @@ export function dir(item: unknown) {
 
 export function helpCmd(cmds: string[], help: string | string[]) {
     for (const cmd of cmds) {
-        print(`${yellow(`fibs ${cmd}`)}`);
+        print(`${colors.yellow(`fibs ${cmd}`)}`);
     }
     if (typeof help === 'string') {
         print('    ', help);
@@ -26,20 +26,20 @@ export function helpCmd(cmds: string[], help: string | string[]) {
 }
 
 export function helpJob(name: string, help: string, schema: Schema) {
-    print(`${green(`${name}:`)} ${help}`);
+    print(`${colors.green(`${name}:`)} ${help}`);
     for (const [key, val] of Object.entries(schema)) {
-        print(`  ${brightBlue(`${key}${val.optional ? '?' : ''}:`)} ${yellow(val.type)} - ${val.desc}`);
+        print(`  ${colors.brightBlue(`${key}${val.optional ? '?' : ''}:`)} ${colors.yellow(val.type)} - ${val.desc}`);
     }
     print('');
 }
 
 export function helpImport(name: string, help: string, importOptions: { name: string; schema: Schema }[]) {
-    print(`  ${cyan(name)}: ${help}`);
+    print(`  ${colors.cyan(name)}: ${help}`);
     if (importOptions.length > 0) {
         for (const opts of importOptions) {
-            print(`    ${brightBlue(`${opts.name}:`)}`);
+            print(`    ${colors.brightBlue(`${opts.name}:`)}`);
             for (const [key, val] of Object.entries(opts.schema)) {
-                print(`      ${brightBlue(`${key}${val.optional ? '?' : ''}:`)} ${yellow(val.type)} - ${val.desc}`);
+                print(`      ${colors.brightBlue(`${key}${val.optional ? '?' : ''}:`)} ${colors.yellow(val.type)} - ${val.desc}`);
             }
         }
     }
@@ -48,11 +48,11 @@ export function helpImport(name: string, help: string, importOptions: { name: st
 
 export function run(cmdLine: string[], cwd?: string) {
     const cwdString = cwd ? `(in ${cwd})` : '';
-    print(brightBlue(`=> ${cmdLine.join(' ')} ${cwdString}`));
+    print(colors.brightBlue(`=> ${cmdLine.join(' ')} ${cwdString}`));
 }
 
 export function section(name: string) {
-    print(yellow(`=== ${name}:`));
+    print(colors.yellow(`=== ${name}:`));
 }
 
 export function write(str: string) {
@@ -64,7 +64,7 @@ export function info(...args: unknown[]) {
 }
 
 export function warn(...args: unknown[]) {
-    console.warn(`${yellow('[warning]')}`, ...args);
+    console.warn(`${colors.yellow('[warning]')}`, ...args);
 }
 
 export function error(err: unknown, verbose: boolean): never {
@@ -73,18 +73,18 @@ export function error(err: unknown, verbose: boolean): never {
     if (err instanceof Error) {
         if (verbose) {
             // complete error with stack trace
-            console.warn(`\n${red('[error]')} `, err, `\n`);
+            console.warn(`\n${colors.red('[error]')} `, err, `\n`);
         } else {
-            console.warn(`\n${red('[error]')} ${err.message}\n`);
+            console.warn(`\n${colors.red('[error]')} ${err.message}\n`);
         }
         if (err.cause !== undefined) {
-            console.warn(`${brightBlue('[cause]')} `, err.cause, '\n\n');
+            console.warn(`${colors.brightBlue('[cause]')} `, err.cause, '\n\n');
         }
         if (!verbose) {
-            console.warn(`${brightBlue('[note]')} run with '--dbg' for more detailed error information\n`);
+            console.warn(`${colors.brightBlue('[note]')} run with '--dbg' for more detailed error information\n`);
         }
     } else {
-        console.warn(`${red('[unknown error]')}: `, err, '\n');
+        console.warn(`${colors.red('[unknown error]')}: `, err, '\n');
     }
     Deno.exit(10);
 }
@@ -93,6 +93,6 @@ export function ask(msg: string, yes: boolean): boolean {
     if (yes) {
         return true;
     } else {
-        return confirm(`${bold(brightRed('??'))} ${msg}?`);
+        return confirm(`${colors.bold(colors.brightRed('??'))} ${msg}?`);
     }
 }

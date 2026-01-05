@@ -1,6 +1,6 @@
 import { util } from './index.ts';
 import type { RunOptions, RunResult } from '../types.ts';
-import { parse } from '@std/path';
+import { path } from '../deps.ts';
 
 export async function run(options: RunOptions): Promise<RunResult> {
     try {
@@ -21,7 +21,7 @@ export async function exists(): Promise<boolean> {
 }
 
 export function getDir(baseDir: string, url: string, ref?: string): string {
-    const repoName = parse(new URLPattern(url).pathname).name;
+    const repoName = path.parse(new URLPattern(url).pathname).name;
     let repoDir = `${baseDir}/${repoName}`;
     if ((ref !== undefined) && (ref !== 'HEAD')) {
         repoDir += `@${ref}`;
