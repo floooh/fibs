@@ -47,8 +47,8 @@ export async function exists(): Promise<boolean> {
     try {
         const res = await run({
             args: ['--version'],
-            stdout: 'piped',
-            stderr: 'piped',
+            stdout: 'null',
+            stderr: 'null',
             showCmd: false,
             winUseCmd: true,
         });

@@ -12,8 +12,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
 
 export async function exists(): Promise<boolean> {
     try {
-        // NOTE: cannot use local run() function since this would terminate on error!
-        await util.runCmd('git', { args: ['--version'], stdout: 'piped', showCmd: false });
+        await run({ args: ['--version'], stdout: 'null', showCmd: false });
         return true;
     } catch (_err) {
         return false;

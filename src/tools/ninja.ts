@@ -11,7 +11,7 @@ export const ninjaTool: ToolDesc = {
 
 export async function exists(): Promise<boolean> {
     try {
-        await util.runCmd('ninja', { args: ['--version'], stdout: 'piped', showCmd: false });
+        await util.runCmd('ninja', { args: ['--version'], stdout: 'null', showCmd: false });
         return true;
     } catch (_err) {
         return false;
