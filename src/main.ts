@@ -8,10 +8,9 @@ export async function main() {
         Deno.exit(10);
     }
     let args = Deno.args;
-    let verbose = false;
-    if (args.includes('--dbg')) {
-        verbose = true;
-        args = args.filter((arg) => arg !== '--dbg');
+    if (args.includes('--verbose')) {
+        log.setVerbose(true);
+        args = args.filter((arg) => arg !== '--verbose');
     }
     try {
         // special 'reset' command to wipe .fibs directory (useful when imports are broken)
@@ -40,6 +39,6 @@ export async function main() {
             await cmd.run(project, args);
         }
     } catch (err) {
-        log.error(err, verbose);
+        log.error(err);
     }
 }

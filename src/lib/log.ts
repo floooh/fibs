@@ -2,6 +2,15 @@ import type { Schema } from '../types.ts';
 import { colors } from '../deps.ts';
 
 const textEncoder = new TextEncoder();
+let _verbose = false;
+
+export function setVerbose(v: boolean) {
+    _verbose = v;
+}
+
+export function verbose(): boolean {
+    return _verbose;
+}
 
 export function print(...args: unknown[]) {
     console.log(...args);
@@ -67,11 +76,11 @@ export function warn(...args: unknown[]) {
     console.warn(`${colors.yellow('[warning]')}`, ...args);
 }
 
-export function error(err: unknown, verbose: boolean): never {
+export function error(err: unknown): never {
     // FIXME: only print message by default, and more detailed
     // output only on verbose
     if (err instanceof Error) {
-        if (verbose) {
+        if (_verbose) {
             // complete error with stack trace
             console.warn(`\n${colors.red('[error]')} `, err, `\n`);
         } else {
@@ -79,9 +88,6 @@ export function error(err: unknown, verbose: boolean): never {
         }
         if (err.cause !== undefined) {
             console.warn(`${colors.brightBlue('[cause]')} `, err.cause, '\n\n');
-        }
-        if (!verbose) {
-            console.warn(`${colors.brightBlue('[note]')} run with '--dbg' for more detailed error information\n`);
         }
     } else {
         console.warn(`${colors.red('[unknown error]')}: `, err, '\n');

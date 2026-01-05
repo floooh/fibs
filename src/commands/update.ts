@@ -1,5 +1,6 @@
 import { git, imports, log } from '../lib/index.ts';
 import type { CommandDesc, Project } from '../types.ts';
+import { colors } from '../deps.ts';
 
 export const updateCmd: CommandDesc = { name: 'update', help, run };
 
@@ -14,7 +15,6 @@ async function run(project: Project, cmdLineArgs: string[]) {
     const args = parseArgs(project, cmdLineArgs);
     for (const item of args.items) {
         const imp = project.import(item);
-        log.section(`${imp.name}`);
         const isLinked = imports.isLinked(project, imp.name);
         if (isLinked) {
             log.print();
@@ -30,12 +30,13 @@ async function run(project: Project, cmdLineArgs: string[]) {
             if (log.ask(`delete and clone ${repoDir}`, false)) {
                 log.info(`  deleting ${repoDir}`);
                 Deno.removeSync(repoDir, { recursive: true });
-                await imports.fetchImport(project, { name: imp.name, url: imp.url, ref: imp.ref });
+                await imports.fetchImport(project, { name: imp.name, url: imp.url, ref: imp.ref }, log.verbose());
             } else {
                 log.info(`  skipping ${repoDir}`);
             }
         } else {
-            if (!await git.update({ dir: project.importsDir(), url: imp.url, ref: imp.ref, showCmd: true })) {
+            log.info(`${colors.green('=> updating:')} ${imp.name} <= ${git.fmtGitUrl(imp.url, imp.ref)} ...`);
+            if (!await git.update({ dir: project.importsDir(), url: imp.url, ref: imp.ref, verbose: log.verbose() })) {
                 throw new Error(`updating '${repoDir}' failed\n\n(consider running 'fibs update --clean')\n`);
             }
         }

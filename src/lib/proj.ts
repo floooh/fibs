@@ -286,7 +286,7 @@ async function configureRecurseImports(
 ): Promise<void> {
     for (const importDesc of configurer._imports) {
         const { name, url, ref } = importDesc;
-        const { valid, dir } = await fetchImport(project, { name, url, ref });
+        const { valid, dir } = await fetchImport(project, { name, url, ref }, log.verbose());
         // record the actual importDir in the parent ImportDesc
         importDesc.importDir = dir;
         importDesc.importModules = [];

@@ -1,9 +1,11 @@
 import { git, log, util } from './index.ts';
 import type { FibsModule, Import, ImportDesc, ImportedModule, Project } from '../types.ts';
+import { colors } from '../deps.ts';
 
 export async function fetchImport(
     project: Project,
     importDesc: ImportDesc,
+    verbose: boolean,
 ): Promise<{ valid: boolean; dir: string }> {
     const { name, url, ref } = importDesc;
     const links = loadImportLinks(project);
@@ -30,7 +32,8 @@ export async function fetchImport(
             res.valid = true;
             return res;
         } else {
-            if (!await git.clone({ url, dir: importsDir, ref })) {
+            log.info(`${colors.green('=> fetching:')} ${name} <= ${git.fmtGitUrl(url, ref)} ...`);
+            if (!await git.clone({ url, dir: importsDir, ref, verbose })) {
                 log.warn(`Failed to clone ${url} into ${res.dir}`);
                 return res;
             }

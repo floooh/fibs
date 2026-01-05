@@ -19,6 +19,14 @@ export async function exists(): Promise<boolean> {
     }
 }
 
+export function fmtGitUrl(url: string, ref?: string): string {
+    if (ref === undefined) {
+        return url;
+    } else {
+        return `${url}@${ref}`;
+    }
+}
+
 export function getDir(baseDir: string, url: string, ref?: string): string {
     const repoName = path.parse(new URLPattern(url).pathname).name;
     let repoDir = `${baseDir}/${repoName}`;
@@ -28,106 +36,85 @@ export function getDir(baseDir: string, url: string, ref?: string): string {
     return repoDir;
 }
 
-export async function clone(options: { url: string; dir: string; ref?: string; showCmd?: boolean }): Promise<boolean> {
+export async function clone(options: { url: string; dir: string; ref?: string; verbose?: boolean }): Promise<boolean> {
     const {
         url,
         dir,
         ref = 'HEAD',
-        showCmd = true,
+        verbose = false,
     } = options;
     const repoDir = getDir(dir, url, ref);
     if (util.dirExists(repoDir)) {
         throw new Error(`git clone directory ${repoDir} already exists!`);
     }
     util.ensureDir(repoDir);
-    if ((await run({ args: ['init', '-q'], cwd: repoDir, showCmd })).exitCode !== 0) {
+    const runOpts: RunOptions = { args: [], cwd: repoDir, stderr: verbose ? 'inherit' : 'null', showCmd: verbose };
+    if ((await run({ ...runOpts, args: ['init', '-q'] })).exitCode !== 0) {
         return false;
     }
-    if ((await run({ args: ['remote', 'add', 'origin', url], cwd: repoDir, showCmd })).exitCode !== 0) {
+    if ((await run({ ...runOpts, args: ['remote', 'add', 'origin', url] })).exitCode !== 0) {
         return false;
     }
     if (
-        (await run({ args: ['remote', 'set-url', '--push', 'origin', 'nopush'], cwd: repoDir, showCmd })).exitCode !== 0
+        (await run({ ...runOpts, args: ['remote', 'set-url', '--push', 'origin', 'nopush'] })).exitCode !== 0
     ) {
         return false;
     }
-    if ((await run({ args: ['fetch', '--depth=1', 'origin', ref], cwd: repoDir, showCmd })).exitCode !== 0) {
+    if ((await run({ ...runOpts, args: ['fetch', '--depth=1', 'origin', ref] })).exitCode !== 0) {
         return false;
     }
     if (
-        (await run({ args: ['-c', 'advice.detachedHead=false', 'checkout', 'FETCH_HEAD'], cwd: repoDir, showCmd }))
+        (await run({ ...runOpts, args: ['-c', 'advice.detachedHead=false', 'checkout', 'FETCH_HEAD'] }))
             .exitCode !== 0
     ) {
         return false;
     }
-    return await updateSubmodules({ url, dir, ref, showCmd });
+    return await updateSubmodules({ url, dir, ref, verbose });
 }
 
 export async function update(
-    options: { url: string; dir: string; ref?: string; force?: boolean; showCmd?: boolean },
+    options: { url: string; dir: string; ref?: string; force?: boolean; verbose?: boolean },
 ): Promise<boolean> {
     const {
         url,
         dir,
         ref = 'HEAD',
         force = false,
-        showCmd = true,
+        verbose = false,
     } = options;
     const repoDir = getDir(dir, url, ref);
+    const runOpts: RunOptions = { args: [], cwd: repoDir, stderr: verbose ? 'inherit' : 'null', showCmd: verbose };
     const args = ['fetch', '--depth=1', 'origin', ref];
     if (force) {
         args.push('-f');
     }
-    if ((await run({ args, cwd: repoDir, showCmd })).exitCode !== 0) {
+    if ((await run({ ...runOpts, args })).exitCode !== 0) {
         return false;
     }
     if (
-        (await run({ args: ['-c', 'advice.detachedHead=false', 'checkout', 'FETCH_HEAD'], cwd: repoDir, showCmd }))
+        (await run({ ...runOpts, args: ['-c', 'advice.detachedHead=false', 'checkout', 'FETCH_HEAD'] }))
             .exitCode !== 0
     ) {
         return false;
     }
-    return await updateSubmodules({ url, dir, ref, showCmd });
+    return await updateSubmodules({ url, dir, ref, verbose });
 }
 
 export async function updateSubmodules(
-    options: { url: string; dir: string; ref: string; showCmd?: boolean },
+    options: { url: string; dir: string; ref: string; verbose?: boolean },
 ): Promise<boolean> {
-    const { url, dir, ref, showCmd = true } = options;
+    const { url, dir, ref, verbose = false } = options;
     const repoDir = getDir(dir, url, ref);
-    if ((await run({ args: ['submodule', 'init'], cwd: repoDir, showCmd })).exitCode !== 0) {
+    if ((await run({ args: ['submodule', 'init'], cwd: repoDir, showCmd: verbose })).exitCode !== 0) {
         return false;
     }
-    if ((await run({ args: ['submodule', 'sync', '--recursive'], cwd: repoDir, showCmd })).exitCode !== 0) {
+    if ((await run({ args: ['submodule', 'sync', '--recursive'], cwd: repoDir, showCmd: verbose })).exitCode !== 0) {
         return false;
     }
     if (
-        (await run({ args: ['submodule', 'update', '--recursive', '--depth=1'], cwd: repoDir, showCmd })).exitCode !== 0
+        (await run({ args: ['submodule', 'update', '--recursive', '--depth=1'], cwd: repoDir, showCmd: verbose })).exitCode !== 0
     ) {
         return false;
     }
     return true;
-}
-
-export async function hasUncommittedChanges(
-    options: { url: string; dir: string; ref: string; showCmd?: boolean },
-): Promise<boolean> {
-    const { url, dir, ref, showCmd = true } = options;
-    const repoDir = getDir(dir, url, ref);
-    const res = await run({ args: ['status', '-s'], cwd: repoDir, showCmd, stdout: 'piped' });
-    return 0 !== res.stdout.length;
-}
-
-export async function hasUnpushedChanges(
-    options: { url: string; dir: string; ref: string; showCmd?: boolean },
-): Promise<boolean> {
-    const { url, dir, ref, showCmd = true } = options;
-    const repoDir = getDir(dir, url, ref);
-    const res = await run({
-        args: ['log', '--branches', '--not', '--remotes', '--oneline'],
-        cwd: repoDir,
-        showCmd,
-        stdout: 'piped',
-    });
-    return 0 !== res.stdout.length;
 }

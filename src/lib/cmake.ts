@@ -1,4 +1,4 @@
-import { util } from './index.ts';
+import { log, util } from './index.ts';
 import type { Config, Project, RunOptions, RunResult } from '../types.ts';
 
 export async function run(options: RunOptions): Promise<RunResult> {
@@ -23,9 +23,14 @@ export async function generate(project: Project, config: Config) {
         await config.opener.generate(project, config);
     }
     const args = ['--preset', config.name, '-B', project.buildDir(config.name)];
-    const res = await run({ args, stderr: 'piped', stdout: 'piped' });
+    const res = await run({
+        args,
+        stderr: 'inherit',
+        stdout: log.verbose() ? 'inherit' : 'null',
+        showCmd: log.verbose(),
+    });
     if (res.exitCode !== 0) {
-        throw new Error(`cmake returned with exit code ${res.exitCode}, stderr:\n\n${res.stderr}`);
+        throw new Error(`cmake returned with exit code ${res.exitCode} (run with --verbose)`);
     }
 }
 
@@ -41,7 +46,7 @@ export async function build(options: { target?: string; forceRebuild?: boolean }
     if (forceRebuild) {
         args = [...args, '--clean-first'];
     }
-    const res = await run({ args });
+    const res = await run({ args, showCmd: log.verbose() });
     if (res.exitCode !== 0) {
         throw new Error('build failed.');
     }

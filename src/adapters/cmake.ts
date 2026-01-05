@@ -1,4 +1,4 @@
-import { cmake, proj, util } from '../lib/index.ts';
+import { cmake, log, proj, util } from '../lib/index.ts';
 import type {
     AdapterBuildOptions,
     AdapterConfigureResult,
@@ -60,9 +60,15 @@ export async function configure(project: Project, config: Config): Promise<Adapt
         const cmakePresetsSource = genCMakePresetsJson(config, configDir);
         Deno.writeTextFileSync(cmakePresetsPath, cmakePresetsSource, { create: true });
 
-        const res = await cmake.run({ cwd: configDir, args: ['--preset', config.name], stderr: 'piped', stdout: 'piped' });
+        const res = await cmake.run({
+            cwd: configDir,
+            args: ['--preset', config.name],
+            stderr: 'inherit',
+            stdout: log.verbose() ? 'inherit' : 'null',
+            showCmd: log.verbose(),
+        });
         if (res.exitCode !== 0) {
-            throw new Error(`cmake returned with exit code ${res.exitCode}, stderr: \n\n${res.stderr}`);
+            throw new Error(`cmake returned with exit code ${res.exitCode} (run with --verbose)`);
         }
     }
     const importPath = `file://${configPath}`;
