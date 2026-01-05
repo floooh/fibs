@@ -143,6 +143,10 @@ function genCMakePresetsJson(config: Config, buildDir: string): string {
                 toolset: config.generatorToolset,
                 toolchainFile: config.toolchainFile,
                 environment: config.environment,
+                // NOTE: CMAKE_BUILD_TYPE *must* exist in preset for CMakeTools to work
+                cacheVariables: {
+                    CMAKE_BUILD_TYPE: asCmakeBuildMode(config.buildMode),
+                },
             },
         ],
         buildPresets: genBuildPresets(config),
@@ -263,9 +267,6 @@ function resolveCMakeVariableValue(val: string | boolean): string {
 function genCMakeVariables(project: Project, config: Config): string {
     let str = '';
     str += 'set(CMAKE_CONFIGURATION_TYPES Debug Release)\n';
-    if (!isMultiConfigGenerator(config)) {
-        str += `set(CMAKE_BUILD_TYPE ${resolveCMakeVariableValue(config.buildMode)})\n`;
-    }
     const vars = util.deduplicate([...config.cmakeVariables, ...project.cmakeVariables()]);
     for (const cmakeVariable of vars) {
         str += `set(${cmakeVariable.name} ${resolveCMakeVariableValue(cmakeVariable.value)})\n`;

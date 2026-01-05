@@ -84,7 +84,7 @@ function writeLaunchJson(project: Project, config: Config, vscodeDir: string) {
                 name: 'Debug Current Target',
                 request: 'launch',
                 program: '${command:cmake.launchTargetPath}',
-                cwd: project.buildDir(config.name),
+                cwd: project.distDir(config.name),
                 args: [],
                 type: getType(),
                 MIMode: getMIMode(),
