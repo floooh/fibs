@@ -56,9 +56,8 @@ const fibsCmdContent = `
 @deno run --allow-all --no-config jsr:@floooh/fibs %*
 `;
 
-// FIXME: use 'jsr:@floooh/fibs@^1'
 const fibsTsContent = `
-import { Builder, Configurer } from 'jsr:@floooh/fibs';
+import { Builder, Configurer } from 'jsr:@floooh/fibs@^1';
 
 export function build(b: Builder): void {
     b.addTarget({
