@@ -59,6 +59,10 @@ const fibsCmdContent = `
 const fibsTsContent = `
 import { Builder, Configurer } from 'jsr:@floooh/fibs@^1';
 
+export function configure(c: Configurer) {
+    // add imports here...
+}
+
 export function build(b: Builder): void {
     b.addTarget({
         name: "hello",
