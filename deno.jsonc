@@ -1,6 +1,6 @@
 {
     "name": "@floooh/fibs",
-    "version": "0.1.54",
+    "version": "1.0.0",
     "license": "MIT",
     "exports": "./index.ts",
     "compilerOptions": {
