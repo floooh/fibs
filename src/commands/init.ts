@@ -7,7 +7,7 @@ export const initCmd: CommandDesc = { name: 'init', help, run };
 function help() {
     log.helpCmd(['init'], [
         'init current dir as fibs project',
-        `run as 'deno --allow-all jsr:@floooh/fibs init'`,
+        `run as 'deno run --allow-all jsr:@floooh/fibs init'`,
     ]);
 }
 
