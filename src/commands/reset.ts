@@ -7,7 +7,7 @@ function help() {
     log.helpCmd(['reset'], 'wipe the .fibs subdirectory and start from scratch');
 }
 
-async function run() {
+export async function run() {
     const cwd = Deno.cwd().replaceAll('\\', '/');
     const fibsFile = `${cwd}/fibs.ts`;
     const fibsDir = `${cwd}/.fibs`;

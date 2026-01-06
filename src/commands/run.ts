@@ -23,5 +23,6 @@ async function run(project: Project, args: string[]) {
     await config.runner.run(project, config, target, {
         args: args.slice(2),
         cwd: project.distDir(config.name),
+        showCmd: log.verbose(),
     });
 }

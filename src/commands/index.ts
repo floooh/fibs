@@ -1,4 +1,5 @@
 import { helpCmd } from './help.ts';
+import { initCmd } from './init.ts';
 import { resetCmd } from './reset.ts';
 import { configCmd } from './config.ts';
 import { buildCmd } from './build.ts';
@@ -17,6 +18,7 @@ import { runjobsCmd } from './runjobs.ts';
 
 export const builtinCommands = [
     helpCmd,
+    initCmd,
     resetCmd,
     configCmd,
     buildCmd,

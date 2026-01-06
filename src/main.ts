@@ -1,6 +1,7 @@
 import { log, proj, util } from './lib/index.ts';
-import { assertFibsModule, type Project } from './types.ts';
-import { resetCmd } from './commands/reset.ts';
+import { assertFibsModule } from './types.ts';
+import { run as resetCmdRun } from './commands/reset.ts';
+import { run as initCmdRun } from './commands/init.ts';
 
 export async function main() {
     if (Deno.args.length < 1) {
@@ -20,7 +21,10 @@ export async function main() {
         let skipCmd = false;
         if (cmdName === 'reset') {
             skipCmd = true;
-            await resetCmd.run(null as unknown as Project, []);
+            await resetCmdRun();
+        } else if (cmdName === 'init') {
+            skipCmd = true;
+            await initCmdRun();
         }
         // try to import a fibs.ts file from current directory
         if (!util.fileExists(rootPath)) {
