@@ -126,6 +126,10 @@ export async function build(project: Project, config: Config, options: AdapterBu
 }
 
 function genCMakePresetsJson(config: Config, buildDir: string): string {
+    const cacheVariables: Record<string, string> = {};
+    if (!isMultiConfigGenerator(config)) {
+        cacheVariables.CMAKE_BUILD_TYPE = asCmakeBuildMode(config.buildMode);
+    }
     const preset = {
         version: 3,
         cmakeMinimumRequired: {
@@ -144,9 +148,7 @@ function genCMakePresetsJson(config: Config, buildDir: string): string {
                 toolchainFile: config.toolchainFile,
                 environment: config.environment,
                 // NOTE: CMAKE_BUILD_TYPE *must* exist in preset for CMakeTools to work
-                cacheVariables: {
-                    CMAKE_BUILD_TYPE: asCmakeBuildMode(config.buildMode),
-                },
+                cacheVariables,
             },
         ],
         buildPresets: genBuildPresets(config),
