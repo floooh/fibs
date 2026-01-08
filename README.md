@@ -95,4 +95,9 @@ To build a native debug build:
     ./fibs run --verbose hello
     ```
 
+5. Uninstall WASI SDK:
+    ```bash
+    ./fibs wasisdk uninstall
+    ```
+
 [to be continued]
