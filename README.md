@@ -1,8 +1,8 @@
-# fibs
+# [WIP] fibs
 
 A Typescript-based cmake wrapper and task runner that simplifies C/C++ project configuration and builds.
 
-This is the spiritual successor to [fips](https://github.com/floooh/fips)
+This is the spiritual successor to [fips](https://github.com/floooh/fips).
 
 ## Feature Overview
 
@@ -53,3 +53,46 @@ To build a native debug build:
 ./fibs build
 ./fibs run hello
 ```
+
+### Build the Hello World example for WASI
+
+...in the `fibs-hello-world` directory from above:
+
+1. Install the WASI SDK:
+
+    ```bash
+    ./fibs wasisdk install
+    ```
+
+2. Run `./fibs diag tools` and make sure that `ninja`, `tar` and `wasmtime` is installed and found:
+
+    ```bash
+    ./fibs diag tools
+    ...
+    ninja:  found
+    ...
+    tar:    found
+    wasmtime:       found
+    ```
+
+3. Run `./fibs list configs`, note the `wasi-*` configs:
+
+    ```bash
+    ./fibs list configs
+    ...
+    wasi-make-debug
+    wasi-make-release
+    wasi-ninja-debug
+    wasi-ninja-release
+    wasi-vscode-debug
+    wasi-vscode-release
+    ```
+
+4. Configure with `wasi-ninja-debug`, build and run:
+    ```bash
+    ./fibs config wasi-ninja-debug
+    ./fibs build
+    ./fibs run --verbose hello
+    ```
+
+[to be continued]
