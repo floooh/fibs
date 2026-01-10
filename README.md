@@ -16,9 +16,13 @@ This is the spiritual successor to [fips](https://github.com/floooh/fips).
 
 - describe C/C++ builds in Typescript instead of wrestling with cmake syntax
 - runs on macOS, Linux and Windows
-- IDE integration for VSCode, VStudio and Xcode
+- extensible IDE integration (comes with builtin support for VSCode, VStudio and Xcode)
 - import dependencies via git
-- extenibility as core feature: build scripts and dependencies can add new commands, custom build jobs, IDE integrations and target platforms, all written in Typescript
+- extensibility as core feature:
+  - add subcommands for custom workflows and automation
+  - custom build jobs for code generation or invoking external build tools (shader compilers, asset exporters, etc...)
+  - add new target platforms and IDE integrations
+  - ...all written in Typescript/Deno
 
 ## Documentation
 
