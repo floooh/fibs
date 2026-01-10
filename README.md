@@ -31,7 +31,6 @@ export function build(b: Builder) {
 
 - describe C/C++ builds in Typescript instead of wrestling with cmake syntax
 - runs on macOS, Linux and Windows
-- extensible IDE integration (comes with builtin support for VSCode, VStudio and Xcode)
 - import dependencies via git
 - extensibility as core feature:
   - add subcommands for custom workflows and automation
