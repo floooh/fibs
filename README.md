@@ -13,7 +13,7 @@ A Typescript-based cmake wrapper and task runner that simplifies C/C++ project c
 ```ts
 import { Builder } from 'jsr:@floooh/fibs@^1';
 
-export function build(b: Builder): void {
+export function build(b: Builder) {
     b.addTarget({
         name: "hello",
         type: "plain-exe",
