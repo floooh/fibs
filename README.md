@@ -43,4 +43,4 @@ export function build(b: Builder) {
 - everything is Typescript instead of a mix of Python, YAML and cmake-script
 - dependencies and output files are now stored within the project directory instead of 'sister directories'
 - new target platforms (e.g. WASI, Emscripten) and IDE integrations can now be added in regular dependencies instead of submitting PRs to the core project
-- non-intrusive 'fibsification' of 3rd-party no longer requires wrestling with git submodules
+- non-intrusive 'fibsification' of 3rd-party C/C++ libraries no longer requires wrestling with git submodules
