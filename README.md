@@ -19,7 +19,7 @@ export function build(b: Builder) {
 }
 ```
 
-...then build and run:
+...then build and run like this:
 ```bash
 ./fibs build
 ./fibs run hello
