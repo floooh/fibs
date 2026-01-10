@@ -28,7 +28,7 @@ Or see the [complete documentation](./docs/index.md).
   - add new target platforms and IDE integrations
   - ...all written in Typescript/Deno
 
-## Main Differences to Fips
+## Differences to Fips
 
 - everything is Typescript instead of a mix of Python, YAML and cmake-script
 - dependencies and output files are now stored within the project directory instead of 'sister directories'
