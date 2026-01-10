@@ -12,6 +12,10 @@ This is the spiritual successor to [fips](https://github.com/floooh/fips).
 ./fibs run hello
 ```
 
+[Getting Started](./docs/01_getting_started.md) • [Troubleshooting](./docs/02_troubleshooting.md) • [Usage](./docs/03_usage.md)
+
+Or see the [complete documentation](./docs/index.md).
+
 ## Features
 
 - describe C/C++ builds in Typescript instead of wrestling with cmake syntax
@@ -23,18 +27,6 @@ This is the spiritual successor to [fips](https://github.com/floooh/fips).
   - custom build jobs for code generation or invoking external build tools (shader compilers, asset exporters, etc...)
   - add new target platforms and IDE integrations
   - ...all written in Typescript/Deno
-
-## Documentation
-
-Essentials:
-
-- [Getting Started](./docs/01_getting_started.md)
-- [Troubleshooting](./docs/02_troubleshooting.md)
-- [Usage](./docs/03_usage.md)
-
-For more details:
-
-- [Table of Content](./docs/index.md)
 
 ## Main Differences to Fips
 
