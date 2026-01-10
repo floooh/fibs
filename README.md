@@ -31,7 +31,7 @@ export function build(b: Builder) {
 
 - describe C/C++ builds in Typescript instead of wrestling with cmake syntax
 - runs on macOS, Linux and Windows
-- import dependencies via git
+- import dependencies from git repositories
 - extensibility as core feature:
   - add subcommands for custom workflows and automation
   - custom build jobs for code generation or invoking external build tools (shader compilers, asset exporters, etc...)
