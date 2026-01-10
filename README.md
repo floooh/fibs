@@ -2,19 +2,33 @@
 
 *Floh's Infernal Build System*
 
-A Typescript-based cmake wrapper and task runner that simplifies C/C++ project configuration and builds.
+A Typescript-based cmake wrapper and task runner that simplifies C/C++ project configuration and builds (and the sprititual successor to [fips](https://github.com/floooh/fips)).
 
-This is the spiritual successor to [fips](https://github.com/floooh/fips).
 
-```bassh
-./fibs config wasi-ninja-debug
+
+
+[Getting Started](./docs/01_getting_started.md) • [Troubleshooting](./docs/02_troubleshooting.md) • [Usage](./docs/03_usage.md) • [Documentation](./docs/index.md)
+
+**TL;DR**: Write your build scripts in Typescript:
+```ts
+import { Builder } from 'jsr:@floooh/fibs@^1';
+
+export function build(b: Builder): void {
+    b.addTarget({
+        name: "hello",
+        type: "plain-exe",
+        sources: ["hello.c"]
+    });
+}
+```
+
+...then build and run:
+```bash
 ./fibs build
 ./fibs run hello
 ```
 
-[Getting Started](./docs/01_getting_started.md) • [Troubleshooting](./docs/02_troubleshooting.md) • [Usage](./docs/03_usage.md)
-
-Or see the [complete documentation](./docs/index.md).
+...plus [much more](./docs/03_usage.md).
 
 ## Features
 
