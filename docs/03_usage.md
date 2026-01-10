@@ -258,7 +258,7 @@ sokol: https://github.com/floooh/sokol
 When the import name is followed by a git url this means that the dependency is
 not currently linked and the files live in the `.fibs/imports` subdirectory.
 
-To link the `sokol` import to a regular git repository so that development work
+To link the `sokol` import to a regular local git repository so that development work
 on sokol can happen, run `./fibs link sokol [localpath]`, e.g.:
 
 ```bash
