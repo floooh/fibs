@@ -1,0 +1,91 @@
+# Getting Started
+- [Prerequisites](#prerequisites)
+- [Building the Hello World project](#building-the-hello-world-project)
+- [Build the Hello World example for WASI](#build-the-hello-world-example-for-wasi)
+
+
+## Prerequisites
+
+1. [Deno](https://docs.deno.com/runtime/getting_started/installation/)
+2. [CMake](https://cliutils.gitlab.io/modern-cmake/chapters/intro/installing.html)
+3. your system's vanilla C/C++ toolchain (GCC, Clang or MSVC)
+4. optional (but recommended): [Ninja](https://ninja-build.org/)
+
+## Building the Hello World project
+
+> [!NOTE]
+> On Windows cmd.exe, run `fibs` instead of `./fibs`
+
+Clone, build and run a native release build:
+
+```bash
+# clone
+git clone https://github.com/floooh/fibs-hello-world
+cd fibs-hello-world
+# build with default build config
+./fibs build
+# run
+./fibs run hello
+```
+
+If anything goes wrong, run `./fibs diag tools` to check if any required tools are missing.
+
+To build a native debug build:
+
+```bash
+# on macOS:
+./fibs config macos-make-debug
+# on on Linux:
+./fibs config linux-make-debug
+# on Windows:
+./fibs config win-vstudio-debug
+
+./fibs build
+./fibs run hello
+```
+
+## Build the Hello World example for WASI
+
+...in the `fibs-hello-world` directory from above:
+
+1. Install the WASI SDK:
+
+    ```bash
+    ./fibs wasisdk install
+    ```
+
+2. Run `./fibs diag tools` and make sure that `ninja`, `tar` and `wasmtime` is installed and found:
+
+    ```bash
+    ./fibs diag tools
+    ...
+    ninja:  found
+    ...
+    tar:    found
+    wasmtime:       found
+    ```
+
+3. Run `./fibs list configs`, note the `wasi-*` configs:
+
+    ```bash
+    ./fibs list configs
+    ...
+    wasi-make-debug
+    wasi-make-release
+    wasi-ninja-debug
+    wasi-ninja-release
+    wasi-vscode-debug
+    wasi-vscode-release
+    ```
+
+4. Configure with `wasi-ninja-debug`, build and run:
+    ```bash
+    ./fibs config wasi-ninja-debug
+    ./fibs build
+    ./fibs run --verbose hello
+    ```
+
+5. Uninstall WASI SDK:
+    ```bash
+    ./fibs wasisdk uninstall
+    ```

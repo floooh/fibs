@@ -1,10 +1,18 @@
-# [WIP] fibs
+# fibs
+
+*Floh's Infernal Build System*
 
 A Typescript-based cmake wrapper and task runner that simplifies C/C++ project configuration and builds.
 
 This is the spiritual successor to [fips](https://github.com/floooh/fips).
 
-## Feature Overview
+```bassh
+./fibs config wasi-ninja-debug
+./fibs build
+./fibs run hello
+```
+
+## Features
 
 - describe C/C++ builds in Typescript instead of wrestling with cmake syntax
 - runs on macOS, Linux and Windows
@@ -12,92 +20,21 @@ This is the spiritual successor to [fips](https://github.com/floooh/fips).
 - import dependencies via git
 - extenibility as core feature: build scripts and dependencies can add new commands, custom build jobs, IDE integrations and target platforms, all written in Typescript
 
-## Getting Started
+## Documentation
 
-### Prerequisites
+Essentials:
 
-1. [Deno](https://docs.deno.com/runtime/getting_started/installation/)
-2. [CMake](https://cliutils.gitlab.io/modern-cmake/chapters/intro/installing.html)
-3. your system's vanilla C/C++ toolchain (GCC, Clang or MSVC)
-4. optionally (but recommended): [Ninja](https://ninja-build.org/)
+- [Getting Started](./docs/01_getting_started.md)
+- [Troubleshooting](./docs/02_troubleshooting.md)
+- [Usage](./docs/03_usage.md)
 
-### Building the Hello World project
+For more details:
 
-> [!NOTE]
-> On Windows cmd.exe, run `fibs` instead of `./fibs`
+- [Table of Content](./docs/index.md)
 
-Clone, build and run a native release build:
+## Main Differences to Fips
 
-```bash
-# clone
-git clone https://github.com/floooh/fibs-hello-world
-cd fibs-hello-world
-# build with default build config
-./fibs build
-# run
-./fibs run hello
-```
-
-If anything goes wrong, run `./fibs diag tools` to check if any required tools are missing.
-
-To build a native debug build:
-
-```bash
-# on macOS:
-./fibs config macos-make-debug
-# on on Linux:
-./fibs config linux-make-debug
-# on Windows:
-./fibs config win-vstudio-debug
-
-./fibs build
-./fibs run hello
-```
-
-### Build the Hello World example for WASI
-
-...in the `fibs-hello-world` directory from above:
-
-1. Install the WASI SDK:
-
-    ```bash
-    ./fibs wasisdk install
-    ```
-
-2. Run `./fibs diag tools` and make sure that `ninja`, `tar` and `wasmtime` is installed and found:
-
-    ```bash
-    ./fibs diag tools
-    ...
-    ninja:  found
-    ...
-    tar:    found
-    wasmtime:       found
-    ```
-
-3. Run `./fibs list configs`, note the `wasi-*` configs:
-
-    ```bash
-    ./fibs list configs
-    ...
-    wasi-make-debug
-    wasi-make-release
-    wasi-ninja-debug
-    wasi-ninja-release
-    wasi-vscode-debug
-    wasi-vscode-release
-    ```
-
-4. Configure with `wasi-ninja-debug`, build and run:
-    ```bash
-    ./fibs config wasi-ninja-debug
-    ./fibs build
-    ./fibs run --verbose hello
-    ```
-
-5. Uninstall WASI SDK:
-    ```bash
-    ./fibs wasisdk uninstall
-    ```
-
-[to be continued]
+- everything is Typescript instead of a mix of Python, YAML and cmake-script
+- all dependencies and output files are stored within the project directory instead of 'sister directories' (instead there's now an `npm link` like mechanism for doing dev-work on dependencies)
+- new target platforms (e.g. WASI, Emscripten) and IDE integrations can now be added in regular dependencies instead of submitting fibs PRs
+- more flexible non-intrusive 'fibsification' of C/C++ libraries, 3rd party libraries can now be pulled in as regular imports instead of wrestling with git submodules
