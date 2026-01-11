@@ -59,10 +59,87 @@ new build configs like `wasi-make-debug`, and a new [Runner](./10_runners.md) wh
 knows how to run WASI blobs via [wasmtime](https://github.com/bytecodealliance/wasmtime).
 
 ## Configure Phase
-[TODO]
+
+A fibs build script may export a `configure` function which is called
+to 'configure' the fibs project:
+
+```ts
+import { Configurer } from 'jsr:@floooh/fibs@^1';
+
+export function configure(c: Configurer): void {
+    // ...
+}
+```
+
+The following project item types can be added in the `configure` function
+by calling methods on the `Configurer` object:
+
+- imports and import options
+- commands
+- build configs
+- jobs
+- runners
+- openers
+- settings keys
+
+Most top level projects will only add imports and import options, while
+the other project item types are commonly added in utility/helper-type
+imports which add new features to fibs.
 
 ### Adding imports
-[TODO]
+
+The most simple way to add an import to a project is to only provide
+a git url:
+
+```ts
+export function configure(c: Configurer): void {
+    // import the Dear ImGui all-in-one source distribution
+    c.addImport({
+        name: 'imgui',
+        url: 'https://github.com/floooh/dcimgui'
+    });
+}
+```
+This will clone the git repository into the `.fibs/imports` directory
+at the `HEAD` commit.
+
+If the git repository contains a `fibs.ts` file in the root directory,
+fibs will automatically import that file causing a recursive import
+process. For instance the above 'imgui' import adds a library target to the
+top-level project:
+
+```
+> ./fibs list targets --lib
+imgui: lib => /Users/floh/projects/fibs-hello-world/.fibs/imports/dcimgui
+```
+
+>[!WARNING]
+>Fibs currently doesn't detect import cycles.
+
+Imports can be pinned to a specific 'git ref' (a branch name, tag name
+or commit-sha):
+
+```ts
+    c.addImport({
+        name: 'imgui',
+        url: 'https://github.com/floooh/dcimgui'
+        // pin to Dear ImGui to version v1.92.0 via a git tag name
+        ref: 'v1.92.0',
+    });
+```
+
+It's also possible to selectively define a list of fibs build files to be imported.
+This allows to build 'fibs collections' where a single git repository offers
+multiple features. For instance the following import makes [sokol](https://github.com/floooh/sokol)
+and [stb](https://github.com/nothings/stb) targets available to fibs projects:
+
+```ts
+    c.addImport({
+        name: 'libs',
+        url: 'https://github.com/floooh/fibs-libs',
+        files: ['sokol.ts', 'stb.ts'],
+    });
+```
 
 ### Import options
 [TODO]
