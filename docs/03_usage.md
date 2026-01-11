@@ -7,8 +7,10 @@
 - [Cleaning intermediate build files](#cleaning-intermediate-build-files)
 - [Open the project in an IDE](#open-the-project-in-an-ide)
 - [Updating imports](#updating-imports)
+- [Exploring the project](#exploring-the-project)
 - [Linking and unlinking imports](#linking-and-unlinking-imports)
-
+- [Diagnosing problems](#diagnosing-problems)
+- [Settings](#settings)
 
 ## Getting help
 
@@ -236,6 +238,40 @@ select which imports to update or skip, run:
 ./fibs update --clean
 ```
 
+## Exploring the project
+
+Run `./fibs list` and its variants to list project items:
+
+```bash
+./fibs list
+```
+
+This will list all items of all categories. To only list items of
+one catgegory run one of:
+
+```bash
+./fibs list settings
+./fibs list configs
+./fibs list imports
+./fibs list runners
+./fibs list openers
+./fibs list jobs
+./fibs list targets
+```
+
+The `./fibs list target` command additionally lets you filter by target type:
+
+```bash
+# only list executable targets
+./fibs list targets --exe
+# only list static library targets
+./fibs list targets --lib
+# only list DLL targets
+./fibs list targets --dll
+# only list virtual 'interface' targets
+./fibs list targets --interface
+```
+
 ## Linking and unlinking imports
 
 By default, imported dependencies will be cloned as a single commit and in
@@ -292,3 +328,114 @@ changes that were committed and pushed in the linked `sokol` directory:
 ```bash
 ./fibs update sokol
 ```
+
+## Diagnosing problems
+
+Run `./fibs diag` command and its variant to diagnose problems:
+
+```bash
+./fibs diag
+```
+
+...this will run *all* diagnostic checks which might be a bit spammy, so
+in most situations it's better to run one of the subcommands.
+
+To check whether required (or optional) command line tools can be found, run
+`./fibs diag tools`. When a tool is not found this will also print information
+what the tool is needed for.
+
+```bash
+./fibs diag tools
+```
+
+To diagnose build configs, run `./fibs diag configs`. This will check whether
+all requirements are met to build the project with a specific configuration:
+
+```bash
+./fibs diag configs
+```
+
+To diagnose build targets, run `./fibs diag targets`. This is usually helpful
+when writing build scripts:
+
+```bash
+./fibs diag targets
+```
+
+...similar to diagnose imports, run `./fibs diag imports`. Currently this only
+checks whether the import directory exists, in the future the subcommand may
+become more useful:
+
+```bash
+./fibs diag imports
+```
+
+...and finally to dump the entire internal Project object, run:
+
+```bash
+./fibs diag project
+```
+
+This is mostly a debugging feature when working on fibs itself, but is also
+useful for learning what's going on under the hood.
+
+## Settings
+
+The following commands let you inspect and manipulate the 'settings'
+key/value pairs. These are persisted in `.fibs/settings.json` and can
+be used by extensions to let the user customize behaviour, or to
+persist data between command runs. 'Core fibs' only uses a single
+setting: the currently selected build configuration.
+
+To list available settings and their current value run:
+
+```bash
+./fibs list settings
+```
+
+To get the value for a settings key run:
+
+```bash
+./fibs get [key]
+```
+
+To set a settings value run:
+
+```bash
+./fibs set [key] [value]
+```
+
+...for instance you can directly set the current build config via:
+
+```bash
+./fibs set config macos-ninja-debug
+```
+
+...but after this you need to manually reconfigure the project:
+
+```bash
+./fibs config
+```
+
+E.g. running `./fibs config macos-ninja-debug` is essentially a shortcut
+for:
+
+```bash
+./fibs set config macos-ninja-debug
+./fibs config
+```
+
+...and finally to delete a settings key run:
+
+```bash
+./fibs unset [key]
+```
+
+A deleted setting will return its default value, for instance:
+
+```bash
+./fibs unset config
+./fibs get config
+```
+
+...will print the default build configuration for your host platform.
