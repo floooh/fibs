@@ -2,6 +2,12 @@
 
 In case of problems, try the following things in order:
 
+- [Clean the Deno package cache](#clean-the-deno-package-cache)
+- [Run `./fibs update` to update dependencies](#run-fibs-update-to-update-dependencies)
+- [Delete the .fibs directory via `./fibs reset`](#delete-the-fibs-directory-via-fibs-reset)
+- [Run `./fibs diag tools` to check for missing cmdline tools](#run-fibs-diag-tools-to-check-for-missing-cmdline-tools)
+- [Run with `--verbose` for additional debug output](#run-with---verbose-for-additional-debug-output)
+
 ## Clean the Deno package cache
 
 Run `deno clean`, this will clean the global Deno package cache and download
@@ -13,17 +19,27 @@ bumping the major version.
 deno clean
 ```
 
+## Run `./fibs update` to update dependencies
+
+Compile errors may be caused by dependencies not being uptodate (e.g.
+for dependencies which are not pinned to a specific commit-sha). In that
+case try:
+
+```bash
+./fibs update
+```
+
 ## Delete the .fibs directory via `./fibs reset`
 
-If clearing the Deno package cache doesn't fix the issue, try running
-`./fibs reset` next. This will delete the local `.fibs/` subdirectory
-and clone the dependencies. This may fix issues when dependencies have
-been updated but the project doesn't pin dependencies to a specific
-git commit.
+Sometimes it may be necessary to start from scratch by deleting
+the `.fibs/` subdirectory. Do this by running:
 
 ```bash
 ./fibs reset
 ```
+
+After a prompt this will delete the `.fibs/` subdirectory and then
+immediately fetch any dependencies.
 
 ## Run `./fibs diag tools` to check for missing cmdline tools
 
