@@ -1,4 +1,5 @@
 # Troubleshooting
+[⇦ back](./index.md)
 
 In case of problems, try the following things in order:
 

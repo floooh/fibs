@@ -1,4 +1,5 @@
 # Getting Started
+[⇦ back](./index.md)
 - [Prerequisites](#prerequisites)
 - [Building the Hello World project](#building-the-hello-world-project)
 - [Open the project in an IDE](#open-the-project-in-an-ide)

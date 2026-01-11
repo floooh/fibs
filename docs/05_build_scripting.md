@@ -1,4 +1,6 @@
 # Writing Build Scripts
+[⇦ back](./index.md)
+
 - [Anatomy of a fibs.ts file](#anatomy-of-a-fibsts-file)
 - [Configure Phase](#configure-phase)
   - [Adding imports](#adding-imports)
