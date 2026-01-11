@@ -142,13 +142,141 @@ and [stb](https://github.com/nothings/stb) targets available to fibs projects:
 ```
 
 ### Import options
-[TODO]
+
+Fibs dependencies may accept options to configure the import. The available
+import options of a fibs dependency are printed when running `./fibs list imports`.
+
+For instance the Emscripten platform support package in [https://github.com/flooh/fibs-platforms](https://github.com/floooh/fibs-platforms) has the following import options:
+
+```
+platforms: https://github.com/floooh/fibs-platforms
+  emscripten.ts: emscripten platform support
+    emscripten:
+      initialMemory?: number - initial wasm memory in bytes (default: 32 MB)
+      allowMemoryGrowth?: boolean - enable/disable wasm memory growth (default: true)
+      stackSize?: number - wasm stack size in bytes (default: 512 KB)
+      useEmmalloc?: boolean - enable/disable minimal emmalloc allocator (default: true)
+      useFilesystem?: boolean - enable/disable emscripten filesystem layer (default: false)
+      useLTO?: boolean - enable/disable LTO in release mode (default: true)
+      useClosure?: boolean - enable/disable closure optimization in release mode (default: true)
+      useMinimalShellFile?: boolean - use minimal shell.html file (default: true)
+```
+
+...which corresponds to the following Typescript type:
+
+```ts
+type ImportOptions = {
+    initialMemory?: number;
+    allowMemoryGrowth?: boolean;
+    stackSize?: number;
+    useEmmalloc?: boolean;
+    useFilesystem?: boolean;
+    useLTO?: boolean;
+    useClosure?: boolean;
+    useMinimalShellFile?: boolean;
+};
+```
+
+Such import options can be provided via the `Configurer` method `.addImportOptions()`:
+
+```ts
+export function configure(c: Configurer): void {
+    // configure Emscripten platform options
+    c.addImportOptions({
+        emscripten: {
+            initialMemory: 8 * 1024 * 1024,
+            stackSize: 64 * 1024,
+            useLTO: false,
+            useClosure: false,
+        },
+    });
+    // add Emscripten platform support
+    c.addImport({
+        name: 'platforms',
+        url: 'https://github.com/floooh/fibs-platforms',
+        files: ['emscripten.ts'],
+    });
+}
+```
 
 ### Querying configure-phase information
-[TODO]
+
+The `Configurer` object passed to the `configure()` function has a couple
+of getter methods which return information about the fibs runtime environment.
+
+Use one of the following methods to get information about the host platform
+the project is running on ()
+
+```ts
+    // 'linux', 'macos' or 'windows'
+    hostPlatform(): Platform;
+    isHostPlatform(platform: Platform): boolean;
+    isHostWindows(): boolean;
+    isHostLinux(): boolean;
+    isHostMacOS(): boolean;
+```
+
+The `hostArch()` method returns the host CPU architecture (currently only
+`x86_64` and `arm64` is supported):
+
+```ts
+    // 'x86_64' or 'arm64'
+    hostArch(): Arch;
+```
+
+The following helper methods return the absolute directory paths
+to various fibs filesystem locations (all in the `.fibs` subdirectory):
+
+```ts
+    // '[abs_proj_dir]/.fibs'
+    fibsDir(): string;
+    // '[abs_proj_dir]/.fibs/sdks'
+    sdkDir(): string;
+    // '[abs_proj_dir]/.fibs/imports'
+    importsDir(): string;
+    // '[abs_proj_dir]/.fibs/config/[configName]
+    configDir(configName: string): string;
+    // '[abs_build_dir]/.fibs/config/[configName]
+    buildDir(configName: string): string;
+    // '[abs_build_dir]/.fibs/config/[configName]
+    distDir(configName: string): string;
+```
+
 
 ### More things to do in the configure phase
-[TODO]
+
+To add a new fibs command (which would be invoked via `./fibs mycmd`):
+
+```ts
+export function configure(c: Configurer): void {
+    c.addCommand({
+        name: 'mycmd',
+        help: cmdHelpFunc,
+        run: cmdRunFunc,
+    });
+}
+```
+
+More details about authoring new fibs commands can be found [here](./08_commands.md).
+
+Similar, to register a custom build job:
+
+```ts
+export function configure(c: Configurer): void {
+    c.addJob({
+        name: 'mybuildjob',
+        help: jobHelpFunc,
+        validate: jobValidateFunc,
+        build: jobBuildFunc,
+    });
+}
+```
+
+More details about authoring build jobs can be found [here](./09_jobs.md).
+
+The more advanced (and less common) things to do in the `configure` function
+are [adding new runners](./10_runners.md), [adding new IDE openers](./11_openers.md) and [adding new settings keys](./12_settings.md).
+
 
 ## Build Phase
 [TODO]
