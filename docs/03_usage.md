@@ -11,6 +11,7 @@
 - [Linking and unlinking imports](#linking-and-unlinking-imports)
 - [Diagnosing problems](#diagnosing-problems)
 - [Settings](#settings)
+- [Intializing a new project](#intializing-a-new-project)
 
 ## Getting help
 
@@ -439,3 +440,33 @@ A deleted setting will return its default value, for instance:
 ```
 
 ...will print the default build configuration for your host platform.
+
+## Intializing a new project
+
+This is a bit of a special case because `./fibs` is not installed as a global
+tool. To initialize an empty directory as a new fibs hello-world project,
+`deno` is invoked directly instead:
+
+```bash
+mkdir hello
+cd hello
+deno run --allow-all jsr:@floooh/fibs init
+```
+
+You can also run without the `--allow-all` option, in that case
+deno will ask for granular permissions.
+
+The init command will first prompt whether it's ok to initialize the current
+directory as a fibs project and then will write a couple of files:
+
+```bash
+?? ok to initialize current directory as fibs project? [y/N] y
+wrote .gitignore
+wrote fibs
+wrote fibs.cmd
+wrote fibs.ts
+wrote src/hello.c
+```
+
+Next you can run `./fibs build` and `./fibs run hello` to check
+if everything works.
