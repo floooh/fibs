@@ -281,46 +281,46 @@ function genCMakeVariables(project: Project, config: Config): string {
 function compileExpr(l: Language | undefined, m: BuildMode | undefined, str: string): string {
     switch (l) {
         case 'c':
-            str = `"$<$<COMPILE_LANGUAGE:C>:${str}>"`;
+            str = `$<$<COMPILE_LANGUAGE:C>:${str}>`;
             break;
         case 'cxx':
-            str = `"$<$<COMPILE_LANGUAGE:CXX>:${str}>"`;
+            str = `$<$<COMPILE_LANGUAGE:CXX>:${str}>`;
             break;
     }
     switch (m) {
         case 'debug':
-            str = `"$<$<CONFIG:DEBUG>:${str}>"`;
+            str = `$<$<CONFIG:DEBUG>:${str}>`;
             break;
         case 'release':
-            str = `"$<$<CONFIG:RELEASE>:${str}>"`;
+            str = `$<$<CONFIG:RELEASE>:${str}>`;
             break;
     }
-    return str;
+    return `"${str}"`;
 }
 
 function linkExpr(l: Language | undefined, m: BuildMode | undefined, str: string): string {
     switch (l) {
         case 'c':
-            str = `"$<$<LINK_LANGUAGE:C>:${str}>"`;
+            str = `$<$<LINK_LANGUAGE:C>:${str}>`;
             break;
         case 'cxx':
-            str = `"$<$<LINK_LANGUAGE:CXX>:${str}>"`;
+            str = `$<$<LINK_LANGUAGE:CXX>:${str}>`;
             break;
     }
     switch (m) {
         case 'debug':
-            str = `"$<$<CONFIG:DEBUG>:${str}>"`;
+            str = `$<$<CONFIG:DEBUG>:${str}>`;
             break;
         case 'release':
-            str = `"$<$<CONFIG:RELEASE>:${str}>"`;
+            str = `$<$<CONFIG:RELEASE>:${str}>`;
             break;
     }
-    return str;
+    return `"${str}"`;
 }
 function genIncludeDirectories(project: Project): string {
     let str = '';
     project.includeDirectories().forEach((item) =>
-        str += `include_directories(${item.system ? 'SYSTEM ' : ''}"${compileExpr(item.language, item.buildMode, item.dir)}")\n`
+        str += `include_directories(${item.system ? 'SYSTEM ' : ''}${compileExpr(item.language, item.buildMode, item.dir)})\n`
     );
     return str;
 }
@@ -444,7 +444,7 @@ function genTargetIncludeDirectories(target: Target): string {
     target.includeDirectories.forEach((item) => {
         const sys = item.system ? ' SYSTEM' : '';
         const scope = asCmakeScope(item.scope);
-        str += `target_include_directories(${target.name}${sys}${scope} "${compileExpr(item.language, item.buildMode, item.dir)}")\n`;
+        str += `target_include_directories(${target.name}${sys}${scope} ${compileExpr(item.language, item.buildMode, item.dir)})\n`;
     });
     return str;
 }
