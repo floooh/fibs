@@ -447,6 +447,10 @@ export function validate(obj: unknown, schema: Schema): { valid: boolean; hints:
         if (schemaItem === undefined) {
             res.hints.push(`unknown property '${key}'`);
         } else {
+            if ((val === undefined) && schemaItem.optional) {
+                // optional properties may exist as 'undefined'
+                continue;
+            }
             switch (schemaItem.type) {
                 case 'string':
                     if (typeof val !== 'string') {
