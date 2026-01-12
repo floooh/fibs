@@ -11,9 +11,6 @@ type IConfigPhaseInfo = {
     fibsDir(): string;
     sdkDir(): string;
     importsDir(): string;
-    configDir(configName?: string): string;
-    buildDir(configName?: string): string;
-    distDir(configName?: string): string;
     isHostPlatform(platform: Platform): boolean;
     isHostWindows(): boolean;
     isHostLinux(): boolean;
@@ -27,6 +24,9 @@ type IBuildPhaseInfo = IConfigPhaseInfo & {
 
     importDir(importName: string): string;
     importOptions<T>(name: string, schema: Schema): T;
+    configDir(configName?: string): string;
+    buildDir(configName?: string): string;
+    distDir(configName?: string): string;
 
     settings(): Setting[];
     configs(): Config[];
@@ -99,6 +99,9 @@ type IGeneratePhaseInfo = IBuildPhaseInfo & {
 export type Configurer = IConfigPhaseInfo & {
     projectDir(): string;
     selfDir(): string;
+    configDir(configName: string): string;
+    buildDir(configName: string): string;
+    distDir(configName: string): string;
 
     addImportOptions(opts: Record<string, unknown>): void;
     addImportOptions(optsFunc: (p: Project) => Record<string, unknown>): void;
