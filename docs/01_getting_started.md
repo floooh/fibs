@@ -1,6 +1,8 @@
 # Getting Started
+[⇦ back](./index.md)
 - [Prerequisites](#prerequisites)
 - [Building the Hello World project](#building-the-hello-world-project)
+- [Open the project in an IDE](#open-the-project-in-an-ide)
 - [Build the Hello World example for WASI](#build-the-hello-world-example-for-wasi)
 
 
@@ -43,6 +45,25 @@ To build a native debug build:
 ./fibs build
 ./fibs run hello
 ```
+
+## Open the project in an IDE
+
+1. Configure with one of the IDE build configs, e.g.:
+    ```bash
+    # on macOS:
+    ./fibs config macos-xcode-debug
+    ./fibs config macos-vscode-debug
+    # on Windows:
+    ./fibs config win-vstudio-debug
+    ./fibs config win-vscode-debug
+    # on Linux:
+    ./fibs config linux-vscode-debug
+    ```
+
+2. then run `./fibs open` to open the project in VSCode, XCode or VStudio:
+    ```bash
+    ./fibs open
+    ```
 
 ## Build the Hello World example for WASI
 
