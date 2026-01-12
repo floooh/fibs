@@ -199,13 +199,40 @@ export function configure(c: Configurer): void {
 }
 ```
 
+The `addImportOptions()` method has an overload which allows to dynamically
+build import options in a callback function based on other project properties.
+
+This callback function is called at the start of the build phase and thus has
+access to information which isn't available during the configure phase (like the
+currently selected build config, or the compiler toolchain).
+
+For instance the following code snippet checks if the current target platform
+is Emscripten and in that case defines an import option for the Sokol
+library to use the WebGPU backend instead of the default WebGL2 backend:
+
+```ts
+export function configure(c: Configurer): void {
+    c.addImportOptions((p: Project) => {
+        if (p.activeConfig().platform === 'emscripten') {
+            return { sokol: { backend: 'wgpu' } };
+        } else {
+            return {};
+        }
+    });
+```
+
+Such decisions cannot be made directly in the `configure()` method, because at
+the time when `configure()` runs (e.g. in the 'configure phase') the list of
+build configurations isn't known yet (a typical chicken-egg situation, because
+build configs are *defined* during the configure phase).
+
 ### Querying configure-phase information
 
 The `Configurer` object passed to the `configure()` function has a couple
 of getter methods which return information about the fibs runtime environment.
 
 Use one of the following methods to get information about the host platform
-the project is running on ()
+the project is running on.
 
 ```ts
     // 'linux', 'macos' or 'windows'
@@ -228,6 +255,10 @@ The following helper methods return the absolute directory paths
 to various fibs filesystem locations (all in the `.fibs` subdirectory):
 
 ```ts
+    // [abs_proj_dir]
+    projectDir(): string;
+    // return import directory of this script
+    selfDir(): string;
     // '[abs_proj_dir]/.fibs'
     fibsDir(): string;
     // '[abs_proj_dir]/.fibs/sdks'
