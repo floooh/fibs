@@ -8,8 +8,13 @@
   - [Querying configure-phase information](#querying-configure-phase-information)
   - [More things to do in the configure phase](#more-things-to-do-in-the-configure-phase)
 - [Build Phase](#build-phase)
-  - [Global build options](#global-build-options)
-  - [Adding targets](#adding-targets)
+  - [Defining the project name](#defining-the-project-name)
+  - [Defining cmake variables](#defining-cmake-variables)
+  - [Including cmake snippets](#including-cmake-snippets)
+    - [Global header search paths](#global-header-search-paths)
+    - [Global compile definitions](#global-compile-definitions)
+    - [Global compile and link options](#global-compile-and-link-options)
+  - [Adding build targets](#adding-build-targets)
   - [Target dependencies and scopes](#target-dependencies-and-scopes)
   - [Adding target build jobs](#adding-target-build-jobs)
   - [Querying build-phase information](#querying-build-phase-information)
@@ -82,9 +87,9 @@ by calling methods on the `Configurer` object:
 - openers
 - settings keys
 
-Most top level projects will only add imports and import options, while
-the other project item types are commonly added in utility/helper-type
-imports which add new features to fibs.
+Most top level projects will only add imports and import options in the
+configure phase, while the other project item types are commonly added in
+utility/helper-type imports which add new features to fibs.
 
 ### Adding imports
 
@@ -213,7 +218,7 @@ library to use the WebGPU backend instead of the default WebGL2 backend:
 ```ts
 export function configure(c: Configurer): void {
     c.addImportOptions((p: Project) => {
-        if (p.activeConfig().platform === 'emscripten') {
+        if (p.isEmscripten()) {
             return { sokol: { backend: 'wgpu' } };
         } else {
             return {};
@@ -316,17 +321,197 @@ are [adding new runners](./10_runners.md), [adding new IDE openers](./11_openers
 
 
 ## Build Phase
-[TODO]
 
-### Global build options
-[TODO]
+After the configure phase the project enters the 'build phase', and this is where
+compilation options and build targets are defined.
 
-- include directories
-- compile definitions
-- compile options
-- link options
+To define actions for the build phase, a fibs build script exports a
+`build` function which gets a `Builder` object as argument:
 
-### Adding targets
+```ts
+import { Builder } from 'jsr:@floooh/fibs@^1';
+
+export function build(b: Builder) {
+    // ...
+}
+```
+
+### Defining the project name
+
+Call the `setProjectName()` builder method to define the project name:
+
+```ts
+    b.setProjectName('myproject');
+```
+
+The project name ends up in the cmake `project()` declaration as:
+
+```cmake
+    project(myproject C CXX)
+```
+
+### Defining cmake variables
+
+Call the `addCmakeVariable()` builder method to add cmake variable
+key/value pairs to the project. For instance this sets the C++ standard
+to C++20:
+
+```ts
+    b.addCmakeVariable('CMAKE_CXX_STANDARD', '20');
+```
+
+These cmake variables directly translate to `set()` statements at the top
+of the code-generated CMakeLists.txt file:
+
+```cmake
+    set(CMAKE_CXX_STANDARD 20)
+```
+
+See the [cmake documentation on cmake variables](https://cmake.org/cmake/help/latest/manual/cmake-variables.7.html) for a list of valid values.
+
+### Including cmake snippets
+
+Fibs project can directly include snippets of existing cmake code:
+
+```ts
+    b.addCmakeInclude('bla.cmake');
+```
+
+Relative paths will be resolved to the `selfDir()`, e.g. for top level fibs
+scripts the project directory, or for imported dependencies, the import directory.
+
+Cmake includes translate to cmake `include()` statements:
+
+```cmake
+    include([absolute_include_path])
+```
+
+#### Global header search paths
+
+To add one or more global header search path, call one of two `addIncludeDirectories()`
+overloads. The simple version directly takes an array of strings:
+
+```ts
+    b.addInludeDirectories([ '.', 'includes' ]);
+```
+
+If relative paths are passed, they are treated relative to `selfDir()`.
+
+The second overload allows to add options for groups of include directories,
+for instance to treat the provided directories as system include directories
+(e.g. silence warnings on some compilers):
+
+```ts
+    // include directories are treated like system includes
+    b.addIncludeDirectories({ dirs: ['includes'], system: true });
+```
+
+In the generated cmake file this will translate to:
+
+```cmake
+    include_directories(SYSTEM "[abs_path]/includes");
+```
+
+Additionally it's possible to filter by language and build mode, for instance
+the following include directory will only be added for C++ targets and
+in release mode:
+
+```ts
+    b.addIncludeDirectories({
+        dirs: ['cxx-release-includes'],
+        language: 'cxx',
+        buildMode: 'release',
+    });
+```
+
+Filtering by language and build mode needs to happen in this declarative style
+because both are not known until the generated cmake script is actually
+executed. In the generated cmake script, this build-time filtering will
+happen via [generator expressions](https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html).
+
+For other conditions (like the compiler toolchain or the target platform)
+use regular imperative code instead:
+
+```ts
+    if (b.isMsvc()) {
+        // add Visual Studio specific includes
+        b.addIncludeDirectories(['msvc-includes']);
+    }
+    if (b.isEmscripten()) {
+        // add Emscripten specific includes
+        b.addIncludeDirectories(['emsc-includes']);
+    }
+```
+
+#### Global compile definitions
+
+To add global compile definitions call the `addCompileDefinitions()` method:
+```ts
+    b.addCompileDefinitions({
+        MY_DEFINE: 'BLA',
+        OTHER_DEFINE: '1',
+    });
+```
+The above call will result in a cmake `add_compile_definitions()` statement:
+
+```cmake
+    add_compile_definitions(MY_DEFINE=BLA OTHER_DEFINE=1)
+```
+
+Like `addIncludeDirectories()`, the `addCompileDefinitions()` method has an
+overload which allows to define filters:
+
+```ts
+    // only add MY_DEFINE for C++ code
+    b.addCompileDefinitions({
+        defs: { MY_DEFINE: 'BLA' },
+        language: 'cxx',
+    });
+    // only add OTHER_DEFINE in release build mode
+    b.addCompileDefinitions({
+        defs: { OTHER_DEFINE: '1' },
+        buildMode: 'release',
+    });
+```
+
+#### Global compile and link options
+
+Global compile options are added via the `addCompileOptions()` builder method,
+compile options are compiler specific, so usually compile options are defined
+inside an if which checks for the compiler type:
+
+```ts
+    if (b.isMsvc()) {
+        // disable a couple of MSVC warnings
+        b.addCompileOptions(['/wd4244', '/wd4459']);
+    }
+```
+
+It's possible to filter by language or build mode via an overload:
+```ts
+    if (b.isGcc() || b.isClang()) {
+        // disable C++ rtti and exceptions
+        b.addCompileOptions({
+            opts: ['-fno-rtti', '-fno-exceptions' ],
+            language: 'cxx',
+        });
+        // treat warnings as errors, but only in debug mode
+        b.addCompileOptions({
+            opts: ['-Werror'],
+            buildMode: 'debug',
+        });
+    }
+```
+
+Link options work exactly the same but are passed to the linker command:
+```ts
+    if (b.isEmscripten()) {
+        b.addLinkOptions(['-sSAFE_HEAP=1']);
+    }
+```
+
+
+### Adding build targets
 [TODO]
 
 ### Target dependencies and scopes
