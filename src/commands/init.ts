@@ -40,24 +40,20 @@ function safeWrite(relPath: string, content: string) {
     log.info(`${colors.green('wrote')} ${relPath}`);
 }
 
-const gitIgnoreContent = `
-.fibs/
+const gitIgnoreContent = `.fibs/
 .vscode/
 CMakeLists.txt
 CMakePresets.json
 `;
 
-const fibsContent = `
-#!/bin/sh
+const fibsContent = `#!/bin/sh
 exec deno run --allow-all --no-config 'jsr:@floooh/fibs' "$@"
 `;
 
-const fibsCmdContent = `
-@deno run --allow-all --no-config jsr:@floooh/fibs %*
+const fibsCmdContent = `@deno run --allow-all --no-config jsr:@floooh/fibs %*
 `;
 
-const fibsTsContent = `
-import { Builder, Configurer } from 'jsr:@floooh/fibs@^1';
+const fibsTsContent = `import { Builder, Configurer } from 'jsr:@floooh/fibs@^1';
 
 export function configure(c: Configurer) {
     // add imports here...
@@ -73,8 +69,7 @@ export function build(b: Builder): void {
 }
 `;
 
-const helloContent = `
-#include <stdio.h>
+const helloContent = `#include <stdio.h>
 
 int main() {
     printf("Hello World!\\n");
