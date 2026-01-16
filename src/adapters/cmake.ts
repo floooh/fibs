@@ -1,3 +1,4 @@
+import os from 'node:os';
 import { cmake, log, proj, util } from '../lib/index.ts';
 import type {
     AdapterBuildOptions,
@@ -122,7 +123,9 @@ export async function build(project: Project, config: Config, options: AdapterBu
         await generate(project, config);
     }
     const { buildTarget, forceRebuild } = options;
-    await cmake.build({ target: buildTarget, forceRebuild: forceRebuild });
+    // cmake + make with --parallel will heavility overcommit, so limit to available cores
+    const parallelism = config.generator === 'make' ? os.availableParallelism() : undefined;
+    await cmake.build({ target: buildTarget, forceRebuild, parallelism });
 }
 
 function genCMakePresetsJson(config: Config, buildDir: string): string {

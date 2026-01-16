@@ -34,12 +34,18 @@ export async function generate(project: Project, config: Config) {
     }
 }
 
-export async function build(options: { target?: string; forceRebuild?: boolean }) {
+export async function build(options: { target?: string; forceRebuild?: boolean, parallelism?: number }) {
     const {
         target,
         forceRebuild = false,
+        parallelism = 0,
     } = options;
-    let args = ['--build', '--preset', 'default', '--parallel'];
+    let args = ['--build', '--preset', 'default'];
+    if (parallelism === 0) {
+        args.push('--parallel');
+    } else {
+        args.push('--parallel', parallelism.toString());
+    }
     if (target !== undefined) {
         args = [...args, '--target', target];
     }
