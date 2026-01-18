@@ -1,5 +1,8 @@
-# Example Repositories and fibs.ts files
+# Examples
 [⇦ back](./index.md)
+
+Look for `fibs.ts` or generally `.ts` files in the root directory of these
+projects.
 
 ## Example projects:
 
