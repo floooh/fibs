@@ -88,9 +88,9 @@ export class BuilderImpl implements Builder {
     }
     addLinkDirectories(dirs: LinkDirectoriesDesc | string[]): void {
         if (isLinkDirectoriesDesc(dirs)) {
-            this._includeDirectories.push(dirs);
+            this._linkDirectories.push(dirs);
         } else {
-            this._includeDirectories.push({ dirs });
+            this._linkDirectories.push({ dirs });
         }
     }
     addCompileDefinitions(defs: CompileDefinitionsDesc | Record<string, string>): void {

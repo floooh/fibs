@@ -513,7 +513,7 @@ function resolveBuilderLinkDirectories(builders: BuilderImpl[]): LinkDirectory[]
                 dir: resolvePath(builder._importDir,dir),
                 importDir: builder._importDir,
                 scope: items.scope ?? 'public',
-                langauge: items.language,
+                language: items.language,
                 buildMode: items.buildMode,
             }))
         )
