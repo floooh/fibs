@@ -5,7 +5,9 @@ import {
     isCompileDefinitionsDesc,
     isCompileOptionsDesc,
     isIncludeDirectoriesDesc,
+    isLinkDirectoriesDesc,
     isLinkOptionsDesc,
+    type LinkDirectoriesDesc,
     type LinkOptionsDesc,
     type TargetBuilder,
     type TargetDesc,
@@ -30,6 +32,7 @@ export class TargetBuilderImpl implements TargetBuilder {
             frameworks: [],
             props: {},
             includeDirectories: [],
+            linkDirectories: [],
             compileDefinitions: [],
             compileOptions: [],
             linkOptions: [],
@@ -87,6 +90,13 @@ export class TargetBuilderImpl implements TargetBuilder {
             this._desc.includeDirectories!.push(dirs);
         } else {
             this._desc.includeDirectories!.push({ dirs });
+        }
+    }
+    addLinkDirectories(dirs: LinkDirectoriesDesc | string[]): void {
+        if (isLinkDirectoriesDesc(dirs)) {
+            this._desc.linkDirectories!.push(dirs);
+        } else {
+            this._desc.linkDirectories!.push({ dirs });
         }
     }
     addCompileDefinitions(defs: CompileDefinitionsDesc | Record<string, string>): void {

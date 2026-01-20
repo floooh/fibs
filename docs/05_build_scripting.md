@@ -11,9 +11,9 @@
   - [Defining the project name](#defining-the-project-name)
   - [Defining cmake variables](#defining-cmake-variables)
   - [Including cmake snippets](#including-cmake-snippets)
-    - [Global header search paths](#global-header-search-paths)
-    - [Global compile definitions](#global-compile-definitions)
-    - [Global compile and link options](#global-compile-and-link-options)
+  - [Global header and library search paths](#global-header-and-library-search-paths)
+  - [Global compile definitions](#global-compile-definitions)
+  - [Global compile and link options](#global-compile-and-link-options)
   - [Adding build targets](#adding-build-targets)
     - [Target filesystem path resolution](#target-filesystem-path-resolution)
     - [Target dependencies and scopes](#target-dependencies-and-scopes)
@@ -388,13 +388,19 @@ Cmake includes translate to cmake `include()` statements:
     include([absolute_include_path])
 ```
 
-#### Global header search paths
+### Global header and library search paths
 
 To add one or more global header search path, call one of two `addIncludeDirectories()`
 overloads. The simple version directly takes an array of strings:
 
 ```ts
     b.addInludeDirectories([ '.', 'includes' ]);
+```
+
+Likewise for global library search paths:
+
+```ts
+    b.addLinkDirectories([ `${Deno.env.get('VULKAN_SDK')}/Include` }]);
 ```
 
 If relative paths are passed, they are treated relative to `selfDir()`.
@@ -426,6 +432,15 @@ in release mode:
     });
 ```
 
+Likewise for global library search paths:
+
+```ts
+    b.addLinkDirectories({
+        dirs: ['cxx-libraries'],
+        language: 'cxx',
+    });
+```
+
 Filtering by language and build mode needs to happen in this declarative style
 because both are not known until the generated cmake script is actually
 executed. In the generated cmake script, this build-time filtering will
@@ -445,7 +460,7 @@ use regular imperative code instead:
     }
 ```
 
-#### Global compile definitions
+### Global compile definitions
 
 To add global compile definitions call the `addCompileDefinitions()` method:
 ```ts
@@ -476,7 +491,7 @@ overload which allows to define filters:
     });
 ```
 
-#### Global compile and link options
+### Global compile and link options
 
 Global compile options are added via the `addCompileOptions()` builder method,
 compile options are compiler specific, so usually compile options are defined
@@ -562,6 +577,7 @@ Additionally a target has the following *optional* properties:
 - a list of macOS/iOS system frameworks the target depends on
 - a list of 'cmake properties' which are translated into cmake `set_target_properties` statements
 - a list of header search paths (aka include directories)
+- a list of library search paths (aka link directories)
 - a list of compile definitions
 - a list of compiler options
 - a list of linker options

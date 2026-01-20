@@ -12,9 +12,11 @@ import {
     type FibsModule,
     type Import,
     type IncludeDirectoriesDesc,
+    type LinkDirectoriesDesc,
     isCompileDefinitionsDesc,
     isCompileOptionsDesc,
     isIncludeDirectoriesDesc,
+    isLinkDirectoriesDesc,
     isLinkOptionsDesc,
     type JobBuilder,
     type LinkOptionsDesc,
@@ -39,6 +41,7 @@ export class BuilderImpl implements Builder {
     _cmakeIncludes: string[] = [];
     _targets: TargetDesc[] = [];
     _includeDirectories: IncludeDirectoriesDesc[] = [];
+    _linkDirectories: LinkDirectoriesDesc[] = [];
     _compileDefinitions: CompileDefinitionsDesc[] = [];
     _compileOptions: CompileOptionsDesc[] = [];
     _linkOptions: LinkOptionsDesc[] = [];
@@ -78,6 +81,13 @@ export class BuilderImpl implements Builder {
     }
     addIncludeDirectories(dirs: IncludeDirectoriesDesc | string[]): void {
         if (isIncludeDirectoriesDesc(dirs)) {
+            this._includeDirectories.push(dirs);
+        } else {
+            this._includeDirectories.push({ dirs });
+        }
+    }
+    addLinkDirectories(dirs: LinkDirectoriesDesc | string[]): void {
+        if (isLinkDirectoriesDesc(dirs)) {
             this._includeDirectories.push(dirs);
         } else {
             this._includeDirectories.push({ dirs });

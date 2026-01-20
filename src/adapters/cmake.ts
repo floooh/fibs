@@ -236,6 +236,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
     str += genCMakeVariables(project, config);
     str += genMisc(project);
     str += genIncludeDirectories(project);
+    str += genLinkDirectories(project);
     str += genCompileDefinitions(project);
     str += genCompileOptions(project);
     str += genLinkOptions(project);
@@ -244,6 +245,7 @@ function genCMakeListsTxt(project: Project, config: Config): string {
         str += genTarget(project, config, target);
         str += genTargetDependencies(target);
         str += genTargetIncludeDirectories(target);
+        str += genTargetLinkDirectories(target);
         str += genTargetCompileDefinitions(target);
         str += genTargetCompileOptions(target);
         str += genTargetLinkOptions(target);
@@ -324,10 +326,19 @@ function linkExpr(l: Language | undefined, m: BuildMode | undefined, str: string
     }
     return `"${str}"`;
 }
+
 function genIncludeDirectories(project: Project): string {
     let str = '';
     project.includeDirectories().forEach((item) =>
         str += `include_directories(${item.system ? 'SYSTEM ' : ''}${compileExpr(item.language, item.buildMode, item.dir)})\n`
+    );
+    return str;
+}
+
+function genLinkDirectories(project: Project): string {
+    let str = '';
+    project.linkDirectories().forEach((item) =>
+        str += `link_directories(${compileExpr(item.language, item.buildMode, item.dir)})\n`
     );
     return str;
 }
@@ -452,6 +463,15 @@ function genTargetIncludeDirectories(target: Target): string {
         const sys = item.system ? ' SYSTEM' : '';
         const scope = asCmakeScope(item.scope);
         str += `target_include_directories(${target.name}${sys}${scope} ${compileExpr(item.language, item.buildMode, item.dir)})\n`;
+    });
+    return str;
+}
+
+function genTargetLinkDirectories(target: Target): string {
+    let str = '';
+    target.linkDirectories.forEach((item) => {
+        const scope = asCmakeScope(item.scope);
+        str += `target_link_directories(${target.name}${scope} ${compileExpr(item.language, item.buildMode, item.dir)})\n`;
     });
     return str;
 }

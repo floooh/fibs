@@ -86,6 +86,7 @@ type IGeneratePhaseInfo = IBuildPhaseInfo & {
     cmakeIncludes(): CmakeInclude[];
     targets(): Target[];
     includeDirectories(): IncludeDirectory[];
+    linkDirectories(): LinkDirectory[];
     compileDefinitions(): CompileDefinition[];
     compileOptions(): CompileOption[];
     linkOptions(): LinkOption[];
@@ -127,6 +128,8 @@ export type Builder = IBuildPhaseInfo & {
     addTarget(name: string, type: TargetType, fn: (t: TargetBuilder) => void): void;
     addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
     addIncludeDirectories(dirs: string[]): void;
+    addLinkDirectories(dirs: LinkDirectoriesDesc): void;
+    addLinkDirectories(dirs: string[]): void;
     addCompileDefinitions(defs: CompileDefinitionsDesc): void;
     addCompileDefinitions(defs: Record<string, string>): void;
     addCompileOptions(opts: CompileOptionsDesc): void;
@@ -152,6 +155,8 @@ export type TargetBuilder = {
     addProperties(props: Record<string, string>): void;
     addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
     addIncludeDirectories(dirs: string[]): void;
+    addLinkDirectories(dirs: LinkDirectoriesDesc): void;
+    addLinkDirectories(dirs: string[]): void;
     addCompileDefinitions(defs: CompileDefinitionsDesc): void;
     addCompileDefinitions(defs: Record<string, string>): void;
     addCompileOptions(opts: CompileOptionsDesc): void;
@@ -212,6 +217,25 @@ export type CmakeVariableDesc = NamedItem & {
 export type CmakeVariable = ImportedItem & CmakeVariableDesc;
 
 export type CmakeInclude = ImportedItem & { path: string };
+
+export type LinkDirectoriesDesc = {
+    dirs: string[];
+    scope?: Scope;
+    language?: Language;
+    buildMode?: BuildMode;
+}
+export function isLinkDirectoriesDesc(val: unknown): val is LinkDirectoriesDesc {
+    return val !== null &&
+    typeof val === 'object' &&
+    'dirs' in val &&
+    Array.isArray(val.dirs);
+}
+export type LinkDirectory = ImportedItem & {
+    dir: string;
+    scope: Scope;
+    language?: Language;
+    buildMode?: BuildMode;
+};
 
 export type IncludeDirectoriesDesc = {
     dirs: string[];
@@ -358,6 +382,7 @@ export type TargetDesc = NamedItem & {
     props?: Record<string, string>;
     frameworks?: string[];
     includeDirectories?: IncludeDirectoriesDesc[];
+    linkDirectories?: LinkDirectoriesDesc[];
     compileDefinitions?: CompileDefinitionsDesc[];
     compileOptions?: CompileOptionsDesc[];
     linkOptions?: LinkOptionsDesc[];
@@ -374,6 +399,7 @@ export type Target = NamedItem & ImportedItem & {
     props: Record<string, string>;
     frameworks: string[];
     includeDirectories: IncludeDirectory[];
+    linkDirectories: LinkDirectory[];
     compileDefinitions: CompileDefinition[];
     compileOptions: CompileOption[];
     linkOptions: LinkOption[];

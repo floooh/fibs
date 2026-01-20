@@ -11,6 +11,7 @@ import {
     type FibsModule,
     type Import,
     type IncludeDirectory,
+    type LinkDirectory,
     type Job,
     type JobBuilder,
     type LinkOption,
@@ -106,6 +107,10 @@ export function validateTarget(
             res.valid = false;
             res.hints.push(`interface targets must only define interface include directories`);
         }
+        if (target.linkDirectories.some((item) => item.scope !== 'interface')) {
+            res.valid = false;
+            res.hints.push(`interface targets must only define interface link directories`);
+        }
         if (target.compileDefinitions.some((item) => item.scope !== 'interface')) {
             res.valid = false;
             res.hints.push(`interface targets must only define interface compile definitins`);
@@ -164,6 +169,14 @@ export function validateTarget(
         if (!util.dirExists(idir.dir)) {
             res.valid = false;
             res.hints.push(`include directory not found: ${idir.dir}`);
+        }
+    }
+
+    // check that link directories exist
+    for (const ldir of target.linkDirectories) {
+        if (!util.dirExists(ldir.dir)) {
+            res.valid = false;
+            res.hints.push(`link directory not found: ${ldir.dir}`);
         }
     }
 
@@ -350,6 +363,7 @@ function doBuildPhase(project: ProjectImpl): void {
 
     // resolve all builder results into the project
     project._includeDirectories = resolveBuilderIncludeDirectories(builders);
+    project._linkDirectories = resolveBuilderLinkDirectories(builders);
     project._compileDefinitions = resolveBuilderCompileDefinitions(builders);
     project._compileOptions = resolveBuilderCompileOptions(builders);
     project._linkOptions = resolveBuilderLinkOptions(builders);
@@ -492,6 +506,20 @@ function resolveBuilderIncludeDirectories(builders: BuilderImpl[]): IncludeDirec
     );
 }
 
+function resolveBuilderLinkDirectories(builders: BuilderImpl[]): LinkDirectory[] {
+    return builders.flatMap((builder) =>
+        builder._linkDirectories.flatMap((items) =>
+            items.dirs.map((dir) => ({
+                dir: resolvePath(builder._importDir,dir),
+                importDir: builder._importDir,
+                scope: items.scope ?? 'public',
+                langauge: items.language,
+                buildMode: items.buildMode,
+            }))
+        )
+    );
+}
+
 function resolveTargetIncludeDirectories(
     builder: BuilderImpl,
     t: TargetDesc,
@@ -507,6 +535,26 @@ function resolveTargetIncludeDirectories(
             importDir: builder._importDir,
             scope: items.scope ?? defaultScope,
             system: items.system ?? false,
+            language: items.language,
+            buildMode: items.buildMode,
+        }))
+    );
+}
+
+function resolveTargetLinkDirectories(
+    builder: BuilderImpl,
+    t: TargetDesc,
+    resolvedTargetDir: string,
+): LinkDirectory[] {
+    if (t.linkDirectories === undefined) {
+        return [];
+    }
+    const defaultScope: Scope = t.type === 'interface' ? 'interface' : 'public';
+    return t.linkDirectories.flatMap((items) =>
+        items.dirs.map((dir) => ({
+            dir: resolvePath(resolvedTargetDir, dir),
+            importDir: builder._importDir,
+            scope: items.scope ?? defaultScope,
             language: items.language,
             buildMode: items.buildMode,
         }))
@@ -627,6 +675,7 @@ function resolveTargets(builders: BuilderImpl[]): Target[] {
                 frameworks: t.frameworks ?? [],
                 props: t.props ?? {},
                 includeDirectories: resolveTargetIncludeDirectories(builder, t, resolvedTargetDir),
+                linkDirectories: resolveTargetLinkDirectories(builder, t, resolvedTargetDir),
                 compileDefinitions: resolveTargetCompileDefinitions(builder, t),
                 compileOptions: resolveTargetCompileOptions(builder, t),
                 linkOptions: resolveTargetLinkOptions(builder, t),

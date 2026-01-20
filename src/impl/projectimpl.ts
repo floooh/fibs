@@ -11,6 +11,7 @@ import {
     type FibsModule,
     type Import,
     type IncludeDirectory,
+    type LinkDirectory,
     type JobBuilder,
     type LinkOption,
     type Opener,
@@ -38,6 +39,7 @@ export class ProjectImpl implements Project {
     _cmakeVariables: CmakeVariable[] = [];
     _cmakeIncludes: CmakeInclude[] = [];
     _includeDirectories: IncludeDirectory[] = [];
+    _linkDirectories: LinkDirectory[] = [];
     _compileDefinitions: CompileDefinition[] = [];
     _compileOptions: CompileOption[] = [];
     _linkOptions: LinkOption[] = [];
@@ -402,6 +404,10 @@ export class ProjectImpl implements Project {
     includeDirectories(): IncludeDirectory[] {
         this.assertPhaseAtLeast(ProjectPhase.Generate);
         return this._includeDirectories;
+    }
+    linkDirectories(): LinkDirectory[] {
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
+        return this._linkDirectories;
     }
     compileDefinitions(): CompileDefinition[] {
         this.assertPhaseAtLeast(ProjectPhase.Generate);
