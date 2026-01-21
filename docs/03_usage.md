@@ -277,9 +277,9 @@ The `./fibs list target` command additionally lets you filter by target type:
 ## Linking and unlinking imports
 
 By default, imported dependencies will be cloned as a single commit and in
-detached head state' into the project subdirectory `.fibs/imports/`. This
+'detached head state' into the project subdirectory `.fibs/imports/`. This
 is useful for just building those dependencies, but not for doing any
-development work.
+development work on them.
 
 Instead if you want to do development work on a dependency, clone the dependency
 manually somewhere outside the project directory and 'link' it to the import.
