@@ -282,7 +282,7 @@ to various fibs filesystem locations (all in the `.fibs` subdirectory):
 
 The `selfDir()` method deserves a couple more words: in the root `fibs.ts` script
 of a project the result of `selfDir()` is identical with `projectDir()`. In build
-scripts which have been imported as dependencies however, `selfDir()` will return the
+scripts which have been imported as dependencies however, `selfDir()` will return
 an absolute path to the build scripts 'import directory' (e.g. for regular
 imports a subdirectory in `[projdir]/.fibs/imports` or for imports that have
 been linked to a local directory `selfDir()` will return this linked directory.
