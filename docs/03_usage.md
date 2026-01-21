@@ -333,7 +333,7 @@ changes that were committed and pushed in the linked `sokol` directory:
 
 ## Diagnosing problems
 
-Run `./fibs diag` command and its variant to diagnose problems:
+Run `./fibs diag` command and its variants to diagnose problems:
 
 ```bash
 ./fibs diag
