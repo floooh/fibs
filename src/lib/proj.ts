@@ -482,6 +482,7 @@ function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Co
             toolchainFile: c.toolchainFile ? resolvePath(configurer._importDir, c.toolchainFile) : undefined,
             environment: c.environment ?? {},
             cmakeVariables: resolveConfigCmakeVariables(c, configurer._importDir),
+            cmakeCacheVariables: resolveConfigCmakeCacheVariables(c, configurer._importDir),
             validate: c.validate ?? (() => ({ valid: true, hints: [] })),
         }))
     ));
@@ -701,6 +702,19 @@ function resolveConfigCmakeVariables(c: ConfigDesc, importDir: string): CmakeVar
     }
     return util.deduplicate(
         Object.entries(c.cmakeVariables).map(([key, val]) => ({
+            name: key,
+            importDir,
+            value: val,
+        })),
+    );
+}
+
+function resolveConfigCmakeCacheVariables(c: ConfigDesc, importDir: string): CmakeVariable[] {
+    if (c.cmakeCacheVariables === undefined) {
+        return [];
+    }
+    return util.deduplicate(
+        Object.entries(c.cmakeCacheVariables).map(([key, val]) => ({
             name: key,
             importDir,
             value: val,

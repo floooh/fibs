@@ -137,6 +137,9 @@ function genCMakePresetsJson(config: Config, buildDir: string): string {
     if (!isMultiConfigGenerator(config)) {
         cacheVariables.CMAKE_BUILD_TYPE = asCmakeBuildMode(config.buildMode);
     }
+    config.cmakeCacheVariables.forEach((v) => {
+        cacheVariables[v.name] = resolveCMakeVariableValue(v.value);
+    });
     const preset = {
         version: 3,
         cmakeMinimumRequired: {
