@@ -18,6 +18,11 @@
 > [!NOTE]
 > On Windows cmd.exe, run `fibs` instead of `./fibs`
 
+> [!NOTE]
+> On Windows with VS2026, you need a very recent cmake (4.2+) and
+> everything needs to run inside the *Developer Command Prompt for VS*
+> (earlier VS versions also work outside the developer command prompt)
+
 Clone, build and run a native release build:
 
 ```bash

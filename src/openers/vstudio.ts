@@ -8,7 +8,12 @@ export const vstudioOpener: OpenerDesc = {
 };
 
 async function open(project: Project, config: Config) {
-    const path = `${project.buildDir(config.name)}/${project.name()}.sln`;
+    // up to VS2022, solution files have the .sln extension, since VS2026 .slnx
+    const pathBase =`${project.buildDir(config.name)}/${project.name()}`;
+    let path = `${pathBase}.slnx`;
+    if (!util.fileExists(path)) {
+        path = `${pathBase}.sln`;
+    }
     await util.runCmd('start', {
         args: [path],
         cwd: project.dir(),
