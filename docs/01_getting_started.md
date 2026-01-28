@@ -74,13 +74,7 @@ To build a native debug build:
 
 ...in the `fibs-hello-world` directory from above:
 
-1. Install the WASI SDK:
-
-    ```bash
-    ./fibs wasisdk install
-    ```
-
-2. Run `./fibs diag tools` and make sure that `ninja`, `tar` and `wasmtime` is installed and found:
+1. Run `./fibs diag tools` and make sure that `ninja`, `tar` and `wasmtime` is installed and found:
 
     ```bash
     ./fibs diag tools
@@ -89,6 +83,12 @@ To build a native debug build:
     ...
     tar:    found
     wasmtime:       found
+    ```
+
+2. Install the WASI SDK:
+
+    ```bash
+    ./fibs wasisdk install
     ```
 
 3. Run `./fibs list configs`, note the `wasi-*` configs:
