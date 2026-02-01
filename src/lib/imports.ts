@@ -32,9 +32,9 @@ export async function fetchImport(
             res.valid = true;
             return res;
         } else {
-            log.info(`${colors.green('=> fetching:')} ${name} <= ${git.fmtGitUrl(url, ref)} ...`);
+            log.info(`fetching: ${colors.green(name)} (${colors.brightBlue(git.fmtGitUrl(url, ref))}) ...`);
             if (!await git.clone({ url, dir: importsDir, ref, verbose })) {
-                log.warn(`Failed to clone ${url} into ${res.dir}`);
+                log.warn(`Failed to fetch ${url} into ${res.dir}`);
                 return res;
             }
             res.valid = true;
