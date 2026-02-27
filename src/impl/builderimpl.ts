@@ -1,6 +1,5 @@
 import { util } from '../lib/index.ts';
 import {
-    type Adapter,
     type Arch,
     type Builder,
     type CmakeVariableDesc,
@@ -12,13 +11,13 @@ import {
     type FibsModule,
     type Import,
     type IncludeDirectoriesDesc,
-    type LinkDirectoriesDesc,
     isCompileDefinitionsDesc,
     isCompileOptionsDesc,
     isIncludeDirectoriesDesc,
     isLinkDirectoriesDesc,
     isLinkOptionsDesc,
     type JobBuilder,
+    type LinkDirectoriesDesc,
     type LinkOptionsDesc,
     type Opener,
     type Platform,
@@ -166,9 +165,6 @@ export class BuilderImpl implements Builder {
     configs(): Config[] {
         return this._project.configs();
     }
-    adapters(): Adapter[] {
-        return this._project.adapters();
-    }
     commands(): Command[] {
         return this._project.commands();
     }
@@ -193,9 +189,6 @@ export class BuilderImpl implements Builder {
     findConfig(name: string): Config | undefined {
         return this._project.findConfig(name);
     }
-    findAdapter(name: string): Adapter | undefined {
-        return this._project.findAdapter(name);
-    }
     findCommand(name: string): Command | undefined {
         return this._project.findCommand(name);
     }
@@ -219,9 +212,6 @@ export class BuilderImpl implements Builder {
     }
     config(name: string): Config {
         return this._project.config(name);
-    }
-    adapter(name: string): Adapter {
-        return this._project.adapter(name);
     }
     command(name: string): Command {
         return this._project.command(name);

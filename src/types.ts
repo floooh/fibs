@@ -30,7 +30,6 @@ type IBuildPhaseInfo = IConfigPhaseInfo & {
 
     settings(): Setting[];
     configs(): Config[];
-    adapters(): Adapter[];
     commands(): Command[];
     imports(): Import[];
     tools(): Tool[];
@@ -40,7 +39,6 @@ type IBuildPhaseInfo = IConfigPhaseInfo & {
 
     findSetting(name: string): Setting | undefined;
     findConfig(name: string): Config | undefined;
-    findAdapter(name: string): Adapter | undefined;
     findCommand(name: string): Command | undefined;
     findImport(name: string): Import | undefined;
     findTool(name: string): Tool | undefined;
@@ -51,7 +49,6 @@ type IBuildPhaseInfo = IConfigPhaseInfo & {
 
     setting(name: string): Setting;
     config(name: string): Config;
-    adapter(name: string): Adapter;
     command(name: string): Command;
     import(name: string): Import;
     tool(name: string): Tool;
@@ -112,7 +109,6 @@ export type Configurer = IConfigPhaseInfo & {
     addTool(tool: ToolDesc): void;
     addRunner(runner: RunnerDesc): void;
     addOpener(opener: OpenerDesc): void;
-    addAdapter(adapter: AdapterDesc): void;
     addSetting(setting: SettingDesc): void;
     addConfig(config: ConfigDesc): void;
 };
@@ -223,12 +219,12 @@ export type LinkDirectoriesDesc = {
     scope?: Scope;
     language?: Language;
     buildMode?: BuildMode;
-}
+};
 export function isLinkDirectoriesDesc(val: unknown): val is LinkDirectoriesDesc {
     return val !== null &&
-    typeof val === 'object' &&
-    'dirs' in val &&
-    Array.isArray(val.dirs);
+        typeof val === 'object' &&
+        'dirs' in val &&
+        Array.isArray(val.dirs);
 }
 export type LinkDirectory = ImportedItem & {
     dir: string;
@@ -481,22 +477,6 @@ export type ToolDesc = NamedItem & {
     exists(): Promise<boolean>;
 };
 export type Tool = ImportedItem & ToolDesc;
-
-export type AdapterConfigureResult = {
-    compiler: Compiler;
-};
-
-export type AdapterBuildOptions = {
-    buildTarget?: string;
-    forceRebuild?: boolean;
-};
-
-export type AdapterDesc = NamedItem & {
-    configure(project: Project, config: Config): Promise<AdapterConfigureResult>;
-    generate(project: Project, config: Config): Promise<void>;
-    build(project: Project, config: Config, options: AdapterBuildOptions): Promise<void>;
-};
-export type Adapter = ImportedItem & AdapterDesc;
 
 export type SchemaItem = {
     type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]';

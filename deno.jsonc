@@ -16,7 +16,8 @@
         "indentWidth": 4,
         "singleQuote": true,
         "lineWidth": 140,
-        "proseWrap": "never"
+        "proseWrap": "never",
+        "exclude": ["**/*.md"]
     },
     "lint": {
         "rules": {

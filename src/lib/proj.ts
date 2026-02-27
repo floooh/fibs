@@ -1,6 +1,5 @@
 import { conf, host, log, settings, util } from './index.ts';
 import {
-    type Adapter,
     type CmakeInclude,
     type CmakeVariable,
     type Command,
@@ -11,9 +10,9 @@ import {
     type FibsModule,
     type Import,
     type IncludeDirectory,
-    type LinkDirectory,
     type Job,
     type JobBuilder,
+    type LinkDirectory,
     type LinkOption,
     type Opener,
     type Project,
@@ -26,10 +25,10 @@ import {
     type TargetJob,
     type Tool,
 } from '../types.ts';
+import { build as cmakeBuild, configure as cmakeConfigure, generate as cmakeGenerate } from './cmake.ts';
 import { ProjectImpl } from '../impl/projectimpl.ts';
 import { ConfigurerImpl } from '../impl/configurerimpl.ts';
 import { BuilderImpl } from '../impl/builderimpl.ts';
-import { builtinAdapters } from '../adapters/index.ts';
 import { builtinConfigs } from '../configs/index.ts';
 import { builtinOpeners } from '../openers/index.ts';
 import { builtinRunners } from '../runners/index.ts';
@@ -63,8 +62,7 @@ export async function configureTargets(config?: Config): Promise<void> {
     } else {
         config = projectImpl.activeConfig();
     }
-    const adapter = projectImpl.adapter('cmake');
-    const configRes = await adapter.configure(projectImpl, config);
+    const configRes = await cmakeConfigure(projectImpl, config);
     projectImpl._compiler = configRes.compiler;
     doBuildPhase(projectImpl);
     projectImpl.setPhase(ProjectPhase.Generate);
@@ -78,15 +76,13 @@ export async function generate(config?: Config): Promise<void> {
     } else {
         config = projectImpl.activeConfig();
     }
-    const adapter = projectImpl.adapter('cmake');
-    await adapter.generate(projectImpl, config);
+    await cmakeGenerate(projectImpl, config);
 }
 
 export async function build(options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void> {
     projectImpl.assertPhaseExact(ProjectPhase.Generate);
     const { buildTarget, forceRebuild } = options;
-    const adapter = projectImpl.adapter('cmake');
-    await adapter.build(projectImpl, projectImpl.activeConfig(), { buildTarget, forceRebuild });
+    await cmakeBuild(projectImpl, projectImpl.activeConfig(), { target: buildTarget, forceRebuild });
 }
 
 export function validateTarget(
@@ -270,7 +266,6 @@ async function doConfigurePhase(rootModule: FibsModule, project: ProjectImpl): P
     project._tools = resolveTools(configurers);
     project._runners = resolveRunners(configurers);
     project._openers = resolveOpeners(configurers);
-    project._adapters = resolveAdapters(configurers);
     project._configs = resolveConfigs(configurers, project);
     project._importOptionsFuncs = resolveImportOptionsFuncs(configurers);
 }
@@ -283,7 +278,6 @@ function configureBuiltins(project: ProjectImpl): ConfigurerImpl {
         validate: () => ({ valid: true, hint: '' }),
     });
     builtinCommands.forEach((command) => configurer.addCommand(command));
-    builtinAdapters.forEach((adapter) => configurer.addAdapter(adapter));
     builtinConfigs.forEach((config) => configurer.addConfig(config));
     builtinOpeners.forEach((opener) => configurer.addOpener(opener));
     builtinRunners.forEach((runner) => configurer.addRunner(runner));
@@ -455,18 +449,6 @@ function resolveOpeners(configurers: ConfigurerImpl[]): Opener[] {
     ));
 }
 
-function resolveAdapters(configurers: ConfigurerImpl[]): Adapter[] {
-    return util.deduplicate(configurers.flatMap((configurer) =>
-        configurer._adapters.map((a) => ({
-            name: a.name,
-            importDir: configurer._importDir,
-            generate: a.generate,
-            configure: a.configure,
-            build: a.build,
-        }))
-    ));
-}
-
 function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Config[] {
     return util.deduplicate(configurers.flatMap((configurer) =>
         configurer._configs.map((c) => ({
@@ -511,7 +493,7 @@ function resolveBuilderLinkDirectories(builders: BuilderImpl[]): LinkDirectory[]
     return builders.flatMap((builder) =>
         builder._linkDirectories.flatMap((items) =>
             items.dirs.map((dir) => ({
-                dir: resolvePath(builder._importDir,dir),
+                dir: resolvePath(builder._importDir, dir),
                 importDir: builder._importDir,
                 scope: items.scope ?? 'public',
                 language: items.language,

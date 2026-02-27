@@ -1,5 +1,4 @@
 import type {
-    AdapterDesc,
     Arch,
     CommandDesc,
     ConfigDesc,
@@ -31,7 +30,6 @@ export class ConfigurerImpl implements Configurer {
     _runners: RunnerDesc[] = [];
     _openers: OpenerDesc[] = [];
     _configs: ConfigDesc[] = [];
-    _adapters: AdapterDesc[] = [];
     _settings: SettingDesc[] = [];
 
     _imports: (ImportDesc & ImportExtra)[] = [];
@@ -95,14 +93,8 @@ export class ConfigurerImpl implements Configurer {
         }
         this._configs.push(config);
     }
-    addAdapter(adapter: AdapterDesc): void {
-        if (util.find(adapter.name, this._adapters)) {
-            throw new Error(`duplicate adapter: ${adapter.name}`);
-        }
-        this._adapters.push(adapter);
-    }
     addSetting(setting: SettingDesc): void {
-        if (util.find(setting.name, this._adapters)) {
+        if (util.find(setting.name, this._settings)) {
             throw new Error(`duplicate setting: ${setting.name}`);
         }
         this._settings.push(setting);

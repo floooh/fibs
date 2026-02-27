@@ -1,5 +1,4 @@
 import {
-    type Adapter,
     type Arch,
     type CmakeInclude,
     type CmakeVariable,
@@ -11,8 +10,8 @@ import {
     type FibsModule,
     type Import,
     type IncludeDirectory,
-    type LinkDirectory,
     type JobBuilder,
+    type LinkDirectory,
     type LinkOption,
     type Opener,
     type Platform,
@@ -51,7 +50,6 @@ export class ProjectImpl implements Project {
     _runners: Runner[] = [];
     _openers: Opener[] = [];
     _configs: Config[] = [];
-    _adapters: Adapter[] = [];
     _settings: Setting[] = [];
 
     constructor(rootModule: FibsModule, rootDir: string) {
@@ -172,10 +170,6 @@ export class ProjectImpl implements Project {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._configs;
     }
-    adapters(): Adapter[] {
-        this.assertPhaseAtLeast(ProjectPhase.Build);
-        return this._adapters;
-    }
     commands(): Command[] {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._commands;
@@ -207,10 +201,6 @@ export class ProjectImpl implements Project {
     findConfig(name: string): Config | undefined {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         return util.find(name, this._configs);
-    }
-    findAdapter(name: string): Adapter | undefined {
-        this.assertPhaseAtLeast(ProjectPhase.Build);
-        return util.find(name, this._adapters);
     }
     findCommand(name: string): Command | undefined {
         this.assertPhaseAtLeast(ProjectPhase.Build);
@@ -256,13 +246,6 @@ export class ProjectImpl implements Project {
             throw new Error(`unknown config: ${name}`);
         }
         return config;
-    }
-    adapter(name: string): Adapter {
-        const adapter = this.findAdapter(name);
-        if (adapter === undefined) {
-            throw new Error(`unknown adapter: ${name}`);
-        }
-        return adapter;
     }
     command(name: string): Command {
         const command = this.findCommand(name);
