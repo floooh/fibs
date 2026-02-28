@@ -2,6 +2,8 @@ import { util } from '../lib/index.ts';
 import {
     type Arch,
     type Builder,
+    type CmakeCodeFuncDesc,
+    type CmakeTargetCodeFuncDesc,
     type CmakeVariableDesc,
     type Command,
     type CompileDefinitionsDesc,
@@ -21,9 +23,11 @@ import {
     type LinkOptionsDesc,
     type Opener,
     type Platform,
+    type Project,
     type Runner,
     type Schema,
     type Setting,
+    type Target,
     type TargetBuilder,
     type TargetDesc,
     type TargetType,
@@ -38,6 +42,8 @@ export class BuilderImpl implements Builder {
     _importDir: string;
     _cmakeVariables: CmakeVariableDesc[] = [];
     _cmakeIncludes: string[] = [];
+    _cmakeCodeFuncs: CmakeCodeFuncDesc[] = [];
+    _cmakeTargetCodeFuncs: CmakeTargetCodeFuncDesc[] = [];
     _targets: TargetDesc[] = [];
     _includeDirectories: IncludeDirectoriesDesc[] = [];
     _linkDirectories: LinkDirectoriesDesc[] = [];
@@ -63,6 +69,12 @@ export class BuilderImpl implements Builder {
     }
     addCmakeInclude(path: string): void {
         this._cmakeIncludes.push(path);
+    }
+    addCmakeCode(name: string, func: (project: Project, config: Config) => string): void {
+        this._cmakeCodeFuncs.push({ name, func });
+    }
+    addTargetCmakeCode(name: string, func: (project: Project, config: Config, target: Target) => string): void {
+        this._cmakeTargetCodeFuncs.push({ name, func });
     }
     addTarget(target: TargetDesc | string, type?: TargetType, fn?: (t: TargetBuilder) => void): void {
         if (typeof target === 'string') {

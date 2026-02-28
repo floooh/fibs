@@ -1,6 +1,8 @@
 import { conf, host, log, settings, util } from './index.ts';
 import {
+    type CmakeCodeFunc,
     type CmakeInclude,
+    type CmakeTargetCodeFunc,
     type CmakeVariable,
     type Command,
     type CompileDefinition,
@@ -363,6 +365,8 @@ function doBuildPhase(project: ProjectImpl): void {
     project._linkOptions = resolveBuilderLinkOptions(builders);
     project._cmakeVariables = resolveCmakeVariables(builders);
     project._cmakeIncludes = resolveCmakeIncludes(builders);
+    project._cmakeCodeFuncs = resolveCmakeCodeFuncs(builders);
+    project._cmakeTargetCodeFuncs = resolveCmakeTargetCodeFuncs(builders);
     project._targets = resolveTargets(builders);
 }
 
@@ -711,6 +715,26 @@ function resolveCmakeIncludes(builders: BuilderImpl[]): CmakeInclude[] {
             path: resolvePath(builder._importDir, path),
         }))
     );
+}
+
+function resolveCmakeCodeFuncs(builders: BuilderImpl[]): CmakeCodeFunc[] {
+    return util.deduplicate(builders.flatMap((builder) =>
+        builder._cmakeCodeFuncs.map((f) => ({
+            name: f.name,
+            importDir: builder._importDir,
+            func: f.func,
+        }))
+    ));
+}
+
+function resolveCmakeTargetCodeFuncs(builders: BuilderImpl[]): CmakeTargetCodeFunc[] {
+    return util.deduplicate(builders.flatMap((builder) =>
+        builder._cmakeTargetCodeFuncs.map((f) => ({
+            name: f.name,
+            importDir: builder._importDir,
+            func: f.func,
+        }))
+    ));
 }
 
 function resolvePath(rootDir: string, maybeRelativePath: string): string {

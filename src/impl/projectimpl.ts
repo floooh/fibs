@@ -1,6 +1,8 @@
 import {
     type Arch,
+    type CmakeCodeFunc,
     type CmakeInclude,
+    type CmakeTargetCodeFunc,
     type CmakeVariable,
     type Command,
     type CompileDefinition,
@@ -37,6 +39,8 @@ export class ProjectImpl implements Project {
     _importOptions: Record<string, unknown> = {};
     _cmakeVariables: CmakeVariable[] = [];
     _cmakeIncludes: CmakeInclude[] = [];
+    _cmakeCodeFuncs: CmakeCodeFunc[] = [];
+    _cmakeTargetCodeFuncs: CmakeTargetCodeFunc[] = [];
     _includeDirectories: IncludeDirectory[] = [];
     _linkDirectories: LinkDirectory[] = [];
     _compileDefinitions: CompileDefinition[] = [];
@@ -379,6 +383,14 @@ export class ProjectImpl implements Project {
     cmakeIncludes(): CmakeInclude[] {
         this.assertPhaseAtLeast(ProjectPhase.Generate);
         return this._cmakeIncludes;
+    }
+    cmakeCodeFuncs(): CmakeCodeFunc[] {
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
+        return this._cmakeCodeFuncs;
+    }
+    cmakeTargetCodeFuncs(): CmakeTargetCodeFunc[] {
+        this.assertPhaseAtLeast(ProjectPhase.Generate);
+        return this._cmakeTargetCodeFuncs;
     }
     targets(): Target[] {
         this.assertPhaseAtLeast(ProjectPhase.Generate);

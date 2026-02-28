@@ -81,6 +81,8 @@ type IGeneratePhaseInfo = IBuildPhaseInfo & {
     targetAssetsDir(targetName: string, configName?: string): string;
     cmakeVariables(): CmakeVariable[];
     cmakeIncludes(): CmakeInclude[];
+    cmakeCodeFuncs(): CmakeCodeFunc[];
+    cmakeTargetCodeFuncs(): CmakeTargetCodeFunc[];
     targets(): Target[];
     includeDirectories(): IncludeDirectory[];
     linkDirectories(): LinkDirectory[];
@@ -120,6 +122,8 @@ export type Builder = IBuildPhaseInfo & {
     setProjectName(name: string): void;
     addCmakeVariable(name: string, value: string | boolean): void;
     addCmakeInclude(path: string): void;
+    addCmakeCode(name: string, func: (project: Project, config: Config) => string): void;
+    addTargetCmakeCode(name: string, func: (project: Project, config: Config, target: Target) => string): void;
     addTarget(target: TargetDesc): void;
     addTarget(name: string, type: TargetType, fn: (t: TargetBuilder) => void): void;
     addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
@@ -213,6 +217,14 @@ export type CmakeVariableDesc = NamedItem & {
 export type CmakeVariable = ImportedItem & CmakeVariableDesc;
 
 export type CmakeInclude = ImportedItem & { path: string };
+
+export type CmakeCodeFuncDesc = NamedItem & { func: (project: Project, config: Config) => string };
+
+export type CmakeCodeFunc = ImportedItem & CmakeCodeFuncDesc;
+
+export type CmakeTargetCodeFuncDesc = NamedItem & { func: (project: Project, config: Config, target: Target) => string };
+
+export type CmakeTargetCodeFunc = ImportedItem & CmakeTargetCodeFuncDesc;
 
 export type LinkDirectoriesDesc = {
     dirs: string[];
