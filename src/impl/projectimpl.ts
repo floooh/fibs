@@ -1,8 +1,7 @@
 import {
     type Arch,
-    type CmakeCodeFunc,
+    type CmakeCodeInjector,
     type CmakeInclude,
-    type CmakeTargetCodeFunc,
     type CmakeVariable,
     type Command,
     type CompileDefinition,
@@ -23,6 +22,7 @@ import {
     type Schema,
     type Setting,
     type Target,
+    type TargetAttributeInjector,
     type Tool,
 } from '../types.ts';
 import { host, util } from '../lib/index.ts';
@@ -39,8 +39,8 @@ export class ProjectImpl implements Project {
     _importOptions: Record<string, unknown> = {};
     _cmakeVariables: CmakeVariable[] = [];
     _cmakeIncludes: CmakeInclude[] = [];
-    _cmakeCodeFuncs: CmakeCodeFunc[] = [];
-    _cmakeTargetCodeFuncs: CmakeTargetCodeFunc[] = [];
+    _cmakeCodeInjectors: CmakeCodeInjector[] = [];
+    _targetAttributeInjectors: TargetAttributeInjector[] = [];
     _includeDirectories: IncludeDirectory[] = [];
     _linkDirectories: LinkDirectory[] = [];
     _compileDefinitions: CompileDefinition[] = [];
@@ -197,6 +197,14 @@ export class ProjectImpl implements Project {
     openers(): Opener[] {
         this.assertPhaseAtLeast(ProjectPhase.Build);
         return this._openers;
+    }
+    cmakeCodeInjectors(): CmakeCodeInjector[] {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
+        return this._cmakeCodeInjectors;
+    }
+    targetAttributeInjectors(): TargetAttributeInjector[] {
+        this.assertPhaseAtLeast(ProjectPhase.Build);
+        return this._targetAttributeInjectors;
     }
     findSetting(name: string): Setting | undefined {
         this.assertPhaseAtLeast(ProjectPhase.Build);
@@ -383,14 +391,6 @@ export class ProjectImpl implements Project {
     cmakeIncludes(): CmakeInclude[] {
         this.assertPhaseAtLeast(ProjectPhase.Generate);
         return this._cmakeIncludes;
-    }
-    cmakeCodeFuncs(): CmakeCodeFunc[] {
-        this.assertPhaseAtLeast(ProjectPhase.Generate);
-        return this._cmakeCodeFuncs;
-    }
-    cmakeTargetCodeFuncs(): CmakeTargetCodeFunc[] {
-        this.assertPhaseAtLeast(ProjectPhase.Generate);
-        return this._cmakeTargetCodeFuncs;
     }
     targets(): Target[] {
         this.assertPhaseAtLeast(ProjectPhase.Generate);

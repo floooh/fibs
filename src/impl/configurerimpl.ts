@@ -1,5 +1,6 @@
 import type {
     Arch,
+    CmakeCodeInjectorDesc,
     CommandDesc,
     ConfigDesc,
     Configurer,
@@ -11,6 +12,7 @@ import type {
     Project,
     RunnerDesc,
     SettingDesc,
+    TargetAttributeInjectorDesc,
     ToolDesc,
 } from '../types.ts';
 import { host, util } from '../lib/index.ts';
@@ -31,6 +33,8 @@ export class ConfigurerImpl implements Configurer {
     _openers: OpenerDesc[] = [];
     _configs: ConfigDesc[] = [];
     _settings: SettingDesc[] = [];
+    _cmakeCodeInjectors: CmakeCodeInjectorDesc[] = [];
+    _targetAttributeInjectors: TargetAttributeInjectorDesc[] = [];
 
     _imports: (ImportDesc & ImportExtra)[] = [];
     _importErrors: unknown[] = [];
@@ -98,6 +102,18 @@ export class ConfigurerImpl implements Configurer {
             throw new Error(`duplicate setting: ${setting.name}`);
         }
         this._settings.push(setting);
+    }
+    addCmakeCodeInjector(desc: CmakeCodeInjectorDesc): void {
+        if (util.find(desc.name, this._cmakeCodeInjectors)) {
+            throw new Error(`dupliate cmake code injector: ${desc.name}`);
+        }
+        this._cmakeCodeInjectors.push(desc);
+    }
+    addTargetAttributeInjector(desc: TargetAttributeInjectorDesc): void {
+        if (util.find(desc.name, this._targetAttributeInjectors)) {
+            throw new Error(`duplicate target attribute injector: ${desc.name}`);
+        }
+        this._targetAttributeInjectors.push(desc);
     }
 
     //=== ICOnfigurePhaseInfo

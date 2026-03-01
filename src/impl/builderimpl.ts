@@ -2,8 +2,7 @@ import { util } from '../lib/index.ts';
 import {
     type Arch,
     type Builder,
-    type CmakeCodeFuncDesc,
-    type CmakeTargetCodeFuncDesc,
+    type CmakeCodeInjector,
     type CmakeVariableDesc,
     type Command,
     type CompileDefinitionsDesc,
@@ -23,11 +22,10 @@ import {
     type LinkOptionsDesc,
     type Opener,
     type Platform,
-    type Project,
     type Runner,
     type Schema,
     type Setting,
-    type Target,
+    type TargetAttributeInjector,
     type TargetBuilder,
     type TargetDesc,
     type TargetType,
@@ -36,14 +34,38 @@ import {
 import { TargetBuilderImpl } from './targetbuilderimpl.ts';
 import type { ProjectImpl } from './projectimpl.ts';
 
+function mergeTargetDescs(d0: TargetDesc, d1: TargetDesc): TargetDesc {
+    const mergeArrays = <T>(a0?: T[], a1?: T[]): T[] => {
+        return [...(a0 ?? []), ...(a1 ?? [])];
+    };
+    const mergeRecords = <T>(r0?: Record<string, T>, r1?: Record<string, T>): Record<string, T> => {
+        return { ...(r0 ?? {}), ...(r1 ?? {}) };
+    };
+    return {
+        name: d1.name,
+        type: d1.type,
+        dir: d0.dir ?? d1.dir,
+        ideFolder: d0.ideFolder ?? d1.ideFolder,
+        sources: mergeArrays(d0.sources, d1.sources),
+        deps: mergeArrays(d0.deps, d1.deps),
+        libs: mergeArrays(d0.libs, d1.libs),
+        props: mergeRecords(d0.props, d1.props),
+        frameworks: mergeArrays(d0.frameworks, d1.frameworks),
+        includeDirectories: mergeArrays(d0.includeDirectories, d1.includeDirectories),
+        linkDirectories: mergeArrays(d0.linkDirectories, d1.linkDirectories),
+        compileDefinitions: mergeArrays(d0.compileDefinitions, d1.compileDefinitions),
+        compileOptions: mergeArrays(d0.compileOptions, d1.compileOptions),
+        linkOptions: mergeArrays(d0.linkOptions, d1.linkOptions),
+        jobs: mergeArrays(d0.jobs, d1.jobs),
+    };
+}
+
 export class BuilderImpl implements Builder {
     _project: ProjectImpl;
     _projectName: string | undefined;
     _importDir: string;
     _cmakeVariables: CmakeVariableDesc[] = [];
     _cmakeIncludes: string[] = [];
-    _cmakeCodeFuncs: CmakeCodeFuncDesc[] = [];
-    _cmakeTargetCodeFuncs: CmakeTargetCodeFuncDesc[] = [];
     _targets: TargetDesc[] = [];
     _includeDirectories: IncludeDirectoriesDesc[] = [];
     _linkDirectories: LinkDirectoriesDesc[] = [];
@@ -70,20 +92,24 @@ export class BuilderImpl implements Builder {
     addCmakeInclude(path: string): void {
         this._cmakeIncludes.push(path);
     }
-    addCmakeCode(name: string, func: (project: Project, config: Config) => string): void {
-        this._cmakeCodeFuncs.push({ name, func });
-    }
-    addTargetCmakeCode(name: string, func: (project: Project, config: Config, target: Target) => string): void {
-        this._cmakeTargetCodeFuncs.push({ name, func });
-    }
     addTarget(target: TargetDesc | string, type?: TargetType, fn?: (t: TargetBuilder) => void): void {
         if (typeof target === 'string') {
             if ((type === undefined) || (fn === undefined)) {
                 throw Error('Builder.addTarget argument mismatch');
             }
             const b = new TargetBuilderImpl(this._project, target, type);
+            // first call optional target injector functions
+            this.targetAttributeInjectors().forEach((injector) => injector.fn(b));
+            // finally call the user-provided builder function
             fn(b);
             target = b._desc;
+        } else {
+            // call optional target attribute injectors
+            if (this.targetAttributeInjectors().length > 0) {
+                const b = new TargetBuilderImpl(this._project, target.name, target.type);
+                this.targetAttributeInjectors().forEach((injector) => injector.fn(b));
+                target = mergeTargetDescs(b._desc, target);
+            }
         }
         if (util.find(target.name, this._targets)) {
             throw new Error(`duplicate target: ${target.name}`);
@@ -194,6 +220,12 @@ export class BuilderImpl implements Builder {
     }
     openers(): Opener[] {
         return this._project.openers();
+    }
+    cmakeCodeInjectors(): CmakeCodeInjector[] {
+        return this._project.cmakeCodeInjectors();
+    }
+    targetAttributeInjectors(): TargetAttributeInjector[] {
+        return this._project.targetAttributeInjectors();
     }
     findSetting(name: string): Setting | undefined {
         return this._project.findSetting(name);

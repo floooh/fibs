@@ -115,6 +115,9 @@ export function genCMakeListsTxt(project: Project, config: Config): string {
         str += genTargetJobDependencies(target);
         str += genTargetMisc(project, target);
     }
+    project.cmakeCodeInjectors().forEach((injector) => {
+        str += injector.fn(project, config);
+    });
     return str;
 }
 

@@ -1,8 +1,7 @@
 import { conf, host, log, settings, util } from './index.ts';
 import {
-    type CmakeCodeFunc,
+    type CmakeCodeInjector,
     type CmakeInclude,
-    type CmakeTargetCodeFunc,
     type CmakeVariable,
     type Command,
     type CompileDefinition,
@@ -23,6 +22,7 @@ import {
     type Scope,
     type Setting,
     type Target,
+    type TargetAttributeInjector,
     type TargetDesc,
     type TargetJob,
     type Tool,
@@ -270,6 +270,8 @@ async function doConfigurePhase(rootModule: FibsModule, project: ProjectImpl): P
     project._openers = resolveOpeners(configurers);
     project._configs = resolveConfigs(configurers, project);
     project._importOptionsFuncs = resolveImportOptionsFuncs(configurers);
+    project._cmakeCodeInjectors = resolveCmakeCodeInjectors(configurers);
+    project._targetAttributeInjectors = resolveTargetAttributeInjectors(configurers);
 }
 
 function configureBuiltins(project: ProjectImpl): ConfigurerImpl {
@@ -365,8 +367,6 @@ function doBuildPhase(project: ProjectImpl): void {
     project._linkOptions = resolveBuilderLinkOptions(builders);
     project._cmakeVariables = resolveCmakeVariables(builders);
     project._cmakeIncludes = resolveCmakeIncludes(builders);
-    project._cmakeCodeFuncs = resolveCmakeCodeFuncs(builders);
-    project._cmakeTargetCodeFuncs = resolveCmakeTargetCodeFuncs(builders);
     project._targets = resolveTargets(builders);
 }
 
@@ -476,6 +476,26 @@ function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Co
 
 function resolveImportOptionsFuncs(configurers: ConfigurerImpl[]): ((p: Project) => Record<string, unknown>)[] {
     return configurers.flatMap((configurer) => configurer._importOptionsFuncs);
+}
+
+function resolveCmakeCodeInjectors(configurers: ConfigurerImpl[]): CmakeCodeInjector[] {
+    return util.deduplicate(configurers.flatMap((configurer) =>
+        configurer._cmakeCodeInjectors.map((i) => ({
+            name: i.name,
+            importDir: configurer._importDir,
+            fn: i.fn,
+        }))
+    ));
+}
+
+function resolveTargetAttributeInjectors(configurers: ConfigurerImpl[]): TargetAttributeInjector[] {
+    return util.deduplicate(configurers.flatMap((configurer) =>
+        configurer._targetAttributeInjectors.map((i) => ({
+            name: i.name,
+            importDir: configurer._importDir,
+            fn: i.fn,
+        }))
+    ));
 }
 
 function resolveBuilderIncludeDirectories(builders: BuilderImpl[]): IncludeDirectory[] {
@@ -715,26 +735,6 @@ function resolveCmakeIncludes(builders: BuilderImpl[]): CmakeInclude[] {
             path: resolvePath(builder._importDir, path),
         }))
     );
-}
-
-function resolveCmakeCodeFuncs(builders: BuilderImpl[]): CmakeCodeFunc[] {
-    return util.deduplicate(builders.flatMap((builder) =>
-        builder._cmakeCodeFuncs.map((f) => ({
-            name: f.name,
-            importDir: builder._importDir,
-            func: f.func,
-        }))
-    ));
-}
-
-function resolveCmakeTargetCodeFuncs(builders: BuilderImpl[]): CmakeTargetCodeFunc[] {
-    return util.deduplicate(builders.flatMap((builder) =>
-        builder._cmakeTargetCodeFuncs.map((f) => ({
-            name: f.name,
-            importDir: builder._importDir,
-            func: f.func,
-        }))
-    ));
 }
 
 function resolvePath(rootDir: string, maybeRelativePath: string): string {

@@ -36,6 +36,8 @@ type IBuildPhaseInfo = IConfigPhaseInfo & {
     jobs(): JobBuilder[];
     runners(): Runner[];
     openers(): Opener[];
+    cmakeCodeInjectors(): CmakeCodeInjector[];
+    targetAttributeInjectors(): TargetAttributeInjector[];
 
     findSetting(name: string): Setting | undefined;
     findConfig(name: string): Config | undefined;
@@ -81,8 +83,6 @@ type IGeneratePhaseInfo = IBuildPhaseInfo & {
     targetAssetsDir(targetName: string, configName?: string): string;
     cmakeVariables(): CmakeVariable[];
     cmakeIncludes(): CmakeInclude[];
-    cmakeCodeFuncs(): CmakeCodeFunc[];
-    cmakeTargetCodeFuncs(): CmakeTargetCodeFunc[];
     targets(): Target[];
     includeDirectories(): IncludeDirectory[];
     linkDirectories(): LinkDirectory[];
@@ -113,6 +113,8 @@ export type Configurer = IConfigPhaseInfo & {
     addOpener(opener: OpenerDesc): void;
     addSetting(setting: SettingDesc): void;
     addConfig(config: ConfigDesc): void;
+    addCmakeCodeInjector(desc: CmakeCodeInjectorDesc): void;
+    addTargetAttributeInjector(desc: TargetAttributeInjectorDesc): void;
 };
 
 export type Builder = IBuildPhaseInfo & {
@@ -122,8 +124,6 @@ export type Builder = IBuildPhaseInfo & {
     setProjectName(name: string): void;
     addCmakeVariable(name: string, value: string | boolean): void;
     addCmakeInclude(path: string): void;
-    addCmakeCode(name: string, func: (project: Project, config: Config) => string): void;
-    addTargetCmakeCode(name: string, func: (project: Project, config: Config, target: Target) => string): void;
     addTarget(target: TargetDesc): void;
     addTarget(name: string, type: TargetType, fn: (t: TargetBuilder) => void): void;
     addIncludeDirectories(dirs: IncludeDirectoriesDesc): void;
@@ -218,13 +218,13 @@ export type CmakeVariable = ImportedItem & CmakeVariableDesc;
 
 export type CmakeInclude = ImportedItem & { path: string };
 
-export type CmakeCodeFuncDesc = NamedItem & { func: (project: Project, config: Config) => string };
+export type CmakeCodeInjectorDesc = NamedItem & { fn: (project: Project, config: Config) => string };
 
-export type CmakeCodeFunc = ImportedItem & CmakeCodeFuncDesc;
+export type CmakeCodeInjector = ImportedItem & CmakeCodeInjectorDesc;
 
-export type CmakeTargetCodeFuncDesc = NamedItem & { func: (project: Project, config: Config, target: Target) => string };
+export type TargetAttributeInjectorDesc = NamedItem & { fn: (t: TargetBuilder) => void };
 
-export type CmakeTargetCodeFunc = ImportedItem & CmakeTargetCodeFuncDesc;
+export type TargetAttributeInjector = ImportedItem & TargetAttributeInjectorDesc;
 
 export type LinkDirectoriesDesc = {
     dirs: string[];
