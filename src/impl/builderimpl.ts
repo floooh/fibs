@@ -99,7 +99,7 @@ export class BuilderImpl implements Builder {
             }
             const b = new TargetBuilderImpl(this._project, target, type);
             // first call optional target injector functions
-            this.targetAttributeInjectors().forEach((injector) => injector.fn(b));
+            this.targetAttributeInjectors().forEach((injector) => injector.fn(b, this._project.activeConfig()));
             // finally call the user-provided builder function
             fn(b);
             target = b._desc;
@@ -107,7 +107,7 @@ export class BuilderImpl implements Builder {
             // call optional target attribute injectors
             if (this.targetAttributeInjectors().length > 0) {
                 const b = new TargetBuilderImpl(this._project, target.name, target.type);
-                this.targetAttributeInjectors().forEach((injector) => injector.fn(b));
+                this.targetAttributeInjectors().forEach((injector) => injector.fn(b, this._project.activeConfig()));
                 target = mergeTargetDescs(b._desc, target);
             }
         }
