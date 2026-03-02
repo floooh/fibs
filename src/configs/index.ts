@@ -4,7 +4,6 @@ const win = { platform: 'windows' };
 const mac = { platform: 'macos' };
 const linux = { platform: 'linux' };
 const vstudio = { opener: 'vstudio' };
-const xcode = { generator: 'xcode', opener: 'xcode' };
 const vscode = { generator: 'ninja', opener: 'vscode' };
 const make = { generator: 'make' };
 const ninja = { generator: 'ninja' };
@@ -20,8 +19,6 @@ export const builtinConfigs = [
     { ...mac, ...make, ...debug, name: 'macos-make-debug' },
     { ...mac, ...ninja, ...release, name: 'macos-ninja-release' },
     { ...mac, ...ninja, ...debug, name: 'macos-ninja-debug' },
-    { ...mac, ...xcode, ...release, name: 'macos-xcode-release' },
-    { ...mac, ...xcode, ...debug, name: 'macos-xcode-debug' },
     { ...mac, ...vscode, ...release, name: 'macos-vscode-release' },
     { ...mac, ...vscode, ...debug, name: 'macos-vscode-debug' },
     { ...linux, ...make, ...release, name: 'linux-make-release' },
