@@ -101,6 +101,11 @@ export function genCMakeListsTxt(project: Project, config: Config): string {
     str += genCompileDefinitions(project);
     str += genCompileOptions(project);
     str += genLinkOptions(project);
+    project.cmakeCodeInjectors().forEach((injector) => {
+        if (injector.location === 'before-targets') {
+            str += injector.fn(project, config);
+        }
+    });
     str += genAllJobsTarget(project, config);
     for (const target of project.targets()) {
         str += genTarget(project, config, target);
@@ -115,7 +120,9 @@ export function genCMakeListsTxt(project: Project, config: Config): string {
         str += genTargetMisc(project, target);
     }
     project.cmakeCodeInjectors().forEach((injector) => {
-        str += injector.fn(project, config);
+        if (injector.location !== 'before-targets') {
+            str += injector.fn(project, config);
+        }
     });
     return str;
 }

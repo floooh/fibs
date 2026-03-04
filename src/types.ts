@@ -218,7 +218,10 @@ export type CmakeVariable = ImportedItem & CmakeVariableDesc;
 
 export type CmakeInclude = ImportedItem & { path: string };
 
-export type CmakeCodeInjectorDesc = NamedItem & { fn: (project: Project, config: Config) => string };
+export type CmakeCodeInjectorDesc = NamedItem & {
+    fn: (project: Project, config: Config) => string,
+    location?: 'before-targets' | 'after-targets',  // default: after-targets
+};
 
 export type CmakeCodeInjector = ImportedItem & CmakeCodeInjectorDesc;
 
