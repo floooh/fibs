@@ -96,7 +96,6 @@ export function genCMakeListsTxt(project: Project, config: Config): string {
     let str = '';
     str += genProlog(project);
     str += genCMakeVariables(project, config);
-    str += genMisc(project);
     str += genIncludeDirectories(project);
     str += genLinkDirectories(project);
     str += genCompileDefinitions(project);
@@ -397,16 +396,6 @@ function genTargetJobDependencies(target: Target) {
     return str;
 }
 
-function genMisc(project: Project) {
-    let str = '';
-    // Linux pthread handling
-    if (project.isLinux()) {
-        str += `set(THREADS_PREFER_PTHREAD_FLAG TRUE)\n`;
-        str += `find_package(Threads)\n`;
-    }
-    return str;
-}
-
 function genTargetMisc(project: Project, target: Target) {
     let str = '';
     if (project.isMsvc()) {
@@ -416,12 +405,6 @@ function genTargetMisc(project: Project, target: Target) {
             // write a custom command which copies any linked DLLs into the target dist dir
             str +=
                 `add_custom_command(TARGET ${target.name} POST_BUILD COMMAND "\${CMAKE_COMMAND}" -E copy -t "$<TARGET_FILE_DIR:${target.name}>" "$<TARGET_RUNTIME_DLLS:${target.name}>" USES_TERMINAL COMMAND_EXPAND_LISTS)\n`;
-        }
-    }
-    if (project.isLinux()) {
-        if ((target.type === 'plain-exe') || (target.type === 'windowed-exe')) {
-            // optional -pthread flag
-            str += `target_link_libraries(${target.name} Threads::Threads)\n`;
         }
     }
     return str;
