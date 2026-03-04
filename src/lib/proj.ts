@@ -484,6 +484,7 @@ function resolveCmakeCodeInjectors(configurers: ConfigurerImpl[]): CmakeCodeInje
             name: i.name,
             importDir: configurer._importDir,
             fn: i.fn,
+            location: i.location,
         }))
     ));
 }
