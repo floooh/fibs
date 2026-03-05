@@ -178,6 +178,9 @@ To clean all intermediate build files for the current configuration run:
 
 ## Open the project in an IDE
 
+> [!NOTE]
+> FIXME: this needs updating since IDE openers have moved into `floooh/fibs-extras`
+
 Build configurations may define an [Opener](./11_openers.md) which knows how
 to open the project in an IDE. For instance the following builtin configs define
 IDE openers:

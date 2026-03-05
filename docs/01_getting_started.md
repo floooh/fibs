@@ -53,6 +53,9 @@ To build a native debug build:
 
 ## Open the project in an IDE
 
+> [!NOTE]
+> FIXME: this needs updating since IDE openers have moved into `floooh/fibs-extras`
+
 1. Configure with one of the IDE build configs, e.g.:
     ```bash
     # on macOS:
