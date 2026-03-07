@@ -45,7 +45,7 @@ To build a native debug build:
 # on on Linux:
 ./fibs config linux-make-debug
 # on Windows:
-./fibs config win-vstudio-debug
+./fibs config win-msvc-debug
 
 ./fibs build
 ./fibs run hello

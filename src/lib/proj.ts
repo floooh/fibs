@@ -32,7 +32,6 @@ import { ProjectImpl } from '../impl/projectimpl.ts';
 import { ConfigurerImpl } from '../impl/configurerimpl.ts';
 import { BuilderImpl } from '../impl/builderimpl.ts';
 import { builtinConfigs } from '../configs/index.ts';
-import { builtinOpeners } from '../openers/index.ts';
 import { builtinRunners } from '../runners/index.ts';
 import { builtinTools } from '../tools/index.ts';
 import { builtinCommands } from '../commands/index.ts';
@@ -283,7 +282,6 @@ function configureBuiltins(project: ProjectImpl): ConfigurerImpl {
     });
     builtinCommands.forEach((command) => configurer.addCommand(command));
     builtinConfigs.forEach((config) => configurer.addConfig(config));
-    builtinOpeners.forEach((opener) => configurer.addOpener(opener));
     builtinRunners.forEach((runner) => configurer.addRunner(runner));
     builtinTools.forEach((tool) => configurer.addTool(tool));
     return configurer;

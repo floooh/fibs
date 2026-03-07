@@ -25,7 +25,7 @@ export function defaultConfig(): string {
         case 'macos':
             return 'macos-make-release';
         case 'windows':
-            return 'win-vstudio-release';
+            return 'win-msvc-release';
         case 'linux':
             return 'linux-make-release';
     }

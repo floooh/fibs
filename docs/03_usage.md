@@ -49,10 +49,8 @@ To see a list of all build configs, run:
 The output will look something like this:
 
 ```bash
-win-vstudio-release
-win-vstudio-debug
-win-vscode-release
-win-vscode-debug
+win-msvc-release
+win-msvc-debug
 macos-make-release
 macos-make-debug
 macos-ninja-release
@@ -97,7 +95,7 @@ host platform:
 
 - macOS: `macos-make-release`
 - Linux: `linux-make-release`
-- Windows: `win-vstudio-release`
+- Windows: `win-msvc-release`
 
 ## Building the project
 
