@@ -44,6 +44,7 @@ function mergeTargetDescs(d0: TargetDesc, d1: TargetDesc): TargetDesc {
     return {
         name: d1.name,
         type: d1.type,
+        overrideType: d1.overrideType ?? d0.overrideType,
         dir: d1.dir ?? d0.dir,
         ideFolder: d1.ideFolder ?? d0.ideFolder,
         sources: mergeArrays(d0.sources, d1.sources),
