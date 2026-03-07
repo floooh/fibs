@@ -44,8 +44,8 @@ function mergeTargetDescs(d0: TargetDesc, d1: TargetDesc): TargetDesc {
     return {
         name: d1.name,
         type: d1.type,
-        dir: d0.dir ?? d1.dir,
-        ideFolder: d0.ideFolder ?? d1.ideFolder,
+        dir: d1.dir ?? d0.dir,
+        ideFolder: d1.ideFolder ?? d0.ideFolder,
         sources: mergeArrays(d0.sources, d1.sources),
         deps: mergeArrays(d0.deps, d1.deps),
         libs: mergeArrays(d0.libs, d1.libs),
@@ -98,17 +98,35 @@ export class BuilderImpl implements Builder {
                 throw Error('Builder.addTarget argument mismatch');
             }
             const b = new TargetBuilderImpl(this._project, target, type);
-            // first call optional target injector functions
-            this.targetAttributeInjectors().forEach((injector) => injector.fn(b, this._project, this._project.activeConfig()));
-            // finally call the user-provided builder function
+            this.targetAttributeInjectors().forEach((injector) => {
+                if (injector.location !== 'after') {
+                    injector.fn(b, this._project, this._project.activeConfig());
+                }
+            });
             fn(b);
+            this.targetAttributeInjectors().forEach((injector) => {
+                if (injector.location === 'after') {
+                    injector.fn(b, this._project, this._project.activeConfig());
+                }
+            });
             target = b._desc;
         } else {
             // call optional target attribute injectors
             if (this.targetAttributeInjectors().length > 0) {
-                const b = new TargetBuilderImpl(this._project, target.name, target.type);
-                this.targetAttributeInjectors().forEach((injector) => injector.fn(b, this._project, this._project.activeConfig()));
-                target = mergeTargetDescs(b._desc, target);
+                const before = new TargetBuilderImpl(this._project, target.name, target.type);
+                this.targetAttributeInjectors().forEach((injector) => {
+                    if (injector.location !== 'after') {
+                        injector.fn(before, this._project, this._project.activeConfig());
+                    }
+                });
+                target = mergeTargetDescs(before._desc, target);
+                const after = new TargetBuilderImpl(this._project, target.name, target.type);
+                this.targetAttributeInjectors().forEach((injector) => {
+                    if (injector.location === 'after') {
+                        injector.fn(after, this._project, this._project.activeConfig());
+                    }
+                });
+                target = mergeTargetDescs(target, after._desc);
             }
         }
         if (util.find(target.name, this._targets)) {

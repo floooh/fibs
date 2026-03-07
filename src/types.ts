@@ -225,7 +225,10 @@ export type CmakeCodeInjectorDesc = NamedItem & {
 
 export type CmakeCodeInjector = ImportedItem & CmakeCodeInjectorDesc;
 
-export type TargetAttributeInjectorDesc = NamedItem & { fn: (targetBuilder: TargetBuilder, project: Project, config: Config) => void };
+export type TargetAttributeInjectorDesc = NamedItem & {
+    location?: 'before' | 'after', // default: before
+    fn: (targetBuilder: TargetBuilder, project: Project, config: Config) => void
+};
 
 export type TargetAttributeInjector = ImportedItem & TargetAttributeInjectorDesc;
 
