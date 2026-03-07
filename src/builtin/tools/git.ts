@@ -1,5 +1,5 @@
-import { git } from '../lib/index.ts';
-import type { ToolDesc } from '../types.ts';
+import { git } from '../../lib/index.ts';
+import type { ToolDesc } from '../../types.ts';
 
 export const gitTool: ToolDesc = {
     name: 'git',

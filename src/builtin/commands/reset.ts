@@ -1,5 +1,5 @@
-import { log, util } from '../lib/index.ts';
-import type { CommandDesc } from '../types.ts';
+import { log, util } from '../../lib/index.ts';
+import type { CommandDesc } from '../../types.ts';
 
 export const resetCmd: CommandDesc = { name: 'reset', help, run };
 

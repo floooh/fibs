@@ -1,4 +1,4 @@
-import type { ConfigDesc } from '../types.ts';
+import type { ConfigDesc } from '../../types.ts';
 
 const win = { platform: 'windows' };
 const mac = { platform: 'macos' };

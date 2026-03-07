@@ -1,6 +1,6 @@
-import { imports, log } from '../lib/index.ts';
-import type { CommandDesc, Project } from '../types.ts';
-import { path } from '../deps.ts';
+import { imports, log } from '../../lib/index.ts';
+import type { CommandDesc, Project } from '../../types.ts';
+import { path } from '../../deps.ts';
 
 export const linkCmd: CommandDesc = { name: 'link', help, run };
 

@@ -31,10 +31,10 @@ import { build as cmakeBuild, configure as cmakeConfigure, generate as cmakeGene
 import { ProjectImpl } from '../impl/projectimpl.ts';
 import { ConfigurerImpl } from '../impl/configurerimpl.ts';
 import { BuilderImpl } from '../impl/builderimpl.ts';
-import { builtinConfigs } from '../configs/index.ts';
-import { builtinRunners } from '../runners/index.ts';
-import { builtinTools } from '../tools/index.ts';
-import { builtinCommands } from '../commands/index.ts';
+import { builtinConfigs } from '../builtin/configs/index.ts';
+import { builtinRunners } from '../builtin/runners/index.ts';
+import { builtinTools } from '../builtin/tools/index.ts';
+import { builtinCommands } from '../builtin/commands/index.ts';
 import { fetchImport, importModulesFromDir } from './imports.ts';
 import { path } from '../deps.ts';
 

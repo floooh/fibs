@@ -1,6 +1,6 @@
-import { host, log, util } from '../lib/index.ts';
-import type { CommandDesc } from '../types.ts';
-import { colors, path } from '../deps.ts';
+import { host, log, util } from '../../lib/index.ts';
+import type { CommandDesc } from '../../types.ts';
+import { colors, path } from '../../deps.ts';
 
 export const initCmd: CommandDesc = { name: 'init', help, run };
 

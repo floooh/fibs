@@ -1,6 +1,6 @@
-import { git, imports, log } from '../lib/index.ts';
-import type { CommandDesc, Project } from '../types.ts';
-import { colors } from '../deps.ts';
+import { git, imports, log } from '../../lib/index.ts';
+import type { CommandDesc, Project } from '../../types.ts';
+import { colors } from '../../deps.ts';
 
 export const updateCmd: CommandDesc = { name: 'update', help, run };
 

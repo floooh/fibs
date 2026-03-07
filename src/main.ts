@@ -1,7 +1,7 @@
 import { log, proj, util } from './lib/index.ts';
 import { assertFibsModule } from './types.ts';
-import { run as resetCmdRun } from './commands/reset.ts';
-import { run as initCmdRun } from './commands/init.ts';
+import { run as resetCmdRun } from './builtin/commands/reset.ts';
+import { run as initCmdRun } from './builtin/commands/init.ts';
 
 export async function main() {
     if (Deno.args.length < 1) {

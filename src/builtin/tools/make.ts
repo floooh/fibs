@@ -1,5 +1,5 @@
-import { util } from '../lib/index.ts';
-import type { ToolDesc } from '../types.ts';
+import { util } from '../../lib/index.ts';
+import type { ToolDesc } from '../../types.ts';
 
 export const makeTool: ToolDesc = {
     name: 'make',
