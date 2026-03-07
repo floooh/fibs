@@ -1,5 +1,5 @@
 import { proj, util } from './index.ts';
-import type { BuildMode, Config, Generator, Language, Project, Scope, Target } from '../types.ts';
+import type { BuildMode, Config, Generator, Language, Project, Scope, Target, TargetType } from '../types.ts';
 
 export const CMakeMinimumRequiredMajor = 3;
 export const CMakeMinimumRequiredMinor = 21;
@@ -78,6 +78,10 @@ function isMultiConfigGenerator(config: Config): boolean {
         default:
             return config.platform === 'windows';
     }
+}
+
+function getTargetType(t: Target): TargetType {
+    return t.overrideType ?? t.type;
 }
 
 function genBuildPresets(config: Config): unknown[] {
@@ -281,10 +285,11 @@ function genTarget(project: Project, config: Config, target: Target): string {
     const targetSources = [...target.sources, ...jobOutputs];
     const targetSourcesStr = targetSources.join(' ');
     let subtype = '';
-    switch (target.type) {
+    const targetType = getTargetType(target);
+    switch (targetType) {
         case 'plain-exe':
         case 'windowed-exe':
-            if (target.type === 'windowed-exe') {
+            if (targetType === 'windowed-exe') {
                 if (config.platform === 'windows') {
                     subtype = ' WIN32';
                 } else if ((config.platform === 'macos') || (config.platform === 'ios')) {
@@ -312,7 +317,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
 
 function genTargetDependencies(target: Target): string {
     let str = '';
-    const scope = target.type === 'interface' ? ' INTERFACE' : '';
+    const scope = getTargetType(target) === 'interface' ? ' INTERFACE' : '';
     const libs = [...target.deps, ...target.libs];
     if (libs.length > 0) {
         str += `target_link_libraries(${target.name}${scope} ${libs.join(' ')})\n`;

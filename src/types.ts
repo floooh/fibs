@@ -146,6 +146,7 @@ export type TargetBuilder = {
     assetsDir(configName?: string): string;
 
     setDir(dir: string): void;
+    setOverrideType(t: TargetType): void;
     setIdeFolder(folder: string): void;
     addSource(source: string): void;
     addSources(sources: string[]): void;
@@ -390,6 +391,7 @@ export type TargetJob = {
 
 export type TargetDesc = NamedItem & {
     type: TargetType;
+    overrideType?: TargetType;
     dir?: string;
     ideFolder?: string;
     sources: string[];
@@ -407,6 +409,7 @@ export type TargetDesc = NamedItem & {
 
 export type Target = NamedItem & ImportedItem & {
     type: TargetType;
+    overrideType: TargetType | null;
     dir: string;
     ideFolder?: string;
     sources: string[];

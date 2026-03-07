@@ -64,6 +64,9 @@ export class TargetBuilderImpl implements TargetBuilder {
     setDir(dir: string): void {
         this._desc.dir = dir;
     }
+    setOverrideType(t: TargetType): void {
+        this._desc.overrideType = t;
+    }
     setIdeFolder(folder: string): void {
         this._desc.ideFolder = folder;
     }

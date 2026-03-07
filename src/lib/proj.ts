@@ -673,6 +673,7 @@ function resolveTargets(builders: BuilderImpl[]): Target[] {
                 name: t.name,
                 importDir: builder._importDir,
                 type: t.type,
+                overrideType: t.type ?? null,
                 dir: resolvedTargetDir,
                 ideFolder: t.ideFolder,
                 sources: resolveTargetSources(t, resolvedTargetDir),
