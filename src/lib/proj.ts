@@ -330,6 +330,11 @@ function doBuildPhase(project: ProjectImpl): void {
     // setup a 'bottom builder' with builtins
     const bottomBuilder = new BuilderImpl(project, projectImpl._rootDir);
     bottomBuilder.addCmakeVariable('CMAKE_RUNTIME_OUTPUT_DIRECTORY', bottomBuilder.distDir());
+    bottomBuilder.addCmakeVariable('CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG', bottomBuilder.distDir());
+    bottomBuilder.addCmakeVariable('CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE', bottomBuilder.distDir());
+    bottomBuilder.addCmakeVariable('CMAKE_LIBRARY_OUTPUT_DIRECTORY', bottomBuilder.distDir());
+    bottomBuilder.addCmakeVariable('CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG', bottomBuilder.distDir());
+    bottomBuilder.addCmakeVariable('CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE', bottomBuilder.distDir());
     bottomBuilder.addCmakeVariable('CMAKE_C_STANDARD', '11');
     bottomBuilder.addCmakeVariable('CMAKE_CXX_STANDARD', '14');
     builders.push(bottomBuilder);

@@ -156,8 +156,6 @@ function genCMakeVariables(project: Project, config: Config): string {
     for (const cmakeVariable of vars) {
         str += `set(${cmakeVariable.name} ${resolveCMakeVariableValue(cmakeVariable.value)})\n`;
     }
-    str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
-    str += 'set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})\n';
     return str;
 }
 
