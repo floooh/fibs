@@ -68,6 +68,12 @@ export function write(str: string) {
     Deno.stdout.writeSync(textEncoder.encode(str));
 }
 
+export function debug(...args: unknown[]) {
+    if (_verbose) {
+        console.debug(...args);
+    }
+}
+
 export function info(...args: unknown[]) {
     console.info(...args);
 }
