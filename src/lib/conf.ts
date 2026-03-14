@@ -1,5 +1,15 @@
 import { log, util } from './index.ts';
-import type { Config, Project } from '../types.ts';
+import type { Config, Project, ConfigDesc } from '../types.ts';
+import { builtinConfigs } from '../builtin/configs/index.ts';
+
+export function builtinConfigDesc(name: string): ConfigDesc {
+    const config = builtinConfigs.find((conf) => conf.name === name);
+    if (config) {
+        return config;
+    } else {
+        throw new Error(`built-in config '${name}' does not exist`);
+    }
+}
 
 export async function validate(
     project: Project,
