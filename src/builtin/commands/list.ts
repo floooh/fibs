@@ -37,8 +37,7 @@ async function run(project: Project, cmdLineArgs: string[]): Promise<void> {
         const sortedConfigs = project.configs().sort((c0, c1) => c0.name.localeCompare(c1.name));
         for (const c of sortedConfigs) {
             if (log.verbose()) {
-                const msg = c.importDir === project.dir() ? '(builtin)' : `(imported from: ${c.importDir})`;
-                log.print(`${colors.green(c.name)}: ${msg}`);
+                log.print(`${colors.green(c.name)} <= ${colors.brightBlue(c.importDir)}`);
             } else {
                 log.print(c.name);
             }
