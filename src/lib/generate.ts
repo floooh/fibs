@@ -297,7 +297,7 @@ function genTarget(project: Project, config: Config, target: Target): string {
             str += `add_executable(${target.name}${subtype} ${targetSourcesStr})\n`;
             break;
         case 'lib':
-            str += `add_library(${target.name} STATIC ${targetSourcesStr})\n`;
+            str += `add_library(${target.name} STATIC EXCLUDE_FROM_ALL ${targetSourcesStr})\n`;
             break;
         case 'dll':
             str += `add_library(${target.name} SHARED ${targetSourcesStr})\n`;
