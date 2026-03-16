@@ -472,6 +472,7 @@ function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Co
             environment: c.environment ?? {},
             cmakeVariables: resolveConfigCmakeVariables(c, configurer._importDir),
             cmakeCacheVariables: resolveConfigCmakeCacheVariables(c, configurer._importDir),
+            options: c.options ?? {},
             validate: c.validate ?? (() => ({ valid: true, hints: [] })),
         }))
     ));

@@ -351,6 +351,7 @@ export type ConfigDesc = NamedItem & {
     environment?: Record<string, string>;
     cmakeVariables?: Record<string, string | boolean>;
     cmakeCacheVariables?: Record<string, string | boolean>;
+    options?: Record<string, boolean | number | string>;
     validate?(project: Project): { valid: boolean; hints: string[] };
 };
 
@@ -366,6 +367,7 @@ export type Config = NamedItem & ImportedItem & {
     environment: Record<string, string>;
     cmakeVariables: CmakeVariable[];
     cmakeCacheVariables: CmakeVariable[];
+    options: Record<string, boolean | number | string>;
     validate(project: Project): { valid: boolean; hints: string[] };
 };
 
