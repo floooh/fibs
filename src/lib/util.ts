@@ -25,13 +25,13 @@ export function find<T extends NamedItem>(name: string | undefined, items: T[]):
  */
 export function deduplicate<T extends NamedItem>(items: T[]): T[] {
     const set = new Set<string>();
-    return items.reverse().filter((item) => {
+    return items.toReversed().filter((item) => {
         if (set.has(item.name)) {
             return false;
         }
         set.add(item.name);
         return true;
-    }).reverse();
+    }).toReversed();
 }
 
 /**
@@ -254,10 +254,7 @@ export function targetAssetsDir(
  * @throws throws error when input file is missing
  */
 export function dirty(inputs: string[], outputs: string[]): boolean {
-    let mtime: number = 0;
-
-    // first gather input stats and throw if any of the inputs doesn't exist
-    const inputStats = inputs.map((input) => Deno.statSync(input));
+    let minOutputTime: number = 0;
 
     // check if outputs exists, and get their most recent modification time
     for (const path of outputs) {
@@ -267,8 +264,8 @@ export function dirty(inputs: string[], outputs: string[]): boolean {
                 return true;
             } else if (res.size === 0) {
                 return true;
-            } else if (res.mtime.getTime() > mtime) {
-                mtime = res.mtime.getTime();
+            } else if ((minOutputTime === 0) || (res.mtime.getTime() < minOutputTime)) {
+                minOutputTime = res.mtime.getTime();
             }
         } catch (_err) {
             // output file doesn't exist
@@ -277,10 +274,11 @@ export function dirty(inputs: string[], outputs: string[]): boolean {
     }
 
     // check inputs
+    const inputStats = inputs.map((input) => Deno.statSync(input));
     for (const inputStat of inputStats) {
         if (inputStat.mtime === null) {
             return true;
-        } else if (inputStat.mtime.getTime() > mtime) {
+        } else if (inputStat.mtime.getTime() > minOutputTime) {
             return true;
         }
     }
