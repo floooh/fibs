@@ -17,32 +17,6 @@ export function find<T extends NamedItem>(name: string | undefined, items: T[]):
 }
 
 /**
- * Find index of named item in an array of named items
- *
- * @param name name to search for
- * @param items array of named items
- * @returns index of found item or undefined
- */
-export function findIndex<T extends NamedItem>(name: string, items: T[]): number | undefined {
-    const index = items.findIndex((elm) => elm.name === name);
-    return (index === -1) ? undefined : index;
-}
-
-/**
- * Add or replace a named item to/in an array of named items
- * @param items array of named item
- * @param item item to add or replace
- */
-export function addOrReplace<T extends NamedItem>(items: T[], item: T) {
-    const index = findIndex(item.name, items);
-    if (index === undefined) {
-        items.push(item);
-    } else {
-        items[index] = item;
-    }
-}
-
-/**
  * Return a new array of named items without duplicates. When
  * there are multiple items of the same name, the last item 'wins'.
  *
@@ -50,11 +24,14 @@ export function addOrReplace<T extends NamedItem>(items: T[], item: T) {
  * @returns a new array without duplicates
  */
 export function deduplicate<T extends NamedItem>(items: T[]): T[] {
-    const res: T[] = [];
-    for (const item of items) {
-        addOrReplace(res, item);
-    }
-    return res;
+    const set = new Set<string>();
+    return items.reverse().filter((item) => {
+        if (set.has(item.name)) {
+            return false;
+        }
+        set.add(item.name);
+        return true;
+    }).reverse();
 }
 
 /**
