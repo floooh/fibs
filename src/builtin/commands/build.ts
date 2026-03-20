@@ -6,9 +6,9 @@ export const buildCmd: CommandDesc = { name: 'build', help, run };
 function help() {
     log.helpCmd([
         'build',
-        'build [--rebuild]',
-        'build [target]',
-        'build [target] [--rebuild]',
+        'build [--rebuild] [-- ...]',
+        'build [target] [-- ...]',
+        'build [target] [--rebuild] [-- ...]',
     ], 'build all targets or a specific target');
 }
 
@@ -17,10 +17,16 @@ async function run(project: Project, args: string[]) {
         throw new Error('import errors detected');
     }
     let forceRebuild = false;
+    let buildToolArgsActive = false;
+    const buildToolArgs = [];
     let buildTarget;
     for (const arg of args.slice(1)) {
-        if (arg.startsWith('--')) {
-            if (arg === '--rebuild') {
+        if (buildToolArgsActive) {
+            buildToolArgs.push(arg);
+        } else if (arg.startsWith('--')) {
+            if (arg === '--') {
+                buildToolArgsActive = true;
+            } else if (arg === '--rebuild') {
                 forceRebuild = true;
             } else {
                 throw new Error(`unknown option '${arg}, type 'fibs help build'`);
@@ -30,5 +36,5 @@ async function run(project: Project, args: string[]) {
         }
     }
     await conf.validate(project, project.activeConfig(), { silent: false, abortOnError: true });
-    await proj.build({ forceRebuild, buildTarget });
+    await proj.build({ forceRebuild, buildTarget, buildToolArgs });
 }

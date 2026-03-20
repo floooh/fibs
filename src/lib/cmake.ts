@@ -130,10 +130,11 @@ export async function generate(project: Project, config: Config) {
  * @param options build optional target and rebuild flag
  * @throws throws when generation or on build error
  */
-export async function build(project: Project, config: Config, options: { target?: string; forceRebuild?: boolean }) {
+export async function build(project: Project, config: Config, options: { target?: string; forceRebuild?: boolean, buildToolArgs?: string[] }) {
     const {
         target,
         forceRebuild = false,
+        buildToolArgs,
     } = options;
 
     if (!util.fileExists(`${project.buildDir()}/CMakeCache.txt`)) {
@@ -153,6 +154,9 @@ export async function build(project: Project, config: Config, options: { target?
     }
     if (forceRebuild) {
         args = [...args, '--clean-first'];
+    }
+    if (buildToolArgs) {
+        args = [...args, '--', ...buildToolArgs];
     }
     const res = await run({ args, showCmd: log.verbose() });
     if (res.exitCode !== 0) {

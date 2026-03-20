@@ -80,10 +80,10 @@ export async function generate(config?: Config): Promise<void> {
     await cmakeGenerate(projectImpl, config);
 }
 
-export async function build(options: { buildTarget?: string; forceRebuild?: boolean }): Promise<void> {
+export async function build(options: { buildTarget?: string; forceRebuild?: boolean, buildToolArgs?: string[] }): Promise<void> {
     projectImpl.assertPhaseExact(ProjectPhase.Generate);
-    const { buildTarget, forceRebuild } = options;
-    await cmakeBuild(projectImpl, projectImpl.activeConfig(), { target: buildTarget, forceRebuild });
+    const { buildTarget, forceRebuild, buildToolArgs } = options;
+    await cmakeBuild(projectImpl, projectImpl.activeConfig(), { target: buildTarget, forceRebuild, buildToolArgs });
 }
 
 export function validateTarget(
