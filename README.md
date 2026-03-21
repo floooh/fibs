@@ -2,7 +2,7 @@
 
 *Floh's Infernal Build System*
 
-A Typescript-based cmake-wrapper and task-runner that simplifies C/C++ project configuration and builds, sprititual successor to [fips](https://github.com/floooh/fips).
+A Typescript-based cmake-wrapper and task-runner that simplifies C/C++ project configuration and builds, spiritual successor to [fips](https://github.com/floooh/fips).
 
 [Getting Started](./docs/01_getting_started.md) • [Troubleshooting](./docs/02_troubleshooting.md) • [Usage](./docs/03_usage.md) • [Examples](./docs/13_examples.md) • [Documentation](./docs/index.md)
 
