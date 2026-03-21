@@ -14,7 +14,7 @@ function help() {
 async function run(project: Project, args: string[]) {
     if (args.length === 1) {
         log.print(`${colors.blue("Floh's Infernal Build System!")}`);
-        log.print('https://github.com/floooh/fibs');
+        log.print('https://github.com/floooh/fibs\n');
         for (const cmd of project.commands()) {
             cmd.help();
         }
