@@ -260,12 +260,12 @@ export function dirty(inputs: string[], outputs: string[]): boolean {
     for (const path of outputs) {
         try {
             const res = Deno.statSync(path);
-            if (res.mtime === null) {
+            if (res.ctime === null) {
                 return true;
             } else if (res.size === 0) {
                 return true;
-            } else if ((minOutputTime === 0) || (res.mtime.getTime() < minOutputTime)) {
-                minOutputTime = res.mtime.getTime();
+            } else if ((minOutputTime === 0) || (res.ctime.getTime() < minOutputTime)) {
+                minOutputTime = res.ctime.getTime();
             }
         } catch (_err) {
             // output file doesn't exist
@@ -276,9 +276,9 @@ export function dirty(inputs: string[], outputs: string[]): boolean {
     // check inputs
     const inputStats = inputs.map((input) => Deno.statSync(input));
     for (const inputStat of inputStats) {
-        if (inputStat.mtime === null) {
+        if (inputStat.ctime === null) {
             return true;
-        } else if (inputStat.mtime.getTime() > minOutputTime) {
+        } else if (inputStat.ctime.getTime() > minOutputTime) {
             return true;
         }
     }
