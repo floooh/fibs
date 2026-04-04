@@ -1,4 +1,4 @@
-import { proj, util } from './index.ts';
+import { util } from './index.ts';
 import type { BuildMode, Config, Generator, Language, Project, Scope, Target, TargetType } from '../types.ts';
 
 export const CMakeMinimumRequiredMajor = 3;
@@ -112,7 +112,7 @@ export function genCMakeListsTxt(project: Project, config: Config): string {
     });
     str += genAllJobsTarget(project, config);
     for (const target of project.targets()) {
-        str += genTarget(project, config, target);
+        str += genTarget(config, target);
         str += genTargetDependencies(target);
         str += genTargetIncludeDirectories(target);
         str += genTargetLinkDirectories(target);
@@ -264,9 +264,8 @@ function genAllJobsTarget(project: Project, config: Config): string {
     return str;
 }
 
-function genTarget(project: Project, config: Config, target: Target): string {
-    const targetJobs = proj.resolveTargetJobs(project, config, target);
-    const jobOutputs = targetJobs.flatMap((job) => {
+function genTarget(config: Config, target: Target): string {
+    const jobOutputs = target.resolvedJobs.flatMap((job) => {
         if (job.addOutputsToTargetSources) {
             return job.outputs;
         } else {

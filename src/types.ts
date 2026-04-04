@@ -425,6 +425,7 @@ export type Target = NamedItem & ImportedItem & {
     compileOptions: CompileOption[];
     linkOptions: LinkOption[];
     jobs: TargetJob[];
+    resolvedJobs: Job[];
 };
 
 export type JobBuilderDesc = NamedItem & {

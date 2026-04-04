@@ -67,6 +67,9 @@ export async function configureTargets(config?: Config): Promise<void> {
     projectImpl._compiler = configRes.compiler;
     doBuildPhase(projectImpl);
     projectImpl.setPhase(ProjectPhase.Generate);
+    for (const target of projectImpl._targets) {
+        target.resolvedJobs = resolveTargetJobs(projectImpl, config, target);
+    }
 }
 
 export async function generate(config?: Config): Promise<void> {
@@ -214,7 +217,7 @@ export function validateTargetJob(
     return res;
 }
 
-export function resolveTargetJobs(project: Project, config: Config, target: Target): Job[] {
+function resolveTargetJobs(project: Project, config: Config, target: Target): Job[] {
     const res: Job[] = [];
     target.jobs.forEach((j) => {
         const jobBuilder = util.find(j.job, project.jobs());
@@ -230,9 +233,8 @@ export function resolveTargetJobs(project: Project, config: Config, target: Targ
     return res;
 }
 
-export async function runJobs(project: Project, config: Config, target: Target) {
-    const jobs = resolveTargetJobs(project, config, target);
-    for (const job of jobs) {
+export async function runJobs(target: Target) {
+    for (const job of target.resolvedJobs) {
         try {
             await job.func(job.inputs, job.outputs, job.args);
         } catch (err) {
@@ -693,6 +695,7 @@ function resolveTargets(builders: BuilderImpl[]): Target[] {
                 compileOptions: resolveTargetCompileOptions(builder, t),
                 linkOptions: resolveTargetLinkOptions(builder, t),
                 jobs: t.jobs ?? [],
+                resolvedJobs: [],
             };
         })
     ));

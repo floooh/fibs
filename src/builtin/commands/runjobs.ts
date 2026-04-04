@@ -21,5 +21,5 @@ async function run(project: Project, args: string[]) {
         config = project.config(configName);
     }
     await proj.configureTargets(config);
-    await Promise.all(project.targets().map((target): Promise<void> => proj.runJobs(project, config, target)));
+    await Promise.all(project.targets().map((target): Promise<void> => proj.runJobs(target)));
 }
