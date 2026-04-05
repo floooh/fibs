@@ -309,6 +309,9 @@ function genTargetDependencies(target: Target): string {
     if (fws.length > 0) {
         str += `target_link_libraries(${target.name}${scope} ${fws.map((fw) => `"-framework ${fw}"`).join(' ')})\n`;
     }
+    if (target.resolvedJobs.length > 0) {
+        str += `add_dependencies(${target.name} ALL_JOBS)\n`;
+    }
     return str;
 }
 
@@ -393,5 +396,9 @@ function genJobs(project: Project, config: Config) {
     const inputsPart = uniqueInputs.length > 0 ? `DEPENDS ${uniqueInputs.join(' ')}` : '';
     const cmdPart = `COMMAND \${DENO} run --allow-all --no-config ${jobFibsRoot} runjobs ${config.name}`;
     const cwdPart = `WORKING_DIRECTORY ${project.dir()}`
-    return `add_custom_command(${cmdPart} ${outputsPart} ${inputsPart} ${cwdPart})\n`;
+
+    let str = ''
+    str += `add_custom_command(${cmdPart} ${outputsPart} ${inputsPart} ${cwdPart})\n`;
+    str += `add_custom_target(ALL_JOBS DEPENDS ${uniqueOutputs.join(' ')})\n`;
+    return str;
 }
