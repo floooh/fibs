@@ -258,11 +258,6 @@ function genTarget(config: Config, target: Target): string {
         }
     });
 
-    // need to create an empty dummy for any job output file that doesn't exist yet
-    for (const path of jobOutputs) {
-        util.ensureFile(path);
-    }
-
     let str = '';
     const targetSources = [...target.sources, ...jobOutputs];
     const targetSourcesStr = targetSources.join(' ');
