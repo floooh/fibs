@@ -393,7 +393,7 @@ function genJobs(project: Project, config: Config) {
     const cwdPart = `WORKING_DIRECTORY ${project.dir()}`
 
     let str = ''
-    str += `add_custom_command(${cmdPart} ${outputsPart} ${inputsPart} ${cwdPart})\n`;
+    str += `add_custom_command(${cmdPart} VERBATIM COMMENT "Running build jobs" ${outputsPart} ${inputsPart} ${cwdPart})\n`;
     str += `add_custom_target(ALL_JOBS DEPENDS ${uniqueOutputs.join(' ')})\n`;
     return str;
 }
