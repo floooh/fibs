@@ -18,7 +18,7 @@ export async function run() {
         log.warn('no .fibs subdirectory in current directory');
         return;
     }
-    if (log.ask(`ok to delete directory ${fibsDir}?`, false)) {
+    if (log.ask(`ok to delete directory ${fibsDir}`, false)) {
         Deno.removeSync(fibsDir, { recursive: true });
         log.info('ok');
     } else {
