@@ -1,7 +1,7 @@
 import { host, log, util } from './index.ts';
 import type { Compiler, Config, Project, RunOptions, RunResult } from '../types.ts';
 import { CMakeMinimumRequired, genCMakeListsTxt, genCMakePresetsJson } from './generate.ts';
-import { planJobs, validateJobs, writeJobFiles } from './jobs.ts';
+import { checkSharedDirCollisions, planJobs, validateJobs, writeJobFiles } from './jobs.ts';
 
 const helloSource = `
 #include <stdio.h>
@@ -158,6 +158,7 @@ export async function generate(project: Project, config: Config) {
     const cmakePresetsPath = `${project.dir()}/CMakePresets.json`;
     const jobPlan = planJobs(project, config);
     validateJobs(project, config, jobPlan);
+    checkSharedDirCollisions(project, config, jobPlan);
     writeJobFiles(project, jobPlan);
     try {
         Deno.writeTextFileSync(

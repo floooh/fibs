@@ -117,3 +117,8 @@ When generating the build files, fibs checks that:
 - each job input either exists or is the output of another job
 - different jobs don't produce the same output file
 - there are no cyclic dependencies between jobs
+
+Some targets have their own asset directory (e.g. windowed executables on
+macOS and iOS which live in an app bundle), while on other platforms all
+targets share the same `dist` directory. fibs simulates the shared layout and
+warns about jobs which would produce the same output on other platforms.

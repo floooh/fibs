@@ -1,7 +1,7 @@
-import { host, util } from './index.ts';
+import { host, log, util } from './index.ts';
 import { assertFibsModule, type Config, type JobCommandTarget, type Project, type ResolvedJob, type Target } from '../types.ts';
 import { ConfigurerImpl } from '../impl/configurerimpl.ts';
-import { path } from '../deps.ts';
+import { colors, path } from '../deps.ts';
 
 /**
  * A job in the build plan. Identical jobs of different targets are merged
@@ -49,7 +49,7 @@ export function planJobs(project: Project, config: Config): JobPlan {
     for (const target of project.targets()) {
         const targetJobs: PlannedJob[] = [];
         target.resolvedJobs.forEach((job, index) => {
-            const key = JSON.stringify([job.builder.modulePath, job.name, job.inputs, job.outputs, job.commands, job.args]);
+            const key = jobKey(job);
             let planned = byKey.get(key);
             if (planned === undefined) {
                 planned = { job, owner: target };
@@ -57,13 +57,6 @@ export function planJobs(project: Project, config: Config): JobPlan {
                     planned.jobFile = `${project.buildDir(config.name)}/jobs/${target.name}/${index}-${job.name}.json`;
                 }
                 for (const output of job.outputs) {
-                    const other = plan.producers.get(output);
-                    if (other !== undefined) {
-                        throw new Error(
-                            `output '${output}' of job '${job.name}' in target '${target.name}' ` +
-                                `is also produced by job '${other.job.name}' in target '${other.owner.name}'`,
-                        );
-                    }
                     plan.producers.set(output, planned);
                 }
                 byKey.set(key, planned);
@@ -77,8 +70,88 @@ export function planJobs(project: Project, config: Config): JobPlan {
             plan.targetJobs.set(target.name, targetJobs);
         }
     }
+    const [collision] = findOutputCollisions(plan.jobs);
+    if (collision !== undefined) {
+        throw new Error(outputCollisionMessage(collision));
+    }
     checkCycles(plan);
     return plan;
+}
+
+/** identical jobs in different targets have the same key and are merged */
+function jobKey(job: ResolvedJob): string {
+    return JSON.stringify([job.builder.modulePath, job.name, job.inputs, job.outputs, job.commands, job.args]);
+}
+
+type OutputCollision = {
+    output: string;
+    first: PlannedJob;
+    second: PlannedJob;
+};
+
+/**
+ * Find outputs which are produced by different jobs, the optional mapPath()
+ * function maps paths to a simulated directory layout (identical jobs after
+ * mapping are merged).
+ */
+function findOutputCollisions(jobs: PlannedJob[], mapPath = (s: string) => s): OutputCollision[] {
+    const res: OutputCollision[] = [];
+    const keys = new Set<string>();
+    const producers = new Map<string, PlannedJob>();
+    for (const planned of jobs) {
+        const key = mapPath(jobKey(planned.job));
+        if (keys.has(key)) {
+            continue;
+        }
+        keys.add(key);
+        for (const output of planned.job.outputs.map(mapPath)) {
+            const first = producers.get(output);
+            if (first !== undefined) {
+                res.push({ output, first, second: planned });
+            } else {
+                producers.set(output, planned);
+            }
+        }
+    }
+    return res;
+}
+
+function outputCollisionMessage({ output, first, second }: OutputCollision): string {
+    const file = colors.brightBlue(path.basename(output));
+    const fmt = (p: PlannedJob) => `job '${colors.magenta(p.job.name)}' in target '${colors.blue(p.owner.name)}'`;
+    return `job output file collision:\n\n` +
+        `  ${fmt(first)}\n` +
+        `  ${fmt(second)}\n` +
+        `  both produce output file '${file}'\n\n` +
+        `${colors.cyan('hint:')} identical jobs in different targets are merged into one\n` +
+        `${colors.green('solution:')} split the jobs so that '${file}' is produced by an identical job in each target`;
+}
+
+/**
+ * Some targets have their own assets and dist directories (e.g. app bundles
+ * on macOS and iOS), while on other platforms they share the same dist
+ * directory with all other targets. Simulate the shared layout to warn about
+ * job output collisions which would only happen on other platforms.
+ *
+ * @param project the Project object
+ * @param config the active build config
+ * @param plan the job plan
+ */
+export function checkSharedDirCollisions(project: Project, config: Config, plan: JobPlan) {
+    const sharedDir = util.distDir(project.dir(), config.name);
+    const targetDirs = project.targets().flatMap((t) => [
+        project.targetAssetsDir(t.name, config.name),
+        project.targetDistDir(t.name, config.name),
+    ]);
+    // longest first so that '.../foo.app/Contents/Resources' is replaced before '.../foo.app' (iOS)
+    const privateDirs = [...new Set(targetDirs)].filter((dir) => dir !== sharedDir).sort((a, b) => b.length - a.length);
+    if (privateDirs.length === 0) {
+        return;
+    }
+    const unbundle = (s: string) => privateDirs.reduce((str, dir) => str.replaceAll(dir, sharedDir), s);
+    for (const collision of findOutputCollisions(plan.jobs, unbundle)) {
+        log.warn(outputCollisionMessage(collision));
+    }
 }
 
 function checkCycles(plan: JobPlan) {
