@@ -36,6 +36,13 @@ To show the help for one specific command, run:
 ./fibs help build
 ```
 
+To show the fibs version (and whether fibs runs from JSR or from a local
+directory), run:
+
+```bash
+./fibs version
+```
+
 ## Selecting a build config
 
 A 'build config' groups a related set of build settings under a single name.

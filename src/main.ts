@@ -3,6 +3,7 @@ import { assertFibsModule } from './types.ts';
 import { run as resetCmdRun } from './builtin/commands/reset.ts';
 import { run as initCmdRun } from './builtin/commands/init.ts';
 import { run as runjobCmdRun } from './builtin/commands/runjob.ts';
+import { run as versionCmdRun } from './builtin/commands/version.ts';
 
 export async function main() {
     if (Deno.args.length < 1) {
@@ -19,7 +20,7 @@ export async function main() {
         const rootDir = Deno.cwd().replaceAll('\\', '/');
         const rootPath = `${rootDir}/fibs.ts`;
         const cmdName = args[0];
-        // NOTE: reset, init and runjob don't need a configured project
+        // NOTE: reset, init, runjob and version don't need a configured project
         if (cmdName === 'reset') {
             await resetCmdRun();
             return;
@@ -28,6 +29,9 @@ export async function main() {
             return;
         } else if (cmdName === 'runjob') {
             await runjobCmdRun(args);
+            return;
+        } else if (cmdName === 'version') {
+            await versionCmdRun();
             return;
         }
         // try to import a fibs.ts file from current directory

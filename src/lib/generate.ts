@@ -466,11 +466,11 @@ function quote(str: string): string {
 // the fibs root module for running script jobs at build time, this is pinned
 // to the same fibs version (or local fibs directory) which generated the build files
 function jobFibsRoot(): string {
-    const jsrMatch = import.meta.url.match(/^https:\/\/jsr\.io\/@floooh\/fibs\/([^/]+)\//);
-    if (jsrMatch) {
-        return `jsr:@floooh/fibs@${jsrMatch[1]}`;
-    } else if (import.meta.url.startsWith('file:')) {
-        return path.fromFileUrl(new URL('../../index.ts', import.meta.url)).replaceAll('\\', '/');
+    const { jsrVersion, localDir } = util.fibsInfo();
+    if (jsrVersion !== undefined) {
+        return `jsr:@floooh/fibs@${jsrVersion}`;
+    } else if (localDir !== undefined) {
+        return `${localDir}/index.ts`;
     } else {
         return 'jsr:@floooh/fibs';
     }

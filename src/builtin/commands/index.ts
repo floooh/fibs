@@ -15,6 +15,7 @@ import { getCmd } from './get.ts';
 import { unsetCmd } from './unset.ts';
 import { updateCmd } from './update.ts';
 import { runjobCmd } from './runjob.ts';
+import { versionCmd } from './version.ts';
 
 export const builtinCommands = [
     helpCmd,
@@ -34,4 +35,5 @@ export const builtinCommands = [
     getCmd,
     unsetCmd,
     runjobCmd,
+    versionCmd,
 ];

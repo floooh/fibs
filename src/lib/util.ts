@@ -3,6 +3,44 @@ import { log } from './index.ts';
 import { fs, path } from '../deps.ts';
 
 /**
+ * Information about where fibs is running from:
+ *
+ * - from JSR: the version is part of the module URL
+ * - from a local directory: the version is read from deno.jsonc
+ */
+export type FibsInfo = {
+    version: string;
+    /** the JSR package version, or undefined when running from a local directory */
+    jsrVersion?: string;
+    /** the local fibs directory, or undefined when running from JSR */
+    localDir?: string;
+};
+
+/**
+ * Returns the fibs version and where fibs is running from.
+ *
+ * @returns a FibsInfo object
+ */
+export function fibsInfo(): FibsInfo {
+    // NOTE: this file is at [root]/src/lib/util.ts
+    const jsrMatch = import.meta.url.match(/^https:\/\/jsr\.io\/@floooh\/fibs\/([^/]+)\//);
+    if (jsrMatch) {
+        return { version: jsrMatch[1], jsrVersion: jsrMatch[1] };
+    } else if (import.meta.url.startsWith('file:')) {
+        const localDir = path.fromFileUrl(new URL('../..', import.meta.url)).replaceAll('\\', '/').replace(/\/$/, '');
+        let version = 'unknown';
+        try {
+            version = JSON.parse(Deno.readTextFileSync(`${localDir}/deno.jsonc`)).version ?? version;
+        } catch (_err) {
+            // deno.jsonc not found or not valid JSON
+        }
+        return { version, localDir };
+    } else {
+        return { version: 'unknown' };
+    }
+}
+
+/**
  * Find a named item in an array of named items by name.
  *
  * @param name name to search for
