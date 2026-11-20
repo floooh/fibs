@@ -190,7 +190,10 @@ export function writeJobFiles(project: Project, plan: JobPlan) {
  */
 export async function runJobFile(jobFile: string) {
     const desc = JSON.parse(Deno.readTextFileSync(jobFile)) as JobFile;
-    const module = await import(`file://${desc.modulePath}`);
+    // NOTE: don't use a template string literal in import(), 'deno publish' would
+    // rewrite it into a path relative to this module, which breaks when running from JSR
+    const importPath = `file://${desc.modulePath}`;
+    const module = await import(importPath);
     assertFibsModule(module);
     const configurer = new ConfigurerImpl(desc.rootDir, desc.importDir, desc.modulePath);
     if (module.configure) {
