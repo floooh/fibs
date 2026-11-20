@@ -1,6 +1,6 @@
-import { util } from './index.ts';
+import { log, util } from './index.ts';
 import type { RunOptions, RunResult } from '../types.ts';
-import { path } from '../deps.ts';
+import { colors, path } from '../deps.ts';
 
 export async function run(options: RunOptions): Promise<RunResult> {
     try {
@@ -73,17 +73,22 @@ export async function clone(options: { url: string; dir: string; ref?: string; v
 }
 
 export async function update(
-    options: { url: string; dir: string; ref?: string; force?: boolean; verbose?: boolean },
+    options: { url: string; dir: string; ref?: string; force?: boolean; skipUptodateCheck?: boolean; verbose?: boolean },
 ): Promise<boolean> {
     const {
         url,
         dir,
         ref = 'HEAD',
         force = false,
+        skipUptodateCheck = false,
         verbose = false,
     } = options;
     const repoDir = getDir(dir, url, ref);
     const runOpts: RunOptions = { args: [], cwd: repoDir, stderr: verbose ? 'inherit' : 'null', showCmd: verbose };
+    if (!skipUptodateCheck && await isUptodate({ url, dir, ref })) {
+        // still update submodules, a previous update might have failed
+        return await updateSubmodules({ url, dir, ref, sync: true, verbose });
+    }
     const args = ['fetch', '--depth=1', 'origin', ref];
     if (force) {
         args.push('-f');
@@ -97,22 +102,68 @@ export async function update(
     ) {
         return false;
     }
-    return await updateSubmodules({ url, dir, ref, verbose });
+    // sync submodule urls, they may have changed in .gitmodules
+    return await updateSubmodules({ url, dir, ref, sync: true, verbose });
+}
+
+// update an import and log progress, skip fetch if import is already up-to-date
+export async function updateImport(
+    options: { name: string; url: string; dir: string; ref?: string; skipUptodateCheck?: boolean; verbose?: boolean },
+): Promise<boolean> {
+    const { name, url, dir, ref = 'HEAD', skipUptodateCheck = false, verbose = false } = options;
+    if (!skipUptodateCheck && await isUptodate({ url, dir, ref })) {
+        log.info(`${colors.green('uptodate:')} ${name} (${colors.brightBlue(fmtGitUrl(url, options.ref))})`);
+        // still update submodules, a previous update might have failed
+        return await updateSubmodules({ url, dir, ref, sync: true, verbose });
+    }
+    log.info(`${colors.yellow('updating:')} ${colors.green(name)} (${colors.brightBlue(fmtGitUrl(url, options.ref))}) ...`);
+    return await update({ url, dir, ref, skipUptodateCheck: true, verbose });
+}
+
+// true if local HEAD already matches the remote ref (a shallow re-fetch is slow)
+export async function isUptodate(options: { url: string; dir: string; ref?: string }): Promise<boolean> {
+    const { url, dir, ref = 'HEAD' } = options;
+    const repoDir = getDir(dir, url, ref);
+    const runOpts: RunOptions = { args: [], cwd: repoDir, stdout: 'piped', stderr: 'null', showCmd: false };
+    const head = await run({ ...runOpts, args: ['rev-parse', 'HEAD'] });
+    if (head.exitCode !== 0) {
+        return false;
+    }
+    const headSha = head.stdout.trim();
+    // pinned commit: no network needed
+    if (/^[0-9a-f]{40}$/.test(ref)) {
+        return headSha === ref;
+    }
+    // request peeled entry too, annotated tags point to a tag object
+    const res = await run({ ...runOpts, args: ['ls-remote', 'origin', ref, `${ref}^{}`] });
+    if (res.exitCode !== 0) {
+        return false;
+    }
+    const remoteRefs = new Map(res.stdout.trim().split('\n').map((line) => {
+        const [sha, name] = line.trim().split('\t');
+        return [name, sha];
+    }));
+    // same order as git fetch resolves ref names
+    const candidates = [ref, `refs/${ref}`, `refs/tags/${ref}^{}`, `refs/tags/${ref}`, `refs/heads/${ref}`];
+    const remoteSha = candidates.map((name) => remoteRefs.get(name)).find((sha) => sha !== undefined);
+    return remoteSha === headSha;
 }
 
 export async function updateSubmodules(
-    options: { url: string; dir: string; ref: string; verbose?: boolean },
+    options: { url: string; dir: string; ref: string; sync?: boolean; verbose?: boolean },
 ): Promise<boolean> {
-    const { url, dir, ref, verbose = false } = options;
+    const { url, dir, ref, sync = false, verbose = false } = options;
     const repoDir = getDir(dir, url, ref);
-    if ((await run({ args: ['submodule', 'init'], cwd: repoDir, showCmd: verbose })).exitCode !== 0) {
-        return false;
+    // 'git submodule' is a slow shell script on Windows, skip if not needed
+    if (!util.fileExists(`${repoDir}/.gitmodules`)) {
+        return true;
     }
-    if ((await run({ args: ['submodule', 'sync', '--recursive'], cwd: repoDir, showCmd: verbose })).exitCode !== 0) {
+    if (sync && (await run({ args: ['submodule', 'sync', '--recursive'], cwd: repoDir, showCmd: verbose })).exitCode !== 0) {
         return false;
     }
     if (
-        (await run({ args: ['submodule', 'update', '--recursive', '--depth=1'], cwd: repoDir, showCmd: verbose })).exitCode !== 0
+        (await run({ args: ['submodule', 'update', '--init', '--recursive', '--depth=1'], cwd: repoDir, showCmd: verbose }))
+            .exitCode !== 0
     ) {
         return false;
     }

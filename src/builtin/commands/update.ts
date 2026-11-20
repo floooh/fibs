@@ -1,14 +1,13 @@
 import { git, imports, log } from '../../lib/index.ts';
 import type { CommandDesc, Project } from '../../types.ts';
-import { colors } from '../../deps.ts';
 
 export const updateCmd: CommandDesc = { name: 'update', help, run };
 
 function help() {
     log.helpCmd([
-        'update [--clean]',
-        'update [import...] [--clean]',
-    ], 'update all or specific import, use --clean to delete and fetch from scratch');
+        'update [--clean] [--force]',
+        'update [import...] [--clean] [--force]',
+    ], 'update all or specific import, use --clean to delete and fetch from scratch, use --force to skip the up-to-date check');
 }
 
 async function run(project: Project, cmdLineArgs: string[]) {
@@ -35,20 +34,30 @@ async function run(project: Project, cmdLineArgs: string[]) {
                 log.info(`  skipping ${repoDir}`);
             }
         } else {
-            log.info(`updating: ${colors.green(imp.name)} (${colors.brightBlue(git.fmtGitUrl(imp.url, imp.ref))}) ...`);
-            if (!await git.update({ dir: project.importsDir(), url: imp.url, ref: imp.ref, verbose: log.verbose() })) {
+            if (
+                !await git.updateImport({
+                    name: imp.name,
+                    url: imp.url,
+                    dir: project.importsDir(),
+                    ref: imp.ref,
+                    skipUptodateCheck: args.force,
+                    verbose: log.verbose(),
+                })
+            ) {
                 throw new Error(`updating '${repoDir}' failed\n\n(consider running 'fibs update --clean')\n`);
             }
         }
     }
 }
 
-function parseArgs(project: Project, args: string[]): { clean: boolean; items: string[] } {
-    const res: ReturnType<typeof parseArgs> = { clean: false, items: [] };
+function parseArgs(project: Project, args: string[]): { clean: boolean; force: boolean; items: string[] } {
+    const res: ReturnType<typeof parseArgs> = { clean: false, force: false, items: [] };
     res.items = args.slice(1).filter((arg) => {
         if (arg.startsWith('--')) {
             if (arg === '--clean') {
                 res.clean = true;
+            } else if (arg === '--force') {
+                res.force = true;
             } else {
                 throw new Error(`unknown option '${arg}' (run 'fibs help update')`);
             }
