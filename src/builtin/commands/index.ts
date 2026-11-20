@@ -14,7 +14,7 @@ import { setCmd } from './set.ts';
 import { getCmd } from './get.ts';
 import { unsetCmd } from './unset.ts';
 import { updateCmd } from './update.ts';
-import { runjobsCmd } from './runjobs.ts';
+import { runjobCmd } from './runjob.ts';
 
 export const builtinCommands = [
     helpCmd,
@@ -33,5 +33,5 @@ export const builtinCommands = [
     setCmd,
     getCmd,
     unsetCmd,
-    runjobsCmd,
+    runjobCmd,
 ];

@@ -11,13 +11,13 @@ import {
     type FibsModule,
     type Import,
     type IncludeDirectory,
-    type Job,
     type JobBuilder,
     type LinkDirectory,
     type LinkOption,
     type Opener,
     type Project,
     ProjectPhase,
+    type ResolvedJob,
     type Runner,
     type Scope,
     type Setting,
@@ -217,15 +217,18 @@ export function validateTargetJob(
     return res;
 }
 
-function resolveTargetJobs(project: Project, config: Config, target: Target): Job[] {
-    const res: Job[] = [];
+function resolveTargetJobs(project: Project, config: Config, target: Target): ResolvedJob[] {
+    const res: ResolvedJob[] = [];
     target.jobs.forEach((j) => {
         const jobBuilder = util.find(j.job, project.jobs());
         if (jobBuilder) {
             const job = jobBuilder.build(project, config, target, j.args);
-            job.inputs = job.inputs.map((inp) => resolvePath(target.dir, inp));
-            job.outputs = job.outputs.map((outp) => resolvePath(target.dir, outp));
-            res.push(job);
+            res.push({
+                ...job,
+                inputs: job.inputs.map((inp) => resolvePath(target.dir, inp)),
+                outputs: job.outputs.map((outp) => resolvePath(target.dir, outp)),
+                builder: jobBuilder,
+            });
         } else {
             log.warn(`resolveTargetJobs: job ${j.job} used in target ${target.name} not found!`);
         }
@@ -233,21 +236,11 @@ function resolveTargetJobs(project: Project, config: Config, target: Target): Jo
     return res;
 }
 
-export async function runJobs(target: Target) {
-    for (const job of target.resolvedJobs) {
-        try {
-            await job.func(job.inputs, job.outputs, job.args);
-        } catch (err) {
-            throw new Error(`job '${job.name}' in target '${target.name}' failed`, { cause: err });
-        }
-    }
-}
-
 async function doConfigurePhase(rootModule: FibsModule, project: ProjectImpl): Promise<void> {
     const configurers: ConfigurerImpl[] = [];
 
     // start configuration at the root object to gather imports
-    const rootConfigurer = new ConfigurerImpl(project.dir(), project.dir());
+    const rootConfigurer = new ConfigurerImpl(project.dir(), project.dir(), `${project.dir()}/fibs.ts`);
     if (rootModule.configure) {
         rootModule.configure(rootConfigurer);
     }
@@ -276,7 +269,7 @@ async function doConfigurePhase(rootModule: FibsModule, project: ProjectImpl): P
 }
 
 function configureBuiltins(project: ProjectImpl): ConfigurerImpl {
-    const configurer = new ConfigurerImpl(project.dir(), project.dir());
+    const configurer = new ConfigurerImpl(project.dir(), project.dir(), `${project.dir()}/fibs.ts`);
     configurer.addSetting({
         name: 'config',
         default: host.defaultConfig(),
@@ -306,7 +299,7 @@ async function configureRecurseImports(
             for (const mod of modules) {
                 // record the actual import modules in the parent importDesc
                 importDesc.importModules.push(mod);
-                const childConfigurer = new ConfigurerImpl(project.dir(), dir);
+                const childConfigurer = new ConfigurerImpl(project.dir(), dir, `${dir}/${mod.name}`);
                 childConfigurer._importErrors = importErrors;
                 res.push(childConfigurer);
                 if (mod.module.configure) {
@@ -417,9 +410,11 @@ function resolveJobs(configurers: ConfigurerImpl[]): JobBuilder[] {
         configurer._jobs.map((j) => ({
             name: j.name,
             importDir: configurer._importDir,
+            modulePath: configurer._modulePath,
             help: j.help,
             validate: j.validate,
             build: j.build,
+            run: j.run,
         }))
     ));
 }

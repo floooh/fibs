@@ -25,6 +25,7 @@ type ImportExtra = {
 export class ConfigurerImpl implements Configurer {
     _rootDir: string;
     _importDir: string;
+    _modulePath: string;
     _importOptionsFuncs: ((p: Project) => Record<string, unknown>)[] = [];
     _commands: CommandDesc[] = [];
     _jobs: JobBuilderDesc[] = [];
@@ -39,9 +40,10 @@ export class ConfigurerImpl implements Configurer {
     _imports: (ImportDesc & ImportExtra)[] = [];
     _importErrors: unknown[] = [];
 
-    constructor(rootDir: string, importDir: string) {
+    constructor(rootDir: string, importDir: string, modulePath: string) {
         this._rootDir = rootDir;
         this._importDir = importDir;
+        this._modulePath = modulePath;
     }
     selfDir(): string {
         return this._importDir;

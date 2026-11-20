@@ -428,24 +428,52 @@ export type Target = NamedItem & ImportedItem & {
     compileOptions: CompileOption[];
     linkOptions: LinkOption[];
     jobs: TargetJob[];
-    resolvedJobs: Job[];
+    resolvedJobs: ResolvedJob[];
 };
 
 export type JobBuilderDesc = NamedItem & {
     help(): void;
     validate(args: unknown): { valid: boolean; hints: string[] };
     build(project: Project, config: Config, target: Target, args: unknown): Job;
+    /**
+     * Implements script jobs (jobs without commands). Called in a separate
+     * process at build time, must only depend on its arguments.
+     */
+    // deno-lint-ignore no-explicit-any
+    run?(inputs: string[], outputs: string[], args: any): Promise<void>;
 };
 
-export type JobBuilder = ImportedItem & JobBuilderDesc;
+export type JobBuilder = ImportedItem & JobBuilderDesc & {
+    /** path of the fibs module which registered the job */
+    modulePath: string;
+};
+
+/**
+ * A reference to an executable target in a job command, at build time
+ * this is replaced with the path of the target's executable, and the
+ * job will run after the target has been built.
+ */
+export type JobCommandTarget = { target: string };
+
+/**
+ * A job command line. A command which starts with 'cmake' runs the
+ * cmake executable which drives the build.
+ */
+export type JobCommand = (string | JobCommandTarget)[];
 
 export type Job = NamedItem & {
     inputs: string[];
     outputs: string[];
     addOutputsToTargetSources: boolean;
-    args: unknown;
-    // deno-lint-ignore no-explicit-any
-    func: (inputs: string[], output: string[], args: any) => Promise<void>;
+    /** command jobs: command lines executed by the build system (in the target directory) */
+    commands?: JobCommand[];
+    /** script jobs: JSON-serializable args passed to the job builder's run() function */
+    args?: unknown;
+};
+
+/** a job after it has been built for a specific target */
+export type ResolvedJob = Job & {
+    builder: JobBuilder;
 };
 
 export type CommandDesc = NamedItem & {

@@ -1,6 +1,7 @@
 import { host, log, util } from './index.ts';
 import type { Compiler, Config, Project, RunOptions, RunResult } from '../types.ts';
 import { CMakeMinimumRequired, genCMakeListsTxt, genCMakePresetsJson } from './generate.ts';
+import { planJobs, validateJobs, writeJobFiles } from './jobs.ts';
 
 const helloSource = `
 #include <stdio.h>
@@ -155,10 +156,13 @@ async function runConfigurePrepass(project: Project, config: Config): Promise<Co
 export async function generate(project: Project, config: Config) {
     const cmakeListsPath = `${project.dir()}/CMakeLists.txt`;
     const cmakePresetsPath = `${project.dir()}/CMakePresets.json`;
+    const jobPlan = planJobs(project, config);
+    validateJobs(project, config, jobPlan);
+    writeJobFiles(project, jobPlan);
     try {
         Deno.writeTextFileSync(
             cmakeListsPath,
-            genCMakeListsTxt(project, config),
+            genCMakeListsTxt(project, config, jobPlan),
             { create: true },
         );
     } catch (err) {
