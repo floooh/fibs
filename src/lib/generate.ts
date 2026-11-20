@@ -424,7 +424,8 @@ function genJobRule(planned: PlannedJob): string {
         // NOTE: depending on targets also adds a file-level dependency on the target's executable
         depends.push(...commandTargets(job));
     } else {
-        commands.push(`\${DENO} run --allow-all --no-config ${quote(jobFibsRoot())} runjob ${quote(jobFile)}`);
+        // NOTE: --min-dep-age=0 because the pinned fibs version may have been released less than 24 hours ago
+        commands.push(`\${DENO} run --min-dep-age=0 --allow-all --no-config ${quote(jobFibsRoot())} runjob ${quote(jobFile)}`);
         depends.push(jobFile, job.builder.modulePath);
     }
     let str = `add_custom_command(OUTPUT ${job.outputs.map(quote).join(' ')}\n`;

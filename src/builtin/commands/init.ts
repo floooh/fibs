@@ -47,10 +47,10 @@ CMakePresets.json
 `;
 
 const fibsContent = `#!/bin/sh
-exec deno run --allow-all --no-config 'jsr:@floooh/fibs' "$@"
+exec deno run --min-dep-age=0 --allow-all --no-config 'jsr:@floooh/fibs' "$@"
 `;
 
-const fibsCmdContent = '@deno run --allow-all --no-config jsr:@floooh/fibs %*\n';
+const fibsCmdContent = '@deno run --min-dep-age=0 --allow-all --no-config jsr:@floooh/fibs %*\n';
 
 const fibsTsContent = `import { Builder, Configurer } from 'jsr:@floooh/fibs@^1';
 
