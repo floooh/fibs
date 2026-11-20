@@ -465,6 +465,7 @@ function resolveConfigs(configurers: ConfigurerImpl[], project: ProjectImpl): Co
             importDir: configurer._importDir,
             platform: c.platform,
             buildMode: c.buildMode,
+            compiler: c.compiler,
             runner: util.find(c.runner, project._runners) ?? util.find('native', project._runners)!,
             opener: util.find(c.opener, project._openers),
             generator: c.generator,

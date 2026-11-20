@@ -75,7 +75,7 @@ Alternatively run with the `--verbose` option to see more detailed terminal outp
 
 ```bash
 ./fibs config macos-ninja-debug --verbose
-=> cmake --preset macos-ninja-debug (in /Users/floh/projects/fibs-hello-world/.fibs/config/macos-ninja-debug)
+=> cmake --preset macos-ninja-debug -B /Users/floh/projects/fibs-hello-world/.fibs/build/macos-ninja-debug
 -- The C compiler identification is AppleClang 17.0.0.17000603
 -- The CXX compiler identification is AppleClang 17.0.0.17000603
 -- Detecting C compiler ABI info

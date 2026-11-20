@@ -18,13 +18,13 @@ export async function main() {
         const rootDir = Deno.cwd().replaceAll('\\', '/');
         const rootPath = `${rootDir}/fibs.ts`;
         const cmdName = args[0];
-        let skipCmd = false;
+        // NOTE: reset and init don't need a configured project
         if (cmdName === 'reset') {
-            skipCmd = true;
             await resetCmdRun();
+            return;
         } else if (cmdName === 'init') {
-            skipCmd = true;
             await initCmdRun();
+            return;
         }
         // try to import a fibs.ts file from current directory
         if (!util.fileExists(rootPath)) {
@@ -39,9 +39,7 @@ export async function main() {
         const cmd = project.command(cmdName);
 
         // invoke the requested command (NOTE: the cmd may set Deno.exitCode)
-        if (!skipCmd) {
-            await cmd.run(project, args);
-        }
+        await cmd.run(project, args);
     } catch (err) {
         log.error(err);
     }

@@ -1,7 +1,7 @@
 import type { ConfigDesc } from '../../types.ts';
 
-const win = { platform: 'windows' };
-const mac = { platform: 'macos' };
+const win = { platform: 'windows', compiler: 'msvc' };
+const mac = { platform: 'macos', compiler: 'appleclang' };
 const linux = { platform: 'linux' };
 const make = { generator: 'make' };
 const ninja = { generator: 'ninja' };

@@ -20,6 +20,9 @@ async function run(project: Project, args: string[]) {
         const configName = args[1];
         config = project.config(configName);
     }
-    await proj.configureTargets(config);
+    // targets are already configured for the active config
+    if (config.name !== project.activeConfig().name) {
+        await proj.configureTargets(config);
+    }
     await Promise.all(project.targets().map((target): Promise<void> => proj.runJobs(target)));
 }

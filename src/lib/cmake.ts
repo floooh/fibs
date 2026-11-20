@@ -1,5 +1,4 @@
-import os from 'node:os';
-import { log, util } from './index.ts';
+import { host, log, util } from './index.ts';
 import type { Compiler, Config, Project, RunOptions, RunResult } from '../types.ts';
 import { CMakeMinimumRequired, genCMakeListsTxt, genCMakePresetsJson } from './generate.ts';
 
@@ -15,7 +14,7 @@ const cmakeConfigSource = `
 cmake_minimum_required(VERSION ${CMakeMinimumRequired})
 project(hello C CXX)
 add_executable(hello hello.c)
-file(WRITE cmake_config.json "{\\"CMAKE_C_COMPILER_ID\\":\\"\${CMAKE_C_COMPILER_ID}\\",\\"CMAKE_HOST_SYSTEM_NAME\\":\\"\${CMAKE_HOST_SYSTEM_NAME}\\",\\"CMAKE_SYSTEM_PROCESSOR\\":\\"\${CMAKE_SYTEM_PROCESSOR}\\"}\\n")
+file(WRITE cmake_config.json "{\\"CMAKE_C_COMPILER_ID\\":\\"\${CMAKE_C_COMPILER_ID}\\"}\\n")
 `;
 
 export async function run(options: RunOptions): Promise<RunResult> {
@@ -35,9 +34,18 @@ export async function exists(): Promise<boolean> {
     }
 }
 
+// predefined macros of compilers which also pretend to be GCC or Clang
+const otherCompilerMacros = ['__INTEL_COMPILER', '__INTEL_LLVM_COMPILER', '__NVCOMPILER', '__PGI'];
+
 /**
- * Run the cmake configure 'pre-pass'. This is used to determine runtime
- * properties like the compiler id.
+ * Identify the C/C++ compiler of a build config, in order of preference:
+ *
+ * - the config's compiler hint (unless overridden via the CC environment variable)
+ * - for host compilers: probe the compiler's predefined macros
+ * - otherwise run a cmake configure 'pre-pass' on a dummy project, this
+ *   is slow because it runs cmake's complete compiler detection
+ *
+ * The result of the last two options is cached in the config directory.
  *
  * @param project the Project object
  * @param config a build config
@@ -45,6 +53,67 @@ export async function exists(): Promise<boolean> {
  * @throws throw if cmake returns with an exit code !== 0
  */
 export async function configure(project: Project, config: Config): Promise<{ compiler: Compiler }> {
+    const probeable = isHostCompiler(config);
+    // NOTE: the Xcode generator ignores CC and always uses Xcode's clang
+    const envCC = (probeable && (config.generator !== 'xcode')) ? (config.environment.CC ?? Deno.env.get('CC')) : undefined;
+    if ((config.compiler !== undefined) && (envCC === undefined)) {
+        return { compiler: config.compiler };
+    }
+    const configDir = project.configDir(config.name);
+    if (probeable) {
+        const cc = envCC ?? 'cc';
+        const probePath = `${configDir}/compiler.json`;
+        if (util.fileExists(probePath)) {
+            const cached = JSON.parse(Deno.readTextFileSync(probePath));
+            if (cached.cc === cc) {
+                return { compiler: cached.compiler };
+            }
+        }
+        const compiler = await probeCompiler(cc);
+        if (compiler !== 'unknown-compiler') {
+            util.ensureDir(configDir);
+            Deno.writeTextFileSync(probePath, JSON.stringify({ cc, compiler }));
+            return { compiler };
+        }
+    }
+    return { compiler: await runConfigurePrepass(project, config) };
+}
+
+// true if cmake will pick the compiler via the CC environment variable or the default 'cc'
+function isHostCompiler(config: Config): boolean {
+    if ((config.toolchainFile !== undefined) || (host.platform() === 'windows') || (config.generator === 'vstudio')) {
+        return false;
+    }
+    // the compiler may also be selected via cmake cache variables
+    return !config.cmakeCacheVariables.some((v) => (v.name === 'CMAKE_C_COMPILER') || (v.name === 'CMAKE_TOOLCHAIN_FILE'));
+}
+
+// identify a gcc-compatible compiler via its predefined macros
+async function probeCompiler(cc: string): Promise<Compiler> {
+    try {
+        const res = await util.runCmd(cc, {
+            args: ['-dM', '-E', '-x', 'c', '/dev/null'],
+            stdout: 'piped',
+            stderr: 'null',
+            showCmd: log.verbose(),
+        });
+        if (res.exitCode === 0) {
+            const defined = (macro: string) => new RegExp(`^#define ${macro} `, 'm').test(res.stdout);
+            if (otherCompilerMacros.some(defined)) {
+                return 'unknown-compiler';
+            } else if (defined('__clang__')) {
+                return defined('__apple_build_version__') ? 'appleclang' : 'clang';
+            } else if (defined('__GNUC__')) {
+                return 'gcc';
+            }
+        }
+    } catch (_err) {
+        // compiler not found
+    }
+    return 'unknown-compiler';
+}
+
+async function runConfigurePrepass(project: Project, config: Config): Promise<Compiler> {
     const configDir = project.configDir(config.name);
     const configPath = `${configDir}/cmake_config.json`;
     if (!util.fileExists(configPath)) {
@@ -71,11 +140,8 @@ export async function configure(project: Project, config: Config): Promise<{ com
             throw new Error(`cmake returned with exit code ${res.exitCode} (run with --verbose)`);
         }
     }
-    const importPath = `file://${configPath}`;
-    const configJson = (await import(importPath, { with: { type: 'json' } })).default;
-    return {
-        compiler: fromCmakeCompiler(configJson.CMAKE_C_COMPILER_ID),
-    };
+    const configJson = JSON.parse(Deno.readTextFileSync(configPath));
+    return fromCmakeCompiler(configJson.CMAKE_C_COMPILER_ID);
 }
 
 /**
@@ -141,7 +207,7 @@ export async function build(project: Project, config: Config, options: { target?
         await generate(project, config);
     }
     // cmake + make with --parallel will heavily overcommit, so limit to available cores
-    const parallelism = config.generator === 'make' ? os.availableParallelism() : undefined;
+    const parallelism = config.generator === 'make' ? navigator.hardwareConcurrency : undefined;
 
     let args = ['--build', '--preset', 'default'];
     if (parallelism === undefined) {

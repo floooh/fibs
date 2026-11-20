@@ -76,7 +76,8 @@ export function load(project: Project) {
     for (const key in items) {
         const value = items[key];
         if (validate(project, key, value)) {
-            set(project, key, value);
+            // NOTE: don't call set() here, this would save settings.json for each item
+            project.setting(key).value = value;
         } else {
             hasInvalidKeys = true;
         }

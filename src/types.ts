@@ -342,6 +342,8 @@ export type Setting = NamedItem & SettingDesc & {
 export type ConfigDesc = NamedItem & {
     platform: Platform;
     buildMode: BuildMode;
+    /** optional compiler hint, skips cmake's slow compiler detection */
+    compiler?: Compiler;
     runner?: string;
     opener?: string;
     generator?: Generator;
@@ -358,6 +360,7 @@ export type ConfigDesc = NamedItem & {
 export type Config = NamedItem & ImportedItem & {
     platform: Platform;
     buildMode: BuildMode;
+    compiler?: Compiler;
     runner: Runner;
     opener?: Opener;
     generator?: Generator;
